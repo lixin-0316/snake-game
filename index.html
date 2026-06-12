@@ -6,37 +6,59 @@
 <title>我的平台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0f0f23;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;min-height:100dvh}
-.header{text-align:center;padding:40px 20px 20px;background:linear-gradient(135deg,#1a1a3e,#16213e)}
-.header h1{font-size:28px;color:#e94560;margin-bottom:6px}
-.header p{font-size:14px;color:#888}
-.channels{max-width:600px;margin:20px auto;padding:0 16px;display:grid;gap:12px}
-.channel{display:flex;align-items:center;background:#1a1a3e;border-radius:12px;padding:16px;text-decoration:none;color:#e0e0e0;transition:.2s;border:1px solid transparent}
-.channel:hover{background:#16213e;border-color:#e94560;transform:translateY(-2px)}
+body{background:#08081a;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;min-height:100dvh;overflow-x:hidden}
+
+/* animated background */
+.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden}
+.bg span{position:absolute;display:block;width:20px;height:20px;background:rgba(233,69,96,.04);border-radius:50%;animation:float 20s infinite}
+.bg span:nth-child(1){top:10%;left:20%;width:80px;height:80px;animation-delay:0s;animation-duration:18s}
+.bg span:nth-child(2){top:60%;left:80%;width:120px;height:120px;animation-delay:3s;animation-duration:25s}
+.bg span:nth-child(3){top:30%;left:70%;width:60px;height:60px;animation-delay:6s;animation-duration:15s}
+.bg span:nth-child(4){top:80%;left:30%;width:100px;height:100px;animation-delay:2s;animation-duration:22s}
+.bg span:nth-child(5){top:50%;left:50%;width:40px;height:40px;animation-delay:8s;animation-duration:20s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1);opacity:.3}50%{transform:translateY(-80px) scale(1.2);opacity:.6}}
+
+.header{text-align:center;padding:50px 20px 30px;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;height:2px;background:linear-gradient(90deg,transparent,#e94560,transparent)}
+.header h1{font-size:32px;font-weight:800;background:linear-gradient(135deg,#e94560,#f0c040);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:2px}
+.header p{font-size:14px;color:#555;letter-spacing:4px;text-transform:uppercase}
+
+.channels{max-width:560px;margin:30px auto;padding:0 16px;display:grid;gap:10px}
+.channel{display:flex;align-items:center;background:linear-gradient(135deg,rgba(26,26,62,.8),rgba(22,22,62,.5));border-radius:14px;padding:18px 20px;text-decoration:none;color:#e0e0e0;transition:all .3s;border:1px solid rgba(255,255,255,.04);backdrop-filter:blur(10px)}
 .channel.active{cursor:pointer}
-.channel.disabled{opacity:.4;pointer-events:none}
-.channel .icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-right:14px;flex-shrink:0}
-.channel .icon.snake{background:linear-gradient(135deg,#53d769,#2ecc71)}
-.channel .icon.empty{background:#2a2a4a}
-.channel .info h3{font-size:16px;margin-bottom:3px}
-.channel .info span{font-size:12px;color:#666}
-.channel .badge{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:6px;background:#e94560;color:#fff}
-.footer{text-align:center;padding:30px;font-size:12px;color:#444}
+.channel.active:hover{transform:translateY(-3px);border-color:rgba(233,69,96,.3);box-shadow:0 8px 30px rgba(233,69,96,.12)}
+.channel.disabled{opacity:.3;pointer-events:none;filter:grayscale(1)}
+.channel .icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-right:16px;flex-shrink:0;position:relative}
+.channel .icon.snake{background:linear-gradient(135deg,#1a3a1a,#2d5a2d);box-shadow:0 0 20px rgba(83,215,105,.15)}
+.channel.active:hover .icon.snake{box-shadow:0 0 30px rgba(83,215,105,.25)}
+.channel .icon.snake::after{content:'';position:absolute;inset:-2px;border-radius:14px;background:linear-gradient(135deg,#53d769,transparent);opacity:.3;z-index:-1}
+.channel .icon.empty{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08)}
+.channel .info{flex:1;min-width:0}
+.channel .info h3{font-size:16px;font-weight:600;margin-bottom:2px}
+.channel .info span{font-size:12px;color:#555}
+.channel .tag{margin-left:auto;font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(233,69,96,.15);color:#e94560;font-weight:600;letter-spacing:.5px}
+.channel .tag.coming{background:rgba(255,255,255,.04);color:#444}
+
+.footer{text-align:center;padding:40px;font-size:12px;color:#333;letter-spacing:1px}
+.footer span{color:#e94560}
 </style>
 </head>
 <body>
+<div class="bg">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
 <div class="header">
-  <h1>🎮 我的平台</h1>
-  <p>选择你想玩的频道</p>
+  <h1>我的平台</h1>
+  <p>选择频道</p>
 </div>
 <div class="channels">
   <a href="snake/" class="channel active">
     <div class="icon snake">🐍</div>
     <div class="info">
       <h3>贪吃蛇</h3>
-      <span>经典街机游戏</span>
+      <span>流畅平滑的贪吃蛇体验</span>
     </div>
-    <div class="badge">已上线</div>
+    <div class="tag">已上线</div>
   </a>
   <div class="channel disabled">
     <div class="icon empty">❓</div>
@@ -44,6 +66,7 @@ body{background:#0f0f23;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;mi
       <h3>频道 2</h3>
       <span>即将上线</span>
     </div>
+    <div class="tag coming">待定</div>
   </div>
   <div class="channel disabled">
     <div class="icon empty">❓</div>
@@ -51,6 +74,7 @@ body{background:#0f0f23;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;mi
       <h3>频道 3</h3>
       <span>即将上线</span>
     </div>
+    <div class="tag coming">待定</div>
   </div>
   <div class="channel disabled">
     <div class="icon empty">❓</div>
@@ -58,8 +82,9 @@ body{background:#0f0f23;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;mi
       <h3>频道 4</h3>
       <span>即将上线</span>
     </div>
+    <div class="tag coming">待定</div>
   </div>
 </div>
-<div class="footer">Made with ❤️</div>
+<div class="footer">Made with <span>❤</span></div>
 </body>
 </html>

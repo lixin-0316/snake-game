@@ -61,15 +61,15 @@ const scoreEl=document.getElementById('score'),highScoreEl=document.getElementBy
 const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
 const SEGMENT_SPACING=CELL*0.85;
 const SPEED=2.8;
-const TURN_SPEED=0.12;
+const SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);
 
-let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,animId,frames;
+let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,animId;
 
 function init(){
   headX=CELL*10;headY=CELL*10;
   dirX=1;dirY=0;targetDirX=1;targetDirY=0;
   trail=[];segCount=5;
-  score=0;frames=0;
+  score=0;
   highScore=parseInt(localStorage.getItem('snakeHighScore')||'0');
   highScoreEl.textContent=highScore;
   scoreEl.textContent='0';
@@ -83,7 +83,7 @@ function spawnFood(){
     foodX=Math.floor(Math.random()*COLS)*CELL+CELL/2;
     foodY=Math.floor(Math.random()*ROWS)*CELL+CELL/2;
     valid=true;
-    for(let i=0;i<trail.length;i+=Math.floor(SEGMENT_SPACING/SPEED)){
+    for(let i=0;i<trail.length;i+=SEG_STEP){
       const dx=trail[i].x-foodX,dy=trail[i].y-foodY;
       if(dx*dx+dy*dy<CELL*CELL){valid=false;break;}
     }
@@ -92,53 +92,47 @@ function spawnFood(){
 
 function setDir(x,y){
   if(gameOver)return;
-  if(dirX!==0&&x!==0&&y!==0||dirY!==0&&y!==0&&x!==0)return;
-  if(x===dirX&&y===dirY)return;
+  if(x===-dirX&&y===-dirY)return;
   targetDirX=x;targetDirY=y;
+}
+
+function getBodySegments(){
+  const segs=[];
+  for(let i=trail.length-1;i>=0;i-=SEG_STEP){
+    segs.push({x:trail[i].x,y:trail[i].y});
+    if(segs.length>=segCount)break;
+  }
+  return segs;
 }
 
 function update(){
   if(gameOver)return;
-  frames++;
 
-  let dx=targetDirX-dirX,dy=targetDirY-dirY;
-  if(Math.abs(dx)>1||Math.abs(dy)>1){
-    dirX=targetDirX;dirY=targetDirY;
-  }else{
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    if(dist>TURN_SPEED){
-      const ratio=Math.min(TURN_SPEED/dist,1);
-      dirX+=dx*ratio;dirY+=dy*ratio;
-      const len=Math.sqrt(dirX*dirX+dirY*dirY);
-      dirX/=len;dirY/=len;
-    }else{
-      dirX=targetDirX;dirY=targetDirY;
-    }
-  }
+  dirX=targetDirX;dirY=targetDirY;
 
   headX+=dirX*SPEED;headY+=dirY*SPEED;
 
   trail.push({x:headX,y:headY});
-  if(trail.length>segCount*SEGMENT_SPACING/SPEED+50)
+  if(trail.length>segCount*SEG_STEP+10)
     trail.shift();
+
+  if(headX<0||headX>W||headY<0||headY>H){
+    endGame();return;
+  }
+
+  const segs=getBodySegments();
+  for(let s=3;s<segs.length;s++){
+    const dx=headX-segs[s].x,dy=headY-segs[s].y;
+    if(dx*dx+dy*dy<CELL*CELL*0.3){
+      endGame();return;
+    }
+  }
 
   const dxFood=headX-foodX,dyFood=headY-foodY;
   if(dxFood*dxFood+dyFood*dyFood<CELL*CELL*0.25){
     score++;scoreEl.textContent=score;
     segCount++;
     spawnFood();
-  }
-
-  if(headX<0||headX>W||headY<0||headY>H){
-    endGame();return;
-  }
-
-  const lookBack=Math.floor(SEGMENT_SPACING/SPEED)*2;
-  for(let i=lookBack;i<trail.length-2;i++){
-    const dx=headX-trail[i].x,dy=headY-trail[i].y;
-    if(dx*dx+dy*dy<CELL*CELL*0.2){
-      endGame();return;
-    }
   }
 }
 
@@ -164,45 +158,28 @@ function draw(){
   ctx.fill();
   ctx.shadowBlur=0;
 
+  const segs=getBodySegments();
   ctx.shadowBlur=0;
-  for(let i=trail.length-1;i>=0;i-=Math.floor(SEGMENT_SPACING/SPEED)){
-    const idx=Math.floor(i/SEGMENT_SPACING*SPEED);
-    if(idx>=segCount)continue;
-    const segIdx=segCount-1-idx;
-    const t=segIdx/segCount;
-    const t2=segIdx/(segCount*2);
-    const radius=CELL*0.35*(1-t2*0.3);
-    const x=trail[i].x,y=trail[i].y;
-
+  for(let s=0;s<segs.length;s++){
+    const t=s/segs.length;
+    const radius=CELL*0.4*(1-t*0.25);
+    const x=segs[s].x,y=segs[s].y;
     const gradient=ctx.createRadialGradient(x,y,0,x,y,radius);
     gradient.addColorStop(0,`hsl(${140+t*40},70%,${55+t*20}%)`);
     gradient.addColorStop(1,`hsl(${140+t*40},70%,${35+t*15}%)`);
     ctx.fillStyle=gradient;
 
-    if(segIdx===0){
+    if(s===0){
       ctx.shadowBlur=20;ctx.shadowColor='#53d769';
-    }else if(segIdx===segCount-1){
-      ctx.shadowBlur=0;
-      ctx.globalAlpha=.5;
+    }else if(s===segs.length-1){
+      ctx.shadowBlur=0;ctx.globalAlpha=.5;
     }else{
       ctx.shadowBlur=8;ctx.shadowColor='rgba(83,215,105,0.3)';
     }
-
     ctx.beginPath();
     ctx.arc(x,y,radius,0,Math.PI*2);
     ctx.fill();
     ctx.shadowBlur=0;ctx.globalAlpha=1;
-  }
-
-  if(trail.length>0){
-    const idx=Math.floor((segCount-1)*SEGMENT_SPACING/SPEED);
-    const i=Math.min(idx,trail.length-1);
-    if(i>=0&&trail[i]){
-      ctx.fillStyle='rgba(233,69,96,0.05)';
-      ctx.beginPath();
-      ctx.arc(trail[i].x,trail[i].y,CELL*0.6,0,Math.PI*2);
-      ctx.fill();
-    }
   }
 
   const headRadius=CELL*0.4;
