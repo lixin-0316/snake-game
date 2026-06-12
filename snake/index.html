@@ -47,7 +47,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 <div class="game-wrapper">
   <a href="../" class="back-link">← 返回平台</a>
   <div class="header">
-    <span class="score">🐍 <span id="score">0</span></span>
+    <span class="score">💩 <span id="score">0</span></span>
     <button class="music-btn" id="musicBtn">🔊 音乐</button>
     <span class="high-score">最高 <span id="highScore">0</span></span>
   </div>
@@ -59,7 +59,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
       <p>按空格键重新开始</p>
     </div>
     <div class="start-screen" id="startScreen">
-      <h2>🐍 贪吃蛇</h2>
+      <h2>🐑 懒洋洋</h2>
       <button class="play-btn" id="startBtn">开始游戏</button>
       <p>或按 空格键 / Enter 开始</p>
     </div>
@@ -262,10 +262,10 @@ function update(){
 
 function draw(){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#0d0d24';
+  ctx.fillStyle='#2d5a1e';
   ctx.fillRect(0,0,W,H);
 
-  ctx.strokeStyle='rgba(255,255,255,0.06)';
+  ctx.strokeStyle='rgba(255,255,255,0.04)';
   ctx.lineWidth=1;
   for(let x=0;x<=COLS;x++){
     ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H);ctx.stroke();
@@ -274,50 +274,91 @@ function draw(){
     ctx.beginPath();ctx.moveTo(0,y*CELL);ctx.lineTo(W,y*CELL);ctx.stroke();
   }
 
-  const glow=ctx.createRadialGradient(foodX,foodY,0,foodX,foodY,CELL);
-  glow.addColorStop(0,'rgba(240,192,64,0.5)');
-  glow.addColorStop(1,'rgba(240,192,64,0)');
-  ctx.fillStyle=glow;ctx.fillRect(foodX-CELL,foodY-CELL,CELL*2,CELL*2);
-
-  ctx.fillStyle='#f0c040';
-  ctx.shadowBlur=12;ctx.shadowColor='#f0c040';
-  ctx.beginPath();
-  ctx.arc(foodX,foodY,CELL*0.35,0,Math.PI*2);
-  ctx.fill();
+  ctx.font='22px serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillText('💩',foodX,foodY-2);
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font='24px serif';
+  ctx.fillText('💩',foodX,foodY);
 
   const segs=getBodySegments();
   ctx.shadowBlur=0;
   for(let s=0;s<segs.length;s++){
-    const t=s/segs.length;
-    const radius=CELL*0.38*(1-t*0.2);
     const x=segs[s].x,y=segs[s].y;
-    const gradient=ctx.createRadialGradient(x,y,0,x,y,radius);
-    gradient.addColorStop(0,`hsl(${140+t*40},70%,${55+t*20}%)`);
-    gradient.addColorStop(1,`hsl(${140+t*40},70%,${35+t*15}%)`);
-    ctx.fillStyle=gradient;
-    if(s===0){ctx.shadowBlur=16;ctx.shadowColor='#53d769';}
-    else if(s===segs.length-1){ctx.shadowBlur=0;ctx.globalAlpha=.5;}
-    else{ctx.shadowBlur=6;ctx.shadowColor='rgba(83,215,105,0.25)';}
-    ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
-    ctx.shadowBlur=0;ctx.globalAlpha=1;
+    const scale=1-s/segs.length*0.3;
+    const r=CELL*0.38*scale;
+
+    ctx.shadowBlur=10;ctx.shadowColor='rgba(200,200,200,0.15)';
+    ctx.fillStyle='#f5f5f5';
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(200,200,200,0.3)';
+    for(let i=0;i<6;i++){
+      const a=i/6*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(x+Math.cos(a)*r*0.6,y+Math.sin(a)*r*0.6,r*0.4,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    if(s===0){
+      ctx.strokeStyle='rgba(100,100,100,0.2)';ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){
+        const a=i/4*Math.PI*2+0.3;
+        ctx.beginPath();ctx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r);
+        ctx.lineTo(x+Math.cos(a)*(r+4),y+Math.sin(a)*(r+4));ctx.stroke();
+      }
+    }
+    ctx.shadowBlur=0;
   }
 
-  const headRadius=CELL*0.4;
-  ctx.shadowBlur=22;ctx.shadowColor='rgba(233,69,96,0.5)';
-  const headGrad=ctx.createRadialGradient(headX-2,headY-2,0,headX,headY,headRadius);
-  headGrad.addColorStop(0,'#ff6b81');headGrad.addColorStop(1,'#e94560');
-  ctx.fillStyle=headGrad;
-  ctx.beginPath();ctx.arc(headX,headY,headRadius,0,Math.PI*2);ctx.fill();
+  const hr=CELL*0.42;
+  ctx.shadowBlur=15;ctx.shadowColor='rgba(200,200,200,0.2)';
+  ctx.fillStyle='#f5f5f5';
+  ctx.beginPath();ctx.arc(headX,headY,hr,0,Math.PI*2);ctx.fill();
   ctx.shadowBlur=0;
 
-  const eyeOff=headRadius*0.4,eyeSize=headRadius*0.25;
+  ctx.fillStyle='rgba(200,200,200,0.25)';
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(headX+Math.cos(a)*hr*0.55,headY+Math.sin(a)*hr*0.55,hr*0.35,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  const earOff=hr*0.7;
+  ctx.fillStyle='#ddd';
+  ctx.beginPath();
+  ctx.ellipse(headX+dirX*earOff-dirY*earOff*0.5,headY+dirY*earOff+dirX*earOff*0.5,hr*0.4,hr*0.25,-0.3,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(headX+dirX*earOff+dirY*earOff*0.5,headY+dirY*earOff-dirX*earOff*0.5,hr*0.4,hr*0.25,0.3,0,Math.PI*2);
+  ctx.fill();
+
+  const faceR=hr*0.55;
+  ctx.fillStyle='#2a2a2a';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*faceR*0.3,headY+dirY*faceR*0.3,faceR,0.2,Math.PI-0.2,false);
+  ctx.lineTo(headX+dirX*faceR*0.3+Math.cos(Math.PI-0.2)*faceR,headY+dirY*faceR*0.3+Math.sin(Math.PI-0.2)*faceR);
+  ctx.fill();
+
+  const eo=hr*0.3,es=hr*0.18;
   ctx.fillStyle='#fff';
-  ctx.beginPath();ctx.arc(headX+dirX*eyeOff-dirY*eyeOff,headY+dirY*eyeOff+dirX*eyeOff,eyeSize,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(headX+dirX*eyeOff+dirY*eyeOff,headY+dirY*eyeOff-dirX*eyeOff,eyeSize,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo-dirY*eo,headY+dirY*eo+dirX*eo,es,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo+dirY*eo,headY+dirY*eo-dirX*eo,es,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(headX+dirX*eyeOff-dirY*eyeOff+dirX*2,headY+dirY*eyeOff+dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(headX+dirX*eyeOff+dirY*eyeOff+dirX*2,headY+dirY*eyeOff-dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo-dirY*eo+dirX*1.5,headY+dirY*eo+dirX*eo+dirY*1.5,es*0.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo+dirY*eo+dirX*1.5,headY+dirY*eo-dirX*eo+dirY*1.5,es*0.5,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle='#e8a0a0';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*hr*0.5+dirY*hr*0.15,headY+dirY*hr*0.5-dirX*hr*0.15,hr*0.12,0,Math.PI,false);
+  ctx.fill();
 }
 
 function endGame(){
