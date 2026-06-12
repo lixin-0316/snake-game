@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>广东麻将</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a0a1a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+.game-wrapper{background:linear-gradient(145deg,#2d1a2d,#1a0a1a);padding:15px;border-radius:16px;box-shadow:0 0 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05)}
+canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:100%;max-width:800px}
+.btns{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.btns button{padding:10px 28px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;display:none}
+.btns button.show{display:inline-block}
+.btn-draw{background:linear-gradient(135deg,#f0c040,#d4a830);color:#333}
+.btn-draw:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(240,192,64,.4)}
+.btn-win{background:linear-gradient(135deg,#e94560,#c23152);color:#fff}
+.btn-win:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(233,69,96,.4)}
+.btn-pass{background:linear-gradient(135deg,#666,#444);color:#fff}
+.btn-pass:hover{transform:translateY(-2px)}
+.btn-reset{background:linear-gradient(135deg,#53d769,#2ecc71);color:#fff}
+.btn-reset:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(83,215,105,.4)}
+.info-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 10px;color:rgba(255,255,255,.6);font-size:14px}
+.back-link{display:inline-flex;align-items:center;gap:4px;color:rgba(255,255,255,.4);font-size:13px;text-decoration:none}
+.back-link:hover{color:#e94560}
+</style>
+</head>
+<body>
+<div class="game-wrapper">
+  <div class="info-bar">
+    <a href="../" class="back-link">← 返回平台</a>
+    <span>🀄 广东麻将·带红中</span>
+    <span id="infoRight"></span>
+  </div>
+  <canvas id="game" width="800" height="560"></canvas>
+  <div class="btns" id="btns">
+    <button class="btn-draw" id="drawBtn">摸牌</button>
+    <button class="btn-win" id="winBtn">胡牌</button>
+    <button class="btn-pass" id="passBtn">过</button>
+    <button class="btn-reset" id="resetBtn">重新开始</button>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=800,H=560;
+const TW=42,TH=56;
+
+const TYPES=['wan','tiao','tong','feng','jian'];
+const TYPE_NAMES={wan:'万',tiao:'索',tong:'筒',feng:'风',jian:'箭'};
+const WAN=['一','二','三','四','五','六','七','八','九'];
+const TIAO=['一','二','三','四','五','六','七','八','九'];
+const TONG=['一','二','三','四','五','六','七','八','九'];
+const FENG=['東','南','西','北'];
+const JIAN=['中','發','白'];
+const SUIT_COLORS={wan:'#27ae60',tiao:'#2980b9',tong:'#e74c3c',feng:'#8e44ad',jian:'#e67e22'};
+
+function createTiles(){
+  const tiles=[];
+  for(let i=0;i<4;i++){
+    for(let w=0;w<9;w++)tiles.push({type:'wan',val:w,id:tiles.length});
+    for(let t=0;t<9;t++)tiles.push({type:'tiao',val:t,id:tiles.length});
+    for(let o=0;o<9;o++)tiles.push({type:'tong',val:o,id:tiles.length});
+    for(let f=0;f<4;f++)tiles.push({type:'feng',val:f,id:tiles.length});
+    for(let j=0;j<3;j++)tiles.push({type:'jian',val:j,id:tiles.length});
+  }
+  return tiles;
+}
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function tileName(t){
+  if(t.type==='wan')return WAN[t.val]+'萬';
+  if(t.type==='tiao')return TIAO[t.val]+'條';
+  if(t.type==='tong')return TONG[t.val]+'筒';
+  if(t.type==='feng')return FENG[t.val];
+  return JIAN[t.val];
+}
+
+function tileKey(t){return t.type+'_'+t.val;}
+
+function sortTiles(ts){
+  const order={wan:0,tiao:1,tong:2,feng:3,jian:4};
+  return ts.sort((a,b)=>order[a.type]-order[b.type]||a.val-b.val);
+}
+
+function isRedMiddle(t){return t.type==='jian'&&t.val===0;}
+
+let wall,hands,playerHand,discards,turn,gameOver,msg,drawTile,canWin,phase;
+let dealer=0;
+
+function initGame(){
+  wall=shuffle(createTiles());
+  hands=[sortTiles(wall.splice(0,13)),sortTiles(wall.splice(0,13)),
+         sortTiles(wall.splice(0,13)),sortTiles(wall.splice(0,13))];
+  // dealer draws 14th
+  hands[0].push(wall.pop());
+  sortTiles(hands[0]);
+  playerHand=hands[0];
+  discards=[[],[],[],[]];
+  turn=0;gameOver=false;drawTile=null;canWin=false;phase='play';
+  msg='游戏开始！点击摸牌';
+  document.getElementById('drawBtn').className='btn-draw show';
+  document.getElementById('winBtn').className='btn-win';
+  document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('resetBtn').className='btn-reset';
+  document.getElementById('infoRight').textContent='剩余: '+wall.length+' 张';
+  render();
+}
+
+function isWin(tiles,wilds){
+  if(tiles.length%3!==2)return false;
+  const groups={};
+  tiles.forEach(t=>{
+    const k=tileKey(t);
+    groups[k]=(groups[k]||0)+1;
+  });
+
+  let wildCount=0;
+  if(groups['jian_0']){wildCount=groups['jian_0'];delete groups['jian_0'];}
+
+  const keys=Object.keys(groups).sort();
+  function canFormMelds(g,idx,wc){
+    if(idx>=keys.length)return true;
+    const k=keys[idx];
+    if(g[k]<=0)return canFormMelds(g,idx+1,wc);
+
+    // try pair (only once)
+    if(g[k]>=2){
+      g[k]-=2;
+      const rest={...g};
+      if(canFormMelds(rest,idx,wc))return true;
+      g[k]+=2;
+    }
+    // try wild pair
+    if(wc>0){
+      wc--;
+      g[k]--;
+      const rest={...g};
+      if(canFormMelds(rest,idx,wc))return true;
+      wc++;
+      g[k]++;
+    }
+
+    // try triplet
+    if(g[k]>=3){
+      g[k]-=3;
+      const rest={...g};
+      if(canFormMelds(rest,idx,wc))return true;
+      g[k]+=3;
+    }
+    // try wild triplet
+    if(wc>=2&&g[k]>=1){
+      wc-=2;g[k]-=1;
+      const rest={...g};
+      if(canFormMelds(rest,idx,wc))return true;
+      wc+=2;g[k]+=1;
+    }
+    if(wc>=1&&g[k]>=2){
+      wc-=1;g[k]-=2;
+      const rest={...g};
+      if(canFormMelds(rest,idx,wc))return true;
+      wc+=1;g[k]+=2;
+    }
+
+    // try sequence (wan, tiao, tong only)
+    if(k.startsWith('wan_')||k.startsWith('tiao_')||k.startsWith('tong_')){
+      const parts=k.split('_');
+      const v=parseInt(parts[1]);
+      if(v<=6){
+        const k2=parts[0]+'_'+(v+1),k3=parts[0]+'_'+(v+2);
+        const c2=g[k2]||0,c3=g[k3]||0;
+        // no wilds
+        if(c2>0&&c3>0){
+          g[k]--;g[k2]--;g[k3]--;
+          const rest={...g};
+          if(canFormMelds(rest,idx,wc))return true;
+          g[k]++;g[k2]++;g[k3]++;
+        }
+        // 1 wild
+        if(wc>=1){
+          if(c2>0){g[k]--;g[k2]--;wc--;const rest={...g};if(canFormMelds(rest,idx,wc))return true;g[k]++;g[k2]++;wc++;}
+          if(c3>0){g[k]--;g[k3]--;wc--;const rest={...g};if(canFormMelds(rest,idx,wc))return true;g[k]++;g[k3]++;wc++;}
+        }
+        // 2 wilds
+        if(wc>=2){
+          wc-=2;g[k]--;
+          const rest={...g};
+          if(canFormMelds(rest,idx,wc))return true;
+          wc+=2;g[k]++;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Try each pair, check if rest can form 4 melds
+  const total=tiles.length;
+  const requiredMelds=(total-2)/3;
+  // If we have wilds, we need fewer total tiles to form melds
+  // Actually just try the standard algorithm with wild substitutions
+
+  for(let i=0;i<keys.length;i++){
+    const k=keys[i];
+    if(groups[k]>=2){
+      groups[k]-=2;
+      if(canFormMelds(groups,0,wildCount)){groups[k]+=2;return true;}
+      groups[k]+=2;
+    }
+    if(wildCount>0){
+      wildCount--;groups[k]--;
+      if(canFormMelds(groups,0,wildCount)){wildCount++;groups[k]++;return true;}
+      wildCount++;groups[k]++;
+    }
+  }
+  if(wildCount>=2){
+    wildCount-=2;
+    if(canFormMelds(groups,0,wildCount)){wildCount+=2;return true;}
+    wildCount+=2;
+  }
+
+  return false;
+}
+
+function checkWin(hand,includeDraw){
+  const test=includeDraw&&drawTile?[...hand,drawTile]:[...hand];
+  const wilds=test.filter(t=>isRedMiddle(t)).length;
+  return isWin(test,wilds);
+}
+
+function aiDiscard(hand){
+  const b4=sortTiles(hand.filter(t=>{
+    if(isRedMiddle(t))return false;
+    const k=tileKey(t);
+    const cnt=hand.filter(h=>tileKey(h)===k).length;
+    if(cnt>=3)return true;
+    if(k.startsWith('feng')||k.startsWith('jian'))return cnt>=2||hand.filter(h=>isRedMiddle(h)).length>0;
+    return true;
+  }));
+  // discard the first "least useful" tile
+  const candidates=hand.filter(t=>!isRedMiddle(t)).sort((a,b)=>{
+    const ka=tileKey(a),kb=tileKey(b);
+    const ca=hand.filter(h=>tileKey(h)===ka).length;
+    const cb=hand.filter(h=>tileKey(h)===kb).length;
+    if(ca!==cb)return ca-cb;
+    const ta=a.type==='feng'||a.type==='jian'?10:a.val;
+    const tb=b.type==='feng'||b.type==='jian'?10:b.val;
+    const endA=a.val===0||a.val===8||a.type==='feng'||a.type==='jian';
+    const endB=b.val===0||b.val===8||b.type==='feng'||b.type==='jian';
+    if(endA&&!endB)return-1;if(!endA&&endB)return1;
+    return 0;
+  });
+  return candidates.length>0?candidates[0]:hand[0];
+}
+
+function doAITurn(){
+  if(gameOver||turn===0)return;
+  if(wall.length===0){msg='流局！平局';gameOver=true;render();showReset();return;}
+
+  const tile=wall.pop();
+  document.getElementById('infoRight').textContent='剩余: '+wall.length+' 张';
+
+  if(isWin([...hands[turn],tile],hands[turn].filter(t=>isRedMiddle(t)).length+(isRedMiddle(tile)?1:0))){
+    msg=`AI玩家${turn+1} 胡牌了！`;
+    gameOver=true;render();showReset();return;
+  }
+
+  hands[turn].push(tile);
+  const discard=aiDiscard(hands[turn]);
+  const idx=hands[turn].indexOf(discard);
+  if(idx!==-1)hands[turn].splice(idx,1);
+  discards[turn].push(discard);
+  sortTiles(hands[turn]);
+
+  turn=(turn+1)%4;
+  if(turn===0){
+    drawTile=null;
+    document.getElementById('drawBtn').className='btn-draw show';
+    msg='轮到你！点击摸牌';
+    render();
+  }else{
+    render();
+    setTimeout(doAITurn,600);
+  }
+}
+
+function handleDraw(){
+  if(gameOver||turn!==0||phase!=='play')return;
+  if(wall.length===0){msg='流局！平局';gameOver=true;render();showReset();return;}
+
+  drawTile=wall.pop();
+  document.getElementById('infoRight').textContent='剩余: '+wall.length+' 张';
+  canWin=isWin(playerHand,playerHand.filter(t=>isRedMiddle(t)).length+(isRedMiddle(drawTile)?1:0));
+
+  document.getElementById('drawBtn').className='btn-draw';
+  if(canWin)document.getElementById('winBtn').className='btn-win show';
+  document.getElementById('passBtn').className='btn-pass show';
+  msg=canWin?'你可以胡牌！或点击手牌弃掉摸到的牌':'点击手牌弃掉摸到的牌';
+  render();
+}
+
+function handleWin(){
+  if(gameOver||!canWin)return;
+  playerHand.push(drawTile);
+  sortTiles(playerHand);
+  msg='你胡牌了！🎉';
+  gameOver=true;
+  document.getElementById('drawBtn').className='btn-draw';
+  document.getElementById('winBtn').className='btn-win';
+  document.getElementById('passBtn').className='btn-pass';
+  showReset();
+  render();
+}
+
+function handlePass(){
+  if(gameOver||!drawTile||turn!==0)return;
+  playerHand.push(drawTile);
+  sortTiles(playerHand);
+  const discard=aiDiscard(playerHand);
+  const idx=playerHand.indexOf(discard);
+  if(idx!==-1){
+    playerHand.splice(idx,1);
+    discards[0].push(discard);
+  }
+  document.getElementById('winBtn').className='btn-win';
+  document.getElementById('passBtn').className='btn-pass';
+  drawTile=null;canWin=false;
+  turn=1;
+  msg='你弃掉了 '+tileName(discard);
+  render();
+  setTimeout(doAITurn,500);
+}
+
+function showReset(){
+  document.getElementById('resetBtn').className='btn-reset show';
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const grd=ctx.createRadialGradient(400,280,50,400,280,320);
+  grd.addColorStop(0,'#3d1a3d');grd.addColorStop(1,'#1a0a1a');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+
+  // top player (AI 3)
+  const topY=8;
+  const ai3Hand=hands[3]||[];
+  for(let i=0;i<ai3Hand.length;i++){
+    const x=300+i*16;
+    ctx.fillStyle='#2a1a5a';ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.15)';
+    roundRect(x,topY,TW-2,TH-2,3);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.1)';ctx.font='10px serif';ctx.textAlign='center';
+    ctx.fillText('🀄',x+12,topY+25);
+  }
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('AI-3',370,topY+TH+14);
+
+  // left player (AI 2)
+  const leftX=8;
+  for(let i=0;i<(hands[2]||[]).length;i++){
+    const y=130+i*16;
+    ctx.fillStyle='#2a1a5a';ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.15)';
+    roundRect(leftX,y,TW-2,TH-2,3);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.1)';ctx.font='10px serif';ctx.textAlign='center';
+    ctx.fillText('🀄',leftX+12,y+25);
+  }
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('AI-2',leftX+15,130+TH+14);
+
+  // right player (AI 4)
+  const rightX=740;
+  for(let i=0;i<(hands[3]||[]).length;i++){
+    const y=130+i*16;
+    ctx.fillStyle='#2a1a5a';ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.15)';
+    roundRect(rightX,y,TW-2,TH-2,3);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.1)';ctx.font='10px serif';ctx.textAlign='center';
+    ctx.fillText('🀄',rightX+12,y+25);
+  }
+  // Actually AI-4 is top, AI-2 left, AI-3 right... let me fix labels
+
+  // fix labels - player 1 = bottom, 2 = left, 3 = top, 0 = right (but turn order is 0,1,2,3)
+  // Let me redo: turn: 0=player(bottom), 1=AI-left(or right), 2=AI-top, 3=AI-right(or left)
+  // discard areas
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='11px sans-serif';ctx.textAlign='left';
+  ctx.fillText('AI-1',leftX+15,130+TH+14);
+  ctx.textAlign='center';
+  ctx.fillText('AI-4',730,topY+TH+14);
+  ctx.fillText('AI-3',760,130+TH+14);
+
+  const sx=Math.max(10,400-playerHand.length*30);
+  playerHand.forEach((t,i)=>{
+    const x=sx+i*30;
+    drawTileUI(x,450,t,true);
+  });
+
+  if(drawTile){
+    drawTileUI(360,390,drawTile,true);
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('摸到的牌',360,460);
+  }
+
+  // discard areas
+  const positions=[{x:380,y:240},{x:120,y:220},{x:380,y:90},{x:650,y:220}];
+  for(let p=0;p<4;p++){
+    if(discards[p]&&discards[p].length>0){
+      const last=discards[p][discards[p].length-1];
+      ctx.globalAlpha=0.7;
+      drawTileUI(positions[p].x,positions[p].y,last,false);
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // message
+  if(msg){
+    ctx.fillStyle='rgba(0,0,0,.5)';roundRect(200,170,400,36,8);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='15px sans-serif';ctx.textAlign='center';
+    ctx.fillText(msg,400,194);
+  }
+
+  if(gameOver&&msg.includes('胡牌')){
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#f0c040';ctx.font='bold 40px sans-serif';ctx.textAlign='center';
+    ctx.fillText(msg,400,280);
+    ctx.fillStyle='#fff';ctx.font='16px sans-serif';
+    ctx.fillText(turn===0?'你的手牌: '+playerHand.map(tileName).join(', '):'',400,330);
+  }
+}
+
+function drawTileUI(x,y,t,faceUp){
+  ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.15)';
+  ctx.fillStyle='#faf5e8';roundRect(x,y,TW-2,TH-2,4);ctx.fill();ctx.shadowBlur=0;
+  if(faceUp){
+    const col=t.type==='wan'?'#27ae60':t.type==='tiao'?'#2980b9':t.type==='tong'?'#e74c3c':t.type==='feng'?'#8e44ad':'#e67e22';
+    ctx.fillStyle=col;ctx.font='bold 16px serif';ctx.textAlign='center';
+    let label=tileName(t);
+    if(t.type==='jian'){
+      if(t.val===0)label='🀄';else if(t.val===1)label='發';else label='白';
+    }else if(t.type==='feng'){
+      label=FENG[t.val];
+    }else{
+      const chars=tileName(t);
+      ctx.font='bold 13px serif';
+      ctx.fillText(chars.slice(0,1),x+15,y+25);
+      ctx.font='11px serif';
+      ctx.fillText(chars.slice(1),x+15,y+42);
+      return;
+    }
+    ctx.fillText(label,x+15,y+33);
+    if(isRedMiddle(t)){
+      ctx.fillStyle='rgba(231,76,60,.15)';
+      ctx.beginPath();ctx.arc(x+15,y+25,12,0,Math.PI*2);ctx.fill();
+    }
+  }
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+canvas.addEventListener('click',e=>{
+  if(gameOver||turn!==0||!drawTile||phase!=='play')return;
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width,scaleY=canvas.height/rect.height;
+  const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
+
+  const sx=Math.max(10,400-playerHand.length*30);
+  for(let i=0;i<playerHand.length;i++){
+    const cx=sx+i*30;
+    if(mx>=cx&&mx<=cx+TW&&my>=450&&my<=450+TH){
+      playerHand.push(drawTile);
+      sortTiles(playerHand);
+      const discard=playerHand[i];
+      playerHand.splice(i,1);
+      discards[0].push(discard);
+      document.getElementById('winBtn').className='btn-win';
+      document.getElementById('passBtn').className='btn-pass';
+      drawTile=null;canWin=false;
+      turn=1;
+      msg='你弃掉了 '+tileName(discard);
+      render();
+      setTimeout(doAITurn,500);
+      break;
+    }
+  }
+});
+
+document.getElementById('drawBtn').onclick=handleDraw;
+document.getElementById('winBtn').onclick=handleWin;
+document.getElementById('passBtn').onclick=handlePass;
+document.getElementById('resetBtn').onclick=initGame;
+
+initGame();
+</script>
+</body>
+</html>
