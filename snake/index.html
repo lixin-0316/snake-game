@@ -32,6 +32,9 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 .game-over .final-score{font-size:22px;color:#fff;margin:10px 0}
 .back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 10px;border-radius:6px}
 .back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
+.music-btn{background:none;border:1px solid rgba(255,255,255,.08);color:#555;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;transition:.2s}
+.music-btn:hover{border-color:#e94560;color:#e94560}
+.music-btn.on{color:#53d769;border-color:rgba(83,215,105,.3)}
 .start-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,26,.7);border-radius:12px;backdrop-filter:blur(4px);z-index:2}
 .start-screen h2{font-size:30px;color:#fff;margin-bottom:20px;text-shadow:0 0 20px rgba(233,69,96,.4)}
 .start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:.3s;letter-spacing:2px}
@@ -45,6 +48,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
   <a href="../" class="back-link">← 返回平台</a>
   <div class="header">
     <span class="score">🐍 <span id="score">0</span></span>
+    <button class="music-btn" id="musicBtn">🔊 音乐</button>
     <span class="high-score">最高 <span id="highScore">0</span></span>
   </div>
   <div style="position:relative">
@@ -86,6 +90,90 @@ const SEGMENT_SPACING=CELL*0.85;
 
 let SPEED=1.5,SEG_STEP;
 let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,started,animId;
+
+// Music
+let audioCtx,musicGain,musicPlaying=false,musicNodes=[];
+const musicBtn=document.getElementById('musicBtn');
+let musicOn=localStorage.getItem('snakeMusic')!=='off';
+
+function toggleMusic(){
+  musicOn=!musicOn;
+  localStorage.setItem('snakeMusic',musicOn?'on':'off');
+  musicBtn.textContent=musicOn?'🔊 音乐':'🔇 音乐';
+  musicBtn.classList.toggle('on',musicOn);
+  if(musicOn&&!musicPlaying)startMusic();
+  else if(!musicOn&&musicPlaying)stopMusic();
+}
+
+function startMusic(){
+  if(musicPlaying)return;
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  musicGain=audioCtx.createGain();
+  musicGain.gain.value=0.08;
+  musicGain.connect(audioCtx.destination);
+  musicPlaying=true;
+
+  const bpm=140,bps=bpm/60,beat=1/bps;
+  const notes=[262,294,330,349,392,349,330,294,262,294,330,349,392,440,392,349];
+  let noteIdx=0,totalTime=audioCtx.currentTime;
+
+  function scheduleNext(){
+    if(!musicPlaying)return;
+    const now=audioCtx.currentTime;
+    if(totalTime<now+0.5){
+      for(let i=0;i<4;i++){
+        const osc=audioCtx.createOscillator();
+        const noteGain=audioCtx.createGain();
+        osc.type='square';
+        osc.frequency.value=notes[(noteIdx++)%notes.length];
+        noteGain.gain.setValueAtTime(0.08,totalTime);
+        noteGain.gain.exponentialRampToValueAtTime(0.001,totalTime+beat*0.6);
+        osc.connect(noteGain);
+        noteGain.connect(musicGain);
+        osc.start(totalTime);
+        osc.stop(totalTime+beat*0.6);
+        musicNodes.push(osc);
+        totalTime+=beat;
+      }
+    }
+    if(musicPlaying)setTimeout(scheduleNext,100);
+  }
+  scheduleNext();
+
+  // Hi-hat
+  function hiHat(){
+    if(!musicPlaying)return;
+    const now=audioCtx.currentTime;
+    for(let i=0;i<16;i++){
+      const bufSize=audioCtx.sampleRate*0.05;
+      const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+      const data=buf.getChannelData(0);
+      for(let j=0;j<bufSize;j++)data[j]=Math.random()*2-1;
+      const src=audioCtx.createBufferSource();
+      src.buffer=buf;
+      const g=audioCtx.createGain();
+      g.gain.setValueAtTime(0.03,now+i*beat/2);
+      g.gain.exponentialRampToValueAtTime(0.001,now+i*beat/2+0.04);
+      src.connect(g);g.connect(musicGain);
+      src.start(now+i*beat/2);
+      musicNodes.push(src);
+    }
+    if(musicPlaying)setTimeout(hiHat,beat*8*1000);
+  }
+  hiHat();
+}
+
+function stopMusic(){
+  musicPlaying=false;
+  musicNodes.forEach(n=>{try{n.stop()}catch(e){}});
+  musicNodes=[];
+  if(audioCtx)audioCtx.close();
+  audioCtx=null;
+}
+
+musicBtn.onclick=toggleMusic;
+if(musicOn){musicBtn.textContent='🔊 音乐';musicBtn.classList.add('on');}
+else musicBtn.textContent='🔇 音乐';
 
 function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
 
@@ -227,6 +315,7 @@ function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);
 function beginPlay(){
   startScreen.style.display='none';
   started=true;
+  if(musicOn&&!musicPlaying)startMusic();
   if(!animId)loop();
 }
 
