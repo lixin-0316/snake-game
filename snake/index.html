@@ -18,11 +18,17 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 .controls button{height:58px;border:none;border-radius:14px;background:linear-gradient(145deg,#1a1a40,#12122e);color:#fff;font-size:22px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.1s}
 .controls button:active{transform:scale(.92);background:#0f3460}
 .controls .placeholder{visibility:hidden}
-#restartBtn{display:block;margin:14px auto 0;padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:1px;transition:.2s}
-#restartBtn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(233,69,96,.4)}
-.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none;background:rgba(0,0,0,.8);padding:30px 40px;border-radius:16px;backdrop-filter:blur(8px)}
+.bottom-bar{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.bottom-bar button{padding:10px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.btn-restart{background:linear-gradient(135deg,#e94560,#c23152);color:#fff}
+.btn-restart:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(233,69,96,.4)}
+.diff-btn{padding:8px 18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#666;font-size:13px;cursor:pointer;transition:.2s;font-weight:500}
+.diff-btn:hover{border-color:#e94560;color:#e94560}
+.diff-btn.active{background:#e94560;color:#fff;border-color:#e94560}
+.diff-label{color:#555;font-size:13px;display:flex;align-items:center;gap:6px}
+.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none;background:rgba(0,0,0,.85);padding:30px 40px;border-radius:16px;backdrop-filter:blur(8px)}
 .game-over h2{font-size:32px;margin-bottom:6px;color:#e94560}
-.game-over p{font-size:15px;opacity:.7;margin-bottom:4px}
+.game-over p{font-size:14px;opacity:.6;margin-bottom:4px}
 .game-over .final-score{font-size:22px;color:#fff;margin:10px 0}
 .back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 10px;border-radius:6px}
 .back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
@@ -52,7 +58,13 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
     <button id="down">▼</button>
     <button id="right">▶</button>
   </div>
-  <button id="restartBtn">重新开始</button>
+  <div class="bottom-bar">
+    <span class="diff-label">难度</span>
+    <button class="diff-btn active" data-speed="1.5">简单</button>
+    <button class="diff-btn" data-speed="2.8">普通</button>
+    <button class="diff-btn" data-speed="4.5">困难</button>
+    <button class="btn-restart" id="restartBtn">重新开始</button>
+  </div>
 </div>
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
@@ -60,10 +72,11 @@ const scoreEl=document.getElementById('score'),highScoreEl=document.getElementBy
 
 const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
 const SEGMENT_SPACING=CELL*0.85;
-const SPEED=1.8;
-const SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);
 
+let SPEED=1.5,SEG_STEP;
 let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,animId;
+
+function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
 
 function init(){
   headX=CELL*10;headY=CELL*10;
@@ -109,50 +122,47 @@ function update(){
   if(gameOver)return;
 
   dirX=targetDirX;dirY=targetDirY;
-
   headX+=dirX*SPEED;headY+=dirY*SPEED;
 
   trail.push({x:headX,y:headY});
-  if(trail.length>segCount*SEG_STEP+10)
-    trail.shift();
+  if(trail.length>segCount*SEG_STEP+10)trail.shift();
 
-  if(headX<0||headX>W||headY<0||headY>H){
-    endGame();return;
-  }
+  if(headX<0||headX>W||headY<0||headY>H){endGame();return;}
 
   const segs=getBodySegments();
   for(let s=3;s<segs.length;s++){
     const dx=headX-segs[s].x,dy=headY-segs[s].y;
-    if(dx*dx+dy*dy<CELL*CELL*0.3){
-      endGame();return;
-    }
+    if(dx*dx+dy*dy<CELL*CELL*0.3){endGame();return;}
   }
 
   const dxFood=headX-foodX,dyFood=headY-foodY;
   if(dxFood*dxFood+dyFood*dyFood<CELL*CELL*0.25){
     score++;scoreEl.textContent=score;
-    segCount++;
-    spawnFood();
+    segCount++;spawnFood();
   }
 }
 
 function draw(){
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#0a0a2e';
+  ctx.fillStyle='#0d0d24';
   ctx.fillRect(0,0,W,H);
 
-  for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
-    ctx.fillStyle=(x+y)%2===0?'rgba(20,20,60,0.5)':'rgba(15,15,50,0.5)';
-    ctx.fillRect(x*CELL,y*CELL,CELL,CELL);
+  ctx.strokeStyle='rgba(255,255,255,0.06)';
+  ctx.lineWidth=1;
+  for(let x=0;x<=COLS;x++){
+    ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H);ctx.stroke();
+  }
+  for(let y=0;y<=ROWS;y++){
+    ctx.beginPath();ctx.moveTo(0,y*CELL);ctx.lineTo(W,y*CELL);ctx.stroke();
   }
 
   const glow=ctx.createRadialGradient(foodX,foodY,0,foodX,foodY,CELL);
-  glow.addColorStop(0,'rgba(240,192,64,0.6)');
+  glow.addColorStop(0,'rgba(240,192,64,0.5)');
   glow.addColorStop(1,'rgba(240,192,64,0)');
   ctx.fillStyle=glow;ctx.fillRect(foodX-CELL,foodY-CELL,CELL*2,CELL*2);
 
   ctx.fillStyle='#f0c040';
-  ctx.shadowBlur=15;ctx.shadowColor='#f0c040';
+  ctx.shadowBlur=12;ctx.shadowColor='#f0c040';
   ctx.beginPath();
   ctx.arc(foodX,foodY,CELL*0.35,0,Math.PI*2);
   ctx.fill();
@@ -162,89 +172,66 @@ function draw(){
   ctx.shadowBlur=0;
   for(let s=0;s<segs.length;s++){
     const t=s/segs.length;
-    const radius=CELL*0.4*(1-t*0.25);
+    const radius=CELL*0.38*(1-t*0.2);
     const x=segs[s].x,y=segs[s].y;
     const gradient=ctx.createRadialGradient(x,y,0,x,y,radius);
     gradient.addColorStop(0,`hsl(${140+t*40},70%,${55+t*20}%)`);
     gradient.addColorStop(1,`hsl(${140+t*40},70%,${35+t*15}%)`);
     ctx.fillStyle=gradient;
-
-    if(s===0){
-      ctx.shadowBlur=20;ctx.shadowColor='#53d769';
-    }else if(s===segs.length-1){
-      ctx.shadowBlur=0;ctx.globalAlpha=.5;
-    }else{
-      ctx.shadowBlur=8;ctx.shadowColor='rgba(83,215,105,0.3)';
-    }
-    ctx.beginPath();
-    ctx.arc(x,y,radius,0,Math.PI*2);
-    ctx.fill();
+    if(s===0){ctx.shadowBlur=16;ctx.shadowColor='#53d769';}
+    else if(s===segs.length-1){ctx.shadowBlur=0;ctx.globalAlpha=.5;}
+    else{ctx.shadowBlur=6;ctx.shadowColor='rgba(83,215,105,0.25)';}
+    ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
     ctx.shadowBlur=0;ctx.globalAlpha=1;
   }
 
   const headRadius=CELL*0.4;
-  ctx.shadowBlur=25;ctx.shadowColor='rgba(233,69,96,0.6)';
-  const headGrad=ctx.createRadialGradient(headX-3,headY-3,0,headX,headY,headRadius);
-  headGrad.addColorStop(0,'#ff6b81');
-  headGrad.addColorStop(1,'#e94560');
+  ctx.shadowBlur=22;ctx.shadowColor='rgba(233,69,96,0.5)';
+  const headGrad=ctx.createRadialGradient(headX-2,headY-2,0,headX,headY,headRadius);
+  headGrad.addColorStop(0,'#ff6b81');headGrad.addColorStop(1,'#e94560');
   ctx.fillStyle=headGrad;
-  ctx.beginPath();
-  ctx.arc(headX,headY,headRadius,0,Math.PI*2);
-  ctx.fill();
+  ctx.beginPath();ctx.arc(headX,headY,headRadius,0,Math.PI*2);ctx.fill();
   ctx.shadowBlur=0;
 
-  const eyeOff=headRadius*0.4;
-  const eyeSize=headRadius*0.25;
+  const eyeOff=headRadius*0.4,eyeSize=headRadius*0.25;
   ctx.fillStyle='#fff';
-  ctx.beginPath();
-  ctx.arc(headX+dirX*eyeOff-dirY*eyeOff,headY+dirY*eyeOff+dirX*eyeOff,eyeSize,0,Math.PI*2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(headX+dirX*eyeOff+dirY*eyeOff,headY+dirY*eyeOff-dirX*eyeOff,eyeSize,0,Math.PI*2);
-  ctx.fill();
-
+  ctx.beginPath();ctx.arc(headX+dirX*eyeOff-dirY*eyeOff,headY+dirY*eyeOff+dirX*eyeOff,eyeSize,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(headX+dirX*eyeOff+dirY*eyeOff,headY+dirY*eyeOff-dirX*eyeOff,eyeSize,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#111';
-  ctx.beginPath();
-  ctx.arc(headX+dirX*eyeOff-dirY*eyeOff+dirX*2,headY+dirY*eyeOff+dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(headX+dirX*eyeOff+dirY*eyeOff+dirX*2,headY+dirY*eyeOff-dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);
-  ctx.fill();
+  ctx.beginPath();ctx.arc(headX+dirX*eyeOff-dirY*eyeOff+dirX*2,headY+dirY*eyeOff+dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(headX+dirX*eyeOff+dirY*eyeOff+dirX*2,headY+dirY*eyeOff-dirX*eyeOff+dirY*2,eyeSize*0.5,0,Math.PI*2);ctx.fill();
 }
 
 function endGame(){
   gameOver=true;
-  if(score>highScore){
-    highScore=score;
-    localStorage.setItem('snakeHighScore',highScore);
-    highScoreEl.textContent=highScore;
-  }
+  if(score>highScore){highScore=score;localStorage.setItem('snakeHighScore',highScore);highScoreEl.textContent=highScore;}
   finalScoreEl.textContent='得分: '+score;
   gameOverEl.style.display='block';
   if(animId)cancelAnimationFrame(animId);
 }
 
-function loop(){
-  update();
-  draw();
-  if(!gameOver)animId=requestAnimationFrame(loop);
-}
+function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);}
 
 function startGame(){
   if(animId)cancelAnimationFrame(animId);
-  init();
-  loop();
+  recalcStep();init();loop();
 }
 
-let touchStartX,touchStartY;
-canvas.addEventListener('touchstart',e=>{
-  const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;
+document.querySelectorAll('.diff-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    SPEED=parseFloat(btn.dataset.speed);
+    startGame();
+  });
 });
+
+let touchStartX,touchStartY;
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;});
 canvas.addEventListener('touchend',e=>{
   const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
   if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
-  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);
-  else setDir(0,dy>0?1:-1);
+  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);
 });
 
 document.addEventListener('keydown',e=>{
