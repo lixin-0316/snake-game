@@ -175,6 +175,23 @@ musicBtn.onclick=toggleMusic;
 if(musicOn){musicBtn.textContent='🔊 音乐';musicBtn.classList.add('on');}
 else musicBtn.textContent='🔇 音乐';
 
+function playEatSound(){
+  if(!musicOn)return;
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(600,audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.08);
+    gain.gain.setValueAtTime(0.15,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime+0.15);
+  }catch(e){}
+}
+
 function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
 
 function init(){
@@ -237,6 +254,7 @@ function update(){
 
   const dxFood=headX-foodX,dyFood=headY-foodY;
   if(dxFood*dxFood+dyFood*dyFood<CELL*CELL*0.25){
+    playEatSound();
     score++;scoreEl.textContent=score;
     segCount++;spawnFood();
   }
