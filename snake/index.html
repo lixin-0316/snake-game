@@ -32,6 +32,11 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 .game-over .final-score{font-size:22px;color:#fff;margin:10px 0}
 .back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 10px;border-radius:6px}
 .back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
+.start-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,26,.7);border-radius:12px;backdrop-filter:blur(4px);z-index:2}
+.start-screen h2{font-size:30px;color:#fff;margin-bottom:20px;text-shadow:0 0 20px rgba(233,69,96,.4)}
+.start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:.3s;letter-spacing:2px}
+.start-screen .play-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(233,69,96,.5)}
+.start-screen p{color:#555;font-size:13px;margin-top:14px}
 @media(min-width:600px){.controls{display:none}}
 </style>
 </head>
@@ -48,6 +53,11 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
       <h2>游戏结束</h2>
       <div class="final-score" id="finalScore">得分: 0</div>
       <p>按空格键重新开始</p>
+    </div>
+    <div class="start-screen" id="startScreen">
+      <h2>🐍 贪吃蛇</h2>
+      <button class="play-btn" id="startBtn">开始游戏</button>
+      <p>或按 空格键 / Enter 开始</p>
     </div>
   </div>
   <div class="controls">
@@ -69,12 +79,13 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const scoreEl=document.getElementById('score'),highScoreEl=document.getElementById('highScore'),finalScoreEl=document.getElementById('finalScore'),gameOverEl=document.getElementById('gameOver');
+const startScreen=document.getElementById('startScreen'),startBtn=document.getElementById('startBtn');
 
 const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
 const SEGMENT_SPACING=CELL*0.85;
 
 let SPEED=1.5,SEG_STEP;
-let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,animId;
+let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,started,animId;
 
 function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
 
@@ -82,11 +93,12 @@ function init(){
   headX=CELL*10;headY=CELL*10;
   dirX=1;dirY=0;targetDirX=1;targetDirY=0;
   trail=[];segCount=5;
-  score=0;
+  score=0;started=false;
   highScore=parseInt(localStorage.getItem('snakeHighScore')||'0');
   highScoreEl.textContent=highScore;
   scoreEl.textContent='0';
   gameOver=false;gameOverEl.style.display='none';
+  startScreen.style.display='flex';
   spawnFood();
 }
 
@@ -119,7 +131,7 @@ function getBodySegments(){
 }
 
 function update(){
-  if(gameOver)return;
+  if(gameOver||!started)return;
 
   dirX=targetDirX;dirY=targetDirY;
   headX+=dirX*SPEED;headY+=dirY*SPEED;
@@ -212,9 +224,16 @@ function endGame(){
 
 function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);}
 
+function beginPlay(){
+  startScreen.style.display='none';
+  started=true;
+  if(!animId)loop();
+}
+
 function startGame(){
   if(animId)cancelAnimationFrame(animId);
-  recalcStep();init();loop();
+  animId=null;
+  recalcStep();init();draw();
 }
 
 document.querySelectorAll('.diff-btn').forEach(btn=>{
@@ -236,19 +255,21 @@ canvas.addEventListener('touchend',e=>{
 
 document.addEventListener('keydown',e=>{
   switch(e.key){
-    case'ArrowUp':e.preventDefault();setDir(0,-1);break;
-    case'ArrowDown':e.preventDefault();setDir(0,1);break;
-    case'ArrowLeft':e.preventDefault();setDir(-1,0);break;
-    case'ArrowRight':e.preventDefault();setDir(1,0);break;
-    case' ':case'Space':e.preventDefault();if(gameOver)startGame();break;
+    case'ArrowUp':e.preventDefault();if(started)setDir(0,-1);break;
+    case'ArrowDown':e.preventDefault();if(started)setDir(0,1);break;
+    case'ArrowLeft':e.preventDefault();if(started)setDir(-1,0);break;
+    case'ArrowRight':e.preventDefault();if(started)setDir(1,0);break;
+    case' ':case'Space':e.preventDefault();if(gameOver)startGame();else if(!started)beginPlay();break;
+    case'Enter':e.preventDefault();if(!started)beginPlay();break;
   }
 });
 
-document.getElementById('up').onclick=()=>setDir(0,-1);
-document.getElementById('down').onclick=()=>setDir(0,1);
-document.getElementById('left').onclick=()=>setDir(-1,0);
-document.getElementById('right').onclick=()=>setDir(1,0);
+document.getElementById('up').onclick=()=>started&&setDir(0,-1);
+document.getElementById('down').onclick=()=>started&&setDir(0,1);
+document.getElementById('left').onclick=()=>started&&setDir(-1,0);
+document.getElementById('right').onclick=()=>started&&setDir(1,0);
 document.getElementById('restartBtn').onclick=startGame;
+startBtn.onclick=beginPlay;
 
 startGame();
 </script>
