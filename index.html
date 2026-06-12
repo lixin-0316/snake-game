@@ -3,132 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>贪吃蛇</title>
+<title>我的平台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:Arial,sans-serif;overflow:hidden}
-.game-wrapper{padding:15px;background:#16213e;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-canvas{display:block;margin:0 auto;border-radius:8px;background:#0f3460;touch-action:none;width:100%;max-width:500px;aspect-ratio:1}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px;color:#e0e0e0}
-.score{font-size:18px;font-weight:700;color:#e94560}
-.high-score{font-size:14px;color:#888}
-.controls{display:grid;grid-template-columns:repeat(3,60px);gap:6px;justify-content:center;margin-top:15px;padding:0 4px}
-.controls button{height:56px;border:none;border-radius:10px;background:#1a1a40;color:#fff;font-size:22px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
-.controls button:active{background:#0f3460}
-.controls .placeholder{visibility:hidden}
-#restartBtn{display:block;margin:12px auto 0;padding:10px 28px;border:none;border-radius:8px;background:#e94560;color:#fff;font-size:16px;cursor:pointer}
-#restartBtn:active{opacity:.8}
-.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none}
-.game-over h2{font-size:28px;margin-bottom:8px;color:#e94560}
-.game-over p{font-size:16px;opacity:.8}
-@media(min-width:600px){.controls{display:none}}
+body{background:#0f0f23;color:#e0e0e0;font-family:'Segoe UI',Arial,sans-serif;min-height:100dvh}
+.header{text-align:center;padding:40px 20px 20px;background:linear-gradient(135deg,#1a1a3e,#16213e)}
+.header h1{font-size:28px;color:#e94560;margin-bottom:6px}
+.header p{font-size:14px;color:#888}
+.channels{max-width:600px;margin:20px auto;padding:0 16px;display:grid;gap:12px}
+.channel{display:flex;align-items:center;background:#1a1a3e;border-radius:12px;padding:16px;text-decoration:none;color:#e0e0e0;transition:.2s;border:1px solid transparent}
+.channel:hover{background:#16213e;border-color:#e94560;transform:translateY(-2px)}
+.channel.active{cursor:pointer}
+.channel.disabled{opacity:.4;pointer-events:none}
+.channel .icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-right:14px;flex-shrink:0}
+.channel .icon.snake{background:linear-gradient(135deg,#53d769,#2ecc71)}
+.channel .icon.empty{background:#2a2a4a}
+.channel .info h3{font-size:16px;margin-bottom:3px}
+.channel .info span{font-size:12px;color:#666}
+.channel .badge{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:6px;background:#e94560;color:#fff}
+.footer{text-align:center;padding:30px;font-size:12px;color:#444}
 </style>
 </head>
 <body>
-<div class="game-wrapper">
-  <div class="header">
-    <span class="score">分数: <span id="score">0</span></span>
-    <span class="high-score">最高: <span id="highScore">0</span></span>
-  </div>
-  <div style="position:relative">
-    <canvas id="game" width="500" height="500"></canvas>
-    <div class="game-over" id="gameOver">
-      <h2>游戏结束</h2>
-      <p id="finalScore">得分: 0</p>
+<div class="header">
+  <h1>🎮 我的平台</h1>
+  <p>选择你想玩的频道</p>
+</div>
+<div class="channels">
+  <a href="snake/" class="channel active">
+    <div class="icon snake">🐍</div>
+    <div class="info">
+      <h3>贪吃蛇</h3>
+      <span>经典街机游戏</span>
+    </div>
+    <div class="badge">已上线</div>
+  </a>
+  <div class="channel disabled">
+    <div class="icon empty">❓</div>
+    <div class="info">
+      <h3>频道 2</h3>
+      <span>即将上线</span>
     </div>
   </div>
-  <div class="controls">
-    <button class="placeholder"></button>
-    <button id="up">▲</button>
-    <button class="placeholder"></button>
-    <button id="left">◀</button>
-    <button id="down">▼</button>
-    <button id="right">▶</button>
+  <div class="channel disabled">
+    <div class="icon empty">❓</div>
+    <div class="info">
+      <h3>频道 3</h3>
+      <span>即将上线</span>
+    </div>
   </div>
-  <button id="restartBtn">重新开始</button>
+  <div class="channel disabled">
+    <div class="icon empty">❓</div>
+    <div class="info">
+      <h3>频道 4</h3>
+      <span>即将上线</span>
+    </div>
+  </div>
 </div>
-<script>
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-const scoreEl=document.getElementById('score'),highScoreEl=document.getElementById('highScore'),finalScoreEl=document.getElementById('finalScore'),gameOverEl=document.getElementById('gameOver');
-const grid=20,tileSize=canvas.width/grid;
-let snake,direction,nextDirection,food,score,highScore=parseInt(localStorage.getItem('snakeHighScore')||'0'),gameLoop,isGameOver;
-highScoreEl.textContent=highScore;
-
-function init(){
-  snake=[{x:10,y:10}];direction={x:1,y:0};nextDirection={x:1,y:0};
-  score=0;isGameOver=false;gameOverEl.style.display='none';
-  scoreEl.textContent=score;spawnFood();draw();
-}
-
-function spawnFood(){
-  do{food={x:Math.floor(Math.random()*grid),y:Math.floor(Math.random()*grid)}}
-  while(snake.some(s=>s.x===food.x&&s.y===food.y));
-}
-
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  snake.forEach((s,i)=>{
-    ctx.fillStyle=i===0?'#e94560':'#53d769';
-    ctx.shadowBlur=i===0?12:0;ctx.shadowColor='#e94560';
-    ctx.fillRect(s.x*tileSize+1,s.y*tileSize+1,tileSize-2,tileSize-2);
-    ctx.shadowBlur=0;
-  });
-  ctx.fillStyle='#f0c040';ctx.shadowBlur=8;ctx.shadowColor='#f0c040';
-  ctx.beginPath();ctx.arc(food.x*tileSize+tileSize/2,food.y*tileSize+tileSize/2,tileSize/2-2,0,Math.PI*2);ctx.fill();
-  ctx.shadowBlur=0;
-}
-
-function move(){
-  if(isGameOver)return;
-  direction=nextDirection;
-  const head={x:snake[0].x+direction.x,y:snake[0].y+direction.y};
-  if(head.x<0||head.x>=grid||head.y<0||head.y>=grid||snake.some(s=>s.x===head.x&&s.y===head.y))return gameOver();
-  snake.unshift(head);
-  if(head.x===food.x&&head.y===food.y){score++;scoreEl.textContent=score;spawnFood();}
-  else snake.pop();
-  draw();
-}
-
-function gameOver(){
-  isGameOver=true;clearInterval(gameLoop);
-  if(score>highScore){highScore=score;localStorage.setItem('snakeHighScore',highScore);highScoreEl.textContent=highScore;}
-  finalScoreEl.textContent='得分: '+score;gameOverEl.style.display='block';
-}
-
-function setDir(x,y){
-  if(isGameOver)return;
-  if(direction.x!==0&&y!==0||direction.y!==0&&x!==0)nextDirection={x,y};
-}
-
-let touchStartX,touchStartY;
-canvas.addEventListener('touchstart',e=>{
-  const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;
-});
-canvas.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
-  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);
-  else if(Math.abs(dy)>10)setDir(0,dy>0?1:-1);
-});
-
-document.addEventListener('keydown',e=>{
-  switch(e.key){
-    case'ArrowUp':e.preventDefault();setDir(0,-1);break;
-    case'ArrowDown':e.preventDefault();setDir(0,1);break;
-    case'ArrowLeft':e.preventDefault();setDir(-1,0);break;
-    case'ArrowRight':e.preventDefault();setDir(1,0);break;
-    case' ':
-    case'Space':e.preventDefault();if(isGameOver)startGame();break;
-  }
-});
-
-document.getElementById('up').onclick=()=>setDir(0,-1);
-document.getElementById('down').onclick=()=>setDir(0,1);
-document.getElementById('left').onclick=()=>setDir(-1,0);
-document.getElementById('right').onclick=()=>setDir(1,0);
-document.getElementById('restartBtn').onclick=startGame;
-
-function startGame(){clearInterval(gameLoop);init();gameLoop=setInterval(move,130);}
-startGame();
-</script>
+<div class="footer">Made with ❤️</div>
 </body>
 </html>
