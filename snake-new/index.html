@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>贪吃蛇（新）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+.game-wrapper{padding:20px;background:linear-gradient(145deg,#111133,#0d0d24);border-radius:20px;box-shadow:0 0 40px rgba(233,69,96,.15),0 8px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.05)}
+canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:100%;max-width:500px;aspect-ratio:1}
+@media(min-width:768px){.game-wrapper{padding:24px}canvas{max-width:1500px}}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:0 6px}
+.score{font-size:20px;font-weight:700;color:#e94560;text-shadow:0 0 10px rgba(233,69,96,.3)}
+.score span{font-size:28px}
+.high-score{font-size:14px;color:#555;letter-spacing:.5px}
+.high-score span{color:#888}
+.controls{display:grid;grid-template-columns:repeat(3,64px);gap:8px;justify-content:center;margin-top:16px}
+.controls button{height:58px;border:none;border-radius:14px;background:linear-gradient(145deg,#1a1a40,#12122e);color:#fff;font-size:22px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.1s}
+.controls button:active{transform:scale(.92);background:#0f3460}
+.controls .placeholder{visibility:hidden}
+.bottom-bar{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.bottom-bar button{padding:10px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.btn-restart{background:linear-gradient(135deg,#e94560,#c23152);color:#fff}
+.btn-restart:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(233,69,96,.4)}
+.diff-btn{padding:8px 18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#666;font-size:13px;cursor:pointer;transition:.2s;font-weight:500}
+.diff-btn:hover{border-color:#e94560;color:#e94560}
+.diff-btn.active{background:#e94560;color:#fff;border-color:#e94560}
+.diff-label{color:#555;font-size:13px;display:flex;align-items:center;gap:6px}
+.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none;background:rgba(0,0,0,.85);padding:30px 40px;border-radius:16px;backdrop-filter:blur(8px)}
+.game-over h2{font-size:32px;margin-bottom:6px;color:#e94560}
+.game-over p{font-size:14px;opacity:.6;margin-bottom:4px}
+.game-over .final-score{font-size:22px;color:#fff;margin:10px 0}
+.back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 10px;border-radius:6px}
+.back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
+.music-btn{background:none;border:1px solid rgba(255,255,255,.08);color:#555;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;transition:.2s}
+.music-btn:hover{border-color:#e94560;color:#e94560}
+.music-btn.on{color:#53d769;border-color:rgba(83,215,105,.3)}
+.start-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,26,.7);border-radius:12px;backdrop-filter:blur(4px);z-index:2}
+.start-screen h2{font-size:30px;color:#fff;margin-bottom:20px;text-shadow:0 0 20px rgba(233,69,96,.4)}
+.start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:.3s;letter-spacing:2px}
+.start-screen .play-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(233,69,96,.5)}
+.start-screen p{color:#555;font-size:13px;margin-top:14px}
+.fullscreen .back-link,.fullscreen .controls,.fullscreen .bottom-bar,.fullscreen .header .high-score{display:none}
+.fullscreen.game-wrapper{border-radius:0;border:none;padding:10px;box-shadow:none;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+.fullscreen .header{justify-content:center;margin-bottom:8px}
+.fullscreen canvas{max-width:100vw;max-height:calc(100dvh - 80px)}
+@media(min-width:600px){.controls{display:none}}
+</style>
+</head>
+<body>
+<div class="game-wrapper">
+  <a href="../" class="back-link">← 返回平台</a>
+  <div class="header">
+    <span class="score">💩 <span id="score">0</span></span>
+    <button class="music-btn" id="musicBtn">🔊 音乐</button>
+    <span class="high-score">最高 <span id="highScore">0</span></span>
+  </div>
+  <div style="position:relative">
+    <canvas id="game" width="500" height="500"></canvas>
+    <div class="game-over" id="gameOver">
+      <h2>游戏结束</h2>
+      <div class="final-score" id="finalScore">得分: 0</div>
+      <p>按空格键重新开始</p>
+    </div>
+    <div class="start-screen" id="startScreen">
+      <h2>🐑 懒洋洋</h2>
+      <button class="play-btn" id="startBtn">开始游戏</button>
+      <p>或按 空格键 / Enter 开始</p>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="placeholder"></button>
+    <button id="up">▲</button>
+    <button class="placeholder"></button>
+    <button id="left">◀</button>
+    <button id="down">▼</button>
+    <button id="right">▶</button>
+  </div>
+  <div class="bottom-bar">
+    <span class="diff-label">难度</span>
+    <button class="diff-btn active" data-speed="1.5">简单</button>
+    <button class="diff-btn" data-speed="2.8">普通</button>
+    <button class="diff-btn" data-speed="4.5">困难</button>
+    <button class="btn-restart" id="restartBtn">重新开始</button>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const wrapper=document.querySelector('.game-wrapper');
+const scoreEl=document.getElementById('score'),highScoreEl=document.getElementById('highScore'),finalScoreEl=document.getElementById('finalScore'),gameOverEl=document.getElementById('gameOver');
+const startScreen=document.getElementById('startScreen'),startBtn=document.getElementById('startBtn');
+
+const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
+const SEGMENT_SPACING=CELL*0.85;
+
+let SPEED=1.5,SEG_STEP;
+let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,started,animId;
+
+// Music
+let audioCtx,musicGain,musicPlaying=false,musicNodes=[];
+const musicBtn=document.getElementById('musicBtn');
+let musicOn=localStorage.getItem('snakeMusic')!=='off';
+
+function toggleMusic(){
+  musicOn=!musicOn;
+  localStorage.setItem('snakeMusic',musicOn?'on':'off');
+  musicBtn.textContent=musicOn?'🔊 音乐':'🔇 音乐';
+  musicBtn.classList.toggle('on',musicOn);
+  if(musicOn&&!musicPlaying)startMusic();
+  else if(!musicOn&&musicPlaying)stopMusic();
+}
+
+function startMusic(){
+  if(musicPlaying)return;
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  musicGain=audioCtx.createGain();
+  musicGain.gain.value=0.08;
+  musicGain.connect(audioCtx.destination);
+  musicPlaying=true;
+
+  const bpm=140,bps=bpm/60,beat=1/bps;
+  const notes=[262,294,330,349,392,349,330,294,262,294,330,349,392,440,392,349];
+  let noteIdx=0,totalTime=audioCtx.currentTime;
+
+  function scheduleNext(){
+    if(!musicPlaying)return;
+    const now=audioCtx.currentTime;
+    if(totalTime<now+0.5){
+      for(let i=0;i<4;i++){
+        const osc=audioCtx.createOscillator();
+        const noteGain=audioCtx.createGain();
+        osc.type='square';
+        osc.frequency.value=notes[(noteIdx++)%notes.length];
+        noteGain.gain.setValueAtTime(0.08,totalTime);
+        noteGain.gain.exponentialRampToValueAtTime(0.001,totalTime+beat*0.6);
+        osc.connect(noteGain);
+        noteGain.connect(musicGain);
+        osc.start(totalTime);
+        osc.stop(totalTime+beat*0.6);
+        musicNodes.push(osc);
+        totalTime+=beat;
+      }
+    }
+    if(musicPlaying)setTimeout(scheduleNext,100);
+  }
+  scheduleNext();
+
+  // Hi-hat
+  function hiHat(){
+    if(!musicPlaying)return;
+    const now=audioCtx.currentTime;
+    for(let i=0;i<16;i++){
+      const bufSize=audioCtx.sampleRate*0.05;
+      const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+      const data=buf.getChannelData(0);
+      for(let j=0;j<bufSize;j++)data[j]=Math.random()*2-1;
+      const src=audioCtx.createBufferSource();
+      src.buffer=buf;
+      const g=audioCtx.createGain();
+      g.gain.setValueAtTime(0.03,now+i*beat/2);
+      g.gain.exponentialRampToValueAtTime(0.001,now+i*beat/2+0.04);
+      src.connect(g);g.connect(musicGain);
+      src.start(now+i*beat/2);
+      musicNodes.push(src);
+    }
+    if(musicPlaying)setTimeout(hiHat,beat*8*1000);
+  }
+  hiHat();
+}
+
+function stopMusic(){
+  musicPlaying=false;
+  musicNodes.forEach(n=>{try{n.stop()}catch(e){}});
+  musicNodes=[];
+  if(audioCtx)audioCtx.close();
+  audioCtx=null;
+}
+
+musicBtn.onclick=toggleMusic;
+if(musicOn){musicBtn.textContent='🔊 音乐';musicBtn.classList.add('on');}
+else musicBtn.textContent='🔇 音乐';
+
+function playEatSound(){
+  if(!musicOn)return;
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(600,audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.08);
+    gain.gain.setValueAtTime(0.15,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime+0.15);
+  }catch(e){}
+}
+
+function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
+
+function init(){
+  headX=CELL*10;headY=CELL*10;
+  dirX=1;dirY=0;targetDirX=1;targetDirY=0;
+  trail=[];segCount=5;
+  score=0;started=false;
+  highScore=parseInt(localStorage.getItem('snakeHighScore')||'0');
+  highScoreEl.textContent=highScore;
+  scoreEl.textContent='0';
+  gameOver=false;gameOverEl.style.display='none';
+  startScreen.style.display='flex';
+  spawnFood();
+}
+
+function spawnFood(){
+  let valid=false;
+  while(!valid){
+    foodX=Math.floor(Math.random()*COLS)*CELL+CELL/2;
+    foodY=Math.floor(Math.random()*ROWS)*CELL+CELL/2;
+    valid=true;
+    for(let i=0;i<trail.length;i+=SEG_STEP){
+      const dx=trail[i].x-foodX,dy=trail[i].y-foodY;
+      if(dx*dx+dy*dy<CELL*CELL){valid=false;break;}
+    }
+  }
+}
+
+function setDir(x,y){
+  if(gameOver)return;
+  if(x===-dirX&&y===-dirY)return;
+  targetDirX=x;targetDirY=y;
+}
+
+function getBodySegments(){
+  const segs=[];
+  for(let i=trail.length-1;i>=0;i-=SEG_STEP){
+    segs.push({x:trail[i].x,y:trail[i].y});
+    if(segs.length>=segCount)break;
+  }
+  return segs;
+}
+
+function update(){
+  if(gameOver||!started)return;
+
+  dirX=targetDirX;dirY=targetDirY;
+  headX+=dirX*SPEED;headY+=dirY*SPEED;
+
+  trail.push({x:headX,y:headY});
+  if(trail.length>segCount*SEG_STEP+10)trail.shift();
+
+  if(headX<0||headX>W||headY<0||headY>H){endGame();return;}
+
+  const segs=getBodySegments();
+  for(let s=3;s<segs.length;s++){
+    const dx=headX-segs[s].x,dy=headY-segs[s].y;
+    if(dx*dx+dy*dy<CELL*CELL*0.3){endGame();return;}
+  }
+
+  const dxFood=headX-foodX,dyFood=headY-foodY;
+  if(dxFood*dxFood+dyFood*dyFood<CELL*CELL*0.25){
+    playEatSound();
+    score++;scoreEl.textContent=score;
+    segCount++;spawnFood();
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#2d5a1e';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.strokeStyle='rgba(255,255,255,0.04)';
+  ctx.lineWidth=1;
+  for(let x=0;x<=COLS;x++){
+    ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H);ctx.stroke();
+  }
+  for(let y=0;y<=ROWS;y++){
+    ctx.beginPath();ctx.moveTo(0,y*CELL);ctx.lineTo(W,y*CELL);ctx.stroke();
+  }
+
+  ctx.font='22px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillText('💩',foodX,foodY-2);
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font='24px serif';
+  ctx.fillText('💩',foodX,foodY);
+
+  const segs=getBodySegments();
+  ctx.shadowBlur=0;
+  for(let s=0;s<segs.length;s++){
+    const x=segs[s].x,y=segs[s].y;
+    const scale=1-s/segs.length*0.3;
+    const r=CELL*0.38*scale;
+
+    ctx.shadowBlur=10;ctx.shadowColor='rgba(200,200,200,0.15)';
+    ctx.fillStyle='#f5f5f5';
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(200,200,200,0.3)';
+    for(let i=0;i<6;i++){
+      const a=i/6*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(x+Math.cos(a)*r*0.6,y+Math.sin(a)*r*0.6,r*0.4,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    if(s===0){
+      ctx.strokeStyle='rgba(100,100,100,0.2)';ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){
+        const a=i/4*Math.PI*2+0.3;
+        ctx.beginPath();ctx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r);
+        ctx.lineTo(x+Math.cos(a)*(r+4),y+Math.sin(a)*(r+4));ctx.stroke();
+      }
+    }
+    ctx.shadowBlur=0;
+  }
+
+  const hr=CELL*0.42;
+  ctx.shadowBlur=15;ctx.shadowColor='rgba(200,200,200,0.2)';
+  ctx.fillStyle='#f5f5f5';
+  ctx.beginPath();ctx.arc(headX,headY,hr,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+
+  ctx.fillStyle='rgba(200,200,200,0.25)';
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(headX+Math.cos(a)*hr*0.55,headY+Math.sin(a)*hr*0.55,hr*0.35,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  const earOff=hr*0.7;
+  ctx.fillStyle='#ddd';
+  ctx.beginPath();
+  ctx.ellipse(headX+dirX*earOff-dirY*earOff*0.5,headY+dirY*earOff+dirX*earOff*0.5,hr*0.4,hr*0.25,-0.3,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(headX+dirX*earOff+dirY*earOff*0.5,headY+dirY*earOff-dirX*earOff*0.5,hr*0.4,hr*0.25,0.3,0,Math.PI*2);
+  ctx.fill();
+
+  const faceR=hr*0.55;
+  ctx.fillStyle='#2a2a2a';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*faceR*0.3,headY+dirY*faceR*0.3,faceR,0.2,Math.PI-0.2,false);
+  ctx.lineTo(headX+dirX*faceR*0.3+Math.cos(Math.PI-0.2)*faceR,headY+dirY*faceR*0.3+Math.sin(Math.PI-0.2)*faceR);
+  ctx.fill();
+
+  const eo=hr*0.3,es=hr*0.18;
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo-dirY*eo,headY+dirY*eo+dirX*eo,es,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo+dirY*eo,headY+dirY*eo-dirX*eo,es,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo-dirY*eo+dirX*1.5,headY+dirY*eo+dirX*eo+dirY*1.5,es*0.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX+dirX*eo+dirY*eo+dirX*1.5,headY+dirY*eo-dirX*eo+dirY*1.5,es*0.5,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle='#e8a0a0';
+  ctx.beginPath();
+  ctx.arc(headX+dirX*hr*0.5+dirY*hr*0.15,headY+dirY*hr*0.5-dirX*hr*0.15,hr*0.12,0,Math.PI,false);
+  ctx.fill();
+}
+
+function endGame(){
+  gameOver=true;
+  if(score>highScore){highScore=score;localStorage.setItem('snakeHighScore',highScore);highScoreEl.textContent=highScore;}
+  finalScoreEl.textContent='得分: '+score;
+  gameOverEl.style.display='block';
+  if(animId)cancelAnimationFrame(animId);
+  exitFullscreen();
+}
+
+function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);}
+
+function beginPlay(){
+  startScreen.style.display='none';
+  started=true;
+  if(musicOn&&!musicPlaying)startMusic();
+  if(!animId)loop();
+  try{wrapper.requestFullscreen()}catch(e){}
+}
+
+function exitFullscreen(){
+  if(document.fullscreenElement)document.exitFullscreen();
+}
+
+function startGame(){
+  if(animId)cancelAnimationFrame(animId);
+  animId=null;
+  recalcStep();init();draw();
+}
+
+document.querySelectorAll('.diff-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    SPEED=parseFloat(btn.dataset.speed);
+    startGame();
+  });
+});
+
+let touchStartX,touchStartY;
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;});
+canvas.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
+  if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
+  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);
+});
+
+document.addEventListener('keydown',e=>{
+  switch(e.key){
+    case'ArrowUp':e.preventDefault();if(started)setDir(0,-1);break;
+    case'ArrowDown':e.preventDefault();if(started)setDir(0,1);break;
+    case'ArrowLeft':e.preventDefault();if(started)setDir(-1,0);break;
+    case'ArrowRight':e.preventDefault();if(started)setDir(1,0);break;
+    case' ':case'Space':e.preventDefault();if(gameOver)startGame();else if(!started)beginPlay();break;
+    case'Enter':e.preventDefault();if(!started)beginPlay();break;
+  }
+});
+
+document.getElementById('up').onclick=()=>started&&setDir(0,-1);
+document.getElementById('down').onclick=()=>started&&setDir(0,1);
+document.getElementById('left').onclick=()=>started&&setDir(-1,0);
+document.getElementById('right').onclick=()=>started&&setDir(1,0);
+document.getElementById('restartBtn').onclick=startGame;
+startBtn.onclick=beginPlay;
+
+startGame();
+document.addEventListener('fullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.fullscreenElement));
+document.addEventListener('webkitfullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.webkitfullscreenElement));
+</script>
+</body>
+</html>
