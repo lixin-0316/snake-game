@@ -46,6 +46,11 @@ canvas{display:block;margin:0 auto;border-radius:8px;touch-action:none;width:100
 
 /* Desktop: hide overlay controls */
 @media(min-width:768px){.controls-overlay{display:none}}
+
+/* Fullscreen landscape: hide everything but canvas + overlays */
+.fullscreen .back-link,.fullscreen .header,.fullscreen .game-over,.fullscreen [style*="display:flex;gap:6px"]{display:none!important}
+.fullscreen.game-wrapper{padding:0;border-radius:0;border:none;box-shadow:none;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#0a0a1a}
+.fullscreen canvas{max-width:100vw;max-height:100dvh;border-radius:0}
 </style>
 </head>
 <body>
@@ -386,6 +391,22 @@ function draw(){
   ctx.beginPath();
   ctx.arc(headX+dirX*hr*0.5+dirY*hr*0.15,headY+dirY*hr*0.5-dirX*hr*0.15,hr*0.12,0,Math.PI,false);
   ctx.fill();
+
+  // Fullscreen: render score + game over on canvas
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.font='bold 16px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('💩 '+score,8,8);
+    if(gameOver){
+      ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#e94560';ctx.font='bold 36px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('游戏结束',W/2,H/2-20);
+      ctx.fillStyle='#fff';ctx.font='18px sans-serif';
+      ctx.fillText('得分: '+score,W/2,H/2+20);
+      ctx.fillStyle='#888';ctx.font='14px sans-serif';
+      ctx.fillText('点击重新开始',W/2,H/2+50);
+    }
+  }
 }
 
 function endGame(){
@@ -496,7 +517,12 @@ function handleSpeedEnd(){
 
 // Multi-touch controller
 canvas.addEventListener('touchstart',e=>{
-  if(!started||gameOver)return;
+  if(gameOver){
+    e.preventDefault();
+    startGame();beginPlay();
+    return;
+  }
+  if(!started)return;
   e.preventDefault();
   for(let t of e.changedTouches){
     const rect=canvas.getBoundingClientRect();
