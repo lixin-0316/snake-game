@@ -7,23 +7,26 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a3d0a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
-.game-wrapper{background:linear-gradient(145deg,#0d5e0d,#0a3d0a);padding:15px;border-radius:16px;box-shadow:0 0 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05)}
-canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:100%;max-width:800px}
-.btns{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
-.btns button{padding:10px 28px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;display:none}
+.game-wrapper{background:linear-gradient(145deg,#0d5e0d,#0a3d0a);padding:18px;border-radius:20px;box-shadow:0 0 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:100%;max-width:800px;box-shadow:0 4px 30px rgba(0,0,0,.3)}
+@media(min-width:768px){canvas{max-width:1200px}}
+.btns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btns button{padding:10px 28px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s ease;display:none;letter-spacing:.3px}
 .btns button.show{display:inline-block}
-.btn-bid{background:linear-gradient(135deg,#f0c040,#d4a830);color:#333}
-.btn-bid:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(240,192,64,.4)}
-.btn-pass{background:linear-gradient(135deg,#666,#444);color:#fff}
-.btn-pass:hover{transform:translateY(-2px)}
-.btn-play{background:linear-gradient(135deg,#e94560,#c23152);color:#fff}
-.btn-play:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(233,69,96,.4)}
-.btn-reset{background:linear-gradient(135deg,#53d769,#2ecc71);color:#fff}
-.btn-reset:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(83,215,105,.4)}
-.info-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 10px;color:rgba(255,255,255,.7);font-size:14px}
-.info-bar .timer{background:rgba(0,0,0,.3);padding:4px 12px;border-radius:6px}
-.back-link{display:inline-flex;align-items:center;gap:4px;color:rgba(255,255,255,.4);font-size:13px;text-decoration:none;transition:.2s}
-.back-link:hover{color:#e94560}
+.btn-bid{background:linear-gradient(135deg,#f0c040,#d4a830);color:#3d2e00;box-shadow:0 2px 8px rgba(240,192,64,.25)}
+.btn-bid:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(240,192,64,.4)}
+.btn-pass{background:linear-gradient(135deg,#666,#444);color:#ddd;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.btn-pass:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.btn-play{background:linear-gradient(135deg,#e94560,#c23152);color:#fff;box-shadow:0 2px 8px rgba(233,69,96,.25)}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(233,69,96,.4)}
+.btn-hint{background:linear-gradient(135deg,#5dade2,#2e86c1);color:#fff;box-shadow:0 2px 8px rgba(93,173,226,.25)}
+.btn-hint:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(93,173,226,.4)}
+.btn-reset{background:linear-gradient(135deg,#53d769,#2ecc71);color:#fff;box-shadow:0 2px 8px rgba(83,215,105,.25)}
+.btn-reset:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(83,215,105,.4)}
+.info-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:6px 12px;background:rgba(0,0,0,.15);border-radius:10px;color:rgba(255,255,255,.7);font-size:14px}
+.info-bar .timer{background:rgba(0,0,0,.25);padding:4px 12px;border-radius:6px;font-variant-numeric:tabular-nums}
+.back-link{display:inline-flex;align-items:center;gap:4px;color:rgba(255,255,255,.35);font-size:13px;text-decoration:none;transition:all .2s;padding:4px 8px;border-radius:6px}
+.back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
 </style>
 </head>
 <body>
@@ -39,6 +42,7 @@ canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:10
     <button class="btn-pass" id="passBidBtn">不叫</button>
     <button class="btn-play" id="playBtn">出牌</button>
     <button class="btn-pass" id="passBtn">不出</button>
+    <button class="btn-hint" id="hintBtn">提示</button>
     <button class="btn-reset" id="resetBtn">重新开始</button>
   </div>
 </div>
@@ -48,8 +52,46 @@ const W=800,H=550;
 const RANKS=['3','4','5','6','7','8','9','10','J','Q','K','A','2'],SUITS=['♠','♥','♣','♦'];
 const CW=48,CH=68;
 let deck,hands,bottomCards,playerCards,leftCards,rightCards;
-let phase,currentPlayer,landlord,lastPlay,lastPlayer,selected,gameOver,msg;
-let leftCount,rightCount;
+let phase,currentPlayer,landlord,lastPlay,lastPlayer,lastPlayedCards,selected,gameOver,msg;
+let leftCount,rightCount,passCount,bidder,bidPhase,originalCaller,passed,grabDone;
+
+let sharedAc;
+function getAc(){
+  if(!sharedAc||sharedAc.state==='closed')sharedAc=new(window.AudioContext||window.webkitAudioContext)();
+  if(sharedAc.state==='suspended')sharedAc.resume();
+  return sharedAc;
+}
+function initAudio(){getAc();}
+function playSound(freq, dur, type){
+  try{
+    const ac=getAc();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type=type||'square';o.frequency.setValueAtTime(freq,ac.currentTime);
+    g.gain.setValueAtTime(0.15,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
+    o.connect(g);g.connect(ac.destination);
+    o.start(ac.currentTime);o.stop(ac.currentTime+dur);
+  }catch(e){}
+}
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+const RNAME=['3','4','5','6','7','8','9','10','J','Q','K','A','2','小王','大王'];
+function playCardSound(cards){
+  if(!cards||cards.length===0)return;
+  const comb=getCombination(cards);
+  if(!comb)return;
+  if(comb.type==='rocket'){speak('火箭');return}
+  if(comb.type==='bomb'){speak('炸弹');return}
+  if(comb.type==='pair'){speak('对'+RNAME[comb.rank]);return}
+  if(comb.type==='triple'){speak('三张'+RNAME[comb.rank]);return}
+  if(comb.type==='triple1'){speak('三带一');return}
+  if(comb.type==='triple2'){speak('三带二');return}
+  if(comb.type==='straight'){speak('顺子');return}
+  if(comb.type==='pairSeq'){speak('连对');return}
+  if(comb.type==='airplane'||comb.type==='airplane1'||comb.type==='airplane2'){speak('飞机');return}
+  speak(RNAME[cards[0].rank]);
+}
+function playPassSound(){speak('不出')}
+function playWinSound(){speak('赢了')}
 
 function createDeck(){
   const d=[];
@@ -76,12 +118,13 @@ function initGame(){
   bottomCards=deck.slice(51);
   playerCards=hands[0];leftCards=hands[1];rightCards=hands[2];
   leftCount=leftCards.length;rightCount=rightCards.length;
-  phase='bid';currentPlayer=0;landlord=-1;
-  lastPlay=null;lastPlayer=-1;selected=new Set();gameOver=false;msg='请选择：叫地主 / 不叫';
-  document.getElementById('bidBtn').className='btn-bid show';
-  document.getElementById('passBidBtn').className='btn-pass show';
+  phase='bid';currentPlayer=0;landlord=-1;bidder=-1;bidPhase='call';originalCaller=-1;passed=[false,false,false];grabDone=[false,false,false];
+  lastPlay=null;lastPlayer=-1;selected=new Set();gameOver=false;passCount=0;msg='请选择：叫地主 / 不叫';
+  document.getElementById('bidBtn').textContent='叫地主';document.getElementById('bidBtn').className='btn-bid show';
+  document.getElementById('passBidBtn').textContent='不叫';document.getElementById('passBidBtn').className='btn-pass show';
   document.getElementById('playBtn').className='btn-play';
   document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('hintBtn').className='btn-hint';
   document.getElementById('resetBtn').className='btn-reset';
   document.getElementById('timer').textContent='';
   render();
@@ -230,15 +273,24 @@ function findValidPlays(hand, lastPlay){
 function aiBid(hand){
   let strength=0;
   hand.forEach(c=>{
-    if(c.rank>=12)strength+=2; // 2
-    if(c.rank>=10&&c.rank<=11)strength+=1; // A
-    if(c.rank===13)strength+=3; // 小王
-    if(c.rank===14)strength+=4; // 大王
+    if(c.rank===12)strength+=2.5;
+    if(c.rank===11)strength+=1.5;
+    if(c.rank===10)strength+=1;
+    if(c.rank===13)strength+=4;
+    if(c.rank===14)strength+=6;
   });
   const rankGroups={};
   hand.forEach(c=>{rankGroups[c.rank]=(rankGroups[c.rank]||0)+1;});
-  for(const r in rankGroups)if(rankGroups[r]===4)strength+=4;
-  if(hand.length>0&&hand[0].rank>=0)strength+=Math.random()*3;
+  for(const r in rankGroups){
+    if(rankGroups[r]===4)strength+=7;
+  }
+  // Card count bonus (fewer cards = more likely already drew good hand)
+  strength+=Math.max(0,17-hand.length)*0.5;
+  // Pair count bonus
+  let pairs=0;
+  for(const r in rankGroups)if(rankGroups[r]===2)pairs++;
+  strength+=pairs*0.5;
+  strength+=Math.random()*2;
   return strength>=8;
 }
 
@@ -246,112 +298,195 @@ function aiPlay(hand,lastPlay,lastPlayer,currentPlayer){
   if(lastPlayer===currentPlayer||!lastPlay){
     const plays=findValidPlays(hand,null);
     if(plays.length===0)return{action:'play',cards:[]};
-    // play smallest
+    if(hand.length<=2)return{action:'play',indices:plays.find(p=>p.length===hand.length)||plays[0]};
+    const nonBomb=plays.filter(p=>{const c=getCombination(p.map(i=>hand[i]));return c&&c.type!=='bomb'&&c.type!=='rocket';});
+    if(nonBomb.length>0){
+      nonBomb.sort((a,b)=>b.length-a.length||hand[a[0]].rank-hand[b[0]].rank);
+      return{action:'play',indices:nonBomb[0]};
+    }
     return{action:'play',indices:plays[0]};
   }else{
     const plays=findValidPlays(hand,lastPlay);
     if(plays.length===0)return{action:'pass'};
-    return{action:'play',indices:plays[0]};
+    const opponentCards=currentPlayer===1?rightCount:leftCount;
+    const myCards=hand.length;
+    const nonBomb=plays.filter(p=>{const c=getCombination(p.map(i=>hand[i]));return c&&c.type!=='bomb'&&c.type!=='rocket';});
+    if(nonBomb.length>0){
+      nonBomb.sort((a,b)=>a.length-b.length||hand[a[0]].rank-hand[b[0]].rank);
+      return{action:'play',indices:nonBomb[0]};
+    }
+    if(opponentCards<=3||myCards<=4)return{action:'play',indices:plays[0]};
+    return{action:'pass'};
   }
 }
 
+function startLandlord(idx){
+  landlord=idx;phase='play';currentPlayer=idx;
+  if(idx===0){playerCards.push(...bottomCards);sortCards(playerCards);
+  }else if(idx===1){leftCards.push(...bottomCards);sortCards(leftCards);leftCount=leftCards.length;
+  }else{rightCards.push(...bottomCards);sortCards(rightCards);rightCount=rightCards.length;}
+  hideBidBtns();
+  if(idx===0){msg='你是地主！请出牌';document.getElementById('playBtn').className='btn-play show';document.getElementById('hintBtn').className='btn-hint show';document.getElementById('passBtn').className='btn-pass';
+  }else{msg=`AI(${idx===1?'左':'右'}) 是地主`;render();setTimeout(doAIPlay,600);}
+  render();
+}
+function hideBidBtns(){
+  document.getElementById('bidBtn').className='btn-bid';document.getElementById('passBidBtn').className='btn-pass';
+}
+function advanceBid(){
+  if(bidPhase==='call'){
+    for(let i=1;i<=3;i++){
+      const nextP=(currentPlayer+i)%3;
+      if(!passed[nextP]){
+        currentPlayer=nextP;
+        if(currentPlayer===0){
+          msg='请选择：叫地主 / 不叫';
+          document.getElementById('bidBtn').textContent='叫地主';
+          document.getElementById('passBidBtn').textContent='不叫';
+          document.getElementById('bidBtn').className='btn-bid show';
+          document.getElementById('passBidBtn').className='btn-pass show';
+          render();
+        }else{
+          render();
+          setTimeout(doAIBid,500);
+        }
+        return;
+      }
+    }
+    msg='没人叫地主，重新发牌';
+    render();
+    setTimeout(initGame,1500);
+  }else{
+    for(let i=1;i<=3;i++){
+      const nextP=(currentPlayer+i)%3;
+      if(nextP!==originalCaller&&!passed[nextP]&&!grabDone[nextP]){
+        currentPlayer=nextP;
+        if(currentPlayer===0){
+          msg='请选择：抢地主 / 不抢';
+          document.getElementById('bidBtn').textContent='抢地主';
+          document.getElementById('passBidBtn').textContent='不抢';
+          document.getElementById('bidBtn').className='btn-bid show';
+          document.getElementById('passBidBtn').className='btn-pass show';
+          render();
+        }else{
+          render();
+          setTimeout(doAIBid,500);
+        }
+        return;
+      }
+    }
+    startLandlord(bidder);
+  }
+}
 function handlePlayerBid(bid){
   if(phase!=='bid'||currentPlayer!==0)return;
-  if(bid){
-    landlord=0;phase='play';currentPlayer=0;
-    playerCards.push(...bottomCards);sortCards(playerCards);
-    msg='你是地主！请出牌';
-    document.getElementById('bidBtn').className='btn-bid';
-    document.getElementById('passBidBtn').className='btn-pass';
-    document.getElementById('playBtn').className='btn-play show';
-    document.getElementById('passBtn').className='btn-pass';
-    render();
-    return;
+  initAudio();
+  if(bidPhase==='call'){
+    if(bid){
+      originalCaller=0;bidder=0;bidPhase='grab';grabDone=[false,false,false];
+      speak('叫地主');
+      hideBidBtns();advanceBid();
+    }else{
+      speak('不叫');passed[0]=true;
+      hideBidBtns();advanceBid();
+    }
+  }else{
+    if(bid){
+      bidder=0;grabDone[0]=true;
+      speak('抢地主');
+    }else{
+      grabDone[0]=true;
+      speak('不抢');
+    }
+    hideBidBtns();advanceBid();
   }
-  doAIBid();
 }
-
 function doAIBid(){
   if(phase!=='bid')return;
-  // AI 1 (left)
-  if(currentPlayer===1){
-    if(aiBid(leftCards)){
-      landlord=1;phase='play';currentPlayer=1;
-      leftCards.push(...bottomCards);sortCards(leftCards);
-      leftCount=leftCards.length;
-      msg='AI(左) 叫了地主';
-      render();
-      setTimeout(()=>{if(phase==='play'&&currentPlayer===1)doAIPlay();},500);
-      return;
+  const hand=currentPlayer===1?leftCards:rightCards;
+  if(bidPhase==='call'){
+    const shouldBid=aiBid(hand);
+    if(shouldBid){
+      originalCaller=currentPlayer;bidder=currentPlayer;bidPhase='grab';grabDone=[false,false,false];
+      speak('叫地主');
+      advanceBid();
+    }else{
+      passed[currentPlayer]=true;
+      speak('不叫');
+      advanceBid();
     }
-    currentPlayer=2;
-    render();
-    setTimeout(doAIBid,400);
-    return;
-  }
-  // AI 2 (right)
-  if(currentPlayer===2){
-    if(aiBid(rightCards)){
-      landlord=2;phase='play';currentPlayer=2;
-      rightCards.push(...bottomCards);sortCards(rightCards);
-      rightCount=rightCards.length;
-      msg='AI(右) 叫了地主';
-      render();
-      setTimeout(()=>{if(phase==='play'&&currentPlayer===2)doAIPlay();},500);
-      return;
+  }else{
+    const shouldGrab=aiBid(hand)||Math.random()<.3;
+    if(shouldGrab){
+      bidder=currentPlayer;grabDone[currentPlayer]=true;
+      speak('抢地主');
+    }else{
+      grabDone[currentPlayer]=true;
+      speak('不抢');
     }
-    currentPlayer=0;
-    render();
-    return; // back to player
+    advanceBid();
   }
 }
 
 function doAIPlay(){
   if(phase!=='play'||currentPlayer===0||gameOver)return;
-  const hand=currentPlayer===1?leftCards:rightCards;
-  const result=aiPlay(hand,lastPlay,lastPlayer,currentPlayer);
-
-  if(result.action==='pass'){
-    msg=`AI(${currentPlayer===1?'左':'右'}) 不出`;
+  try{
+    const hand=currentPlayer===1?leftCards:rightCards;
+    const result=aiPlay(hand,lastPlay,lastPlayer,currentPlayer);
+    if(!result||result.action==='pass'){
+      passCount++;
+      msg=`AI(${currentPlayer===1?'左':'右'}) 不出`;
+      playPassSound();
+      currentPlayer=(currentPlayer+1)%3;
+      if(passCount>=2){lastPlay=null;lastPlayer=-1;passCount=0;msg='轮到你出牌（可出任意牌）';}
+      render();
+      setTimeout(next,500);
+      return;
+    }
+    const played=result.indices.map(i=>hand[i]);
+    const comb=getCombination(played);
+    if(!comb)throw'no comb';
+    lastPlay=comb;lastPlayer=currentPlayer;passCount=0;
+    lastPlayedCards=played;
+    playCardSound(played);
+    const sorted=result.indices.sort((a,b)=>b-a);
+    sorted.forEach(i=>hand.splice(i,1));
+    const pName=currentPlayer===1?'AI(左)':'AI(右)';
+    if(hand.length===0){
+      gameOver=true;msg=`${pName} 赢了！`;
+      playWinSound();hideBtns();document.getElementById('resetBtn').className='btn-reset show';render();return;
+    }
+    msg=`${pName} 出了: ${played.map(cardName).join(' ')}`;
     currentPlayer=(currentPlayer+1)%3;
+    leftCount=leftCards.length;rightCount=rightCards.length;
     render();
-    setTimeout(()=>{
-      if(currentPlayer===0){document.getElementById('playBtn').className='btn-play show';document.getElementById('passBtn').className='btn-pass show';}
-      else doAIPlay();
-    },500);
-    return;
+    setTimeout(next,600);
+  }catch(e){
+    currentPlayer=(currentPlayer+1)%3;
+    leftCount=leftCards.length;rightCount=rightCards.length;
+    render();
+    setTimeout(next,500);
   }
-
-  const played=result.indices.map(i=>hand[i]);
-  const comb=getCombination(played);
-  lastPlay=comb;lastPlayer=currentPlayer;
-  const sorted=result.indices.sort((a,b)=>b-a);
-  sorted.forEach(i=>hand.splice(i,1));
-  const pName=currentPlayer===1?'AI(左)':'AI(右)';
-
-  if(hand.length===0){
-    gameOver=true;msg=`${pName} 赢了！`;
-    document.getElementById('playBtn').className='btn-play';
-    document.getElementById('passBtn').className='btn-pass';
-    document.getElementById('resetBtn').className='btn-reset show';
-    render();return;
+  function next(){
+    if(currentPlayer===0){showPlayerBtns();}else doAIPlay();
   }
-
-  msg=`${pName} 出了: ${played.map(cardName).join(' ')}`;
-  currentPlayer=(currentPlayer+1)%3;
-  if(currentPlayer===1)leftCount=leftCards.length;
-  if(currentPlayer===2)rightCount=rightCards.length;
-  render();
-
-  setTimeout(()=>{
-    if(currentPlayer===0){document.getElementById('playBtn').className='btn-play show';document.getElementById('passBtn').className='btn-pass show';}
-    else doAIPlay();
-  },600);
 }
+function showPlayerBtns(){
+  document.getElementById('playBtn').className='btn-play show';
+  document.getElementById('passBtn').className='btn-pass show';
+  document.getElementById('hintBtn').className='btn-hint show';
+}
+function hideBtns(){
+  document.getElementById('playBtn').className='btn-play';
+  document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('hintBtn').className='btn-hint';
+}
+
 
 function handlePlayerPlay(){
   if(phase!=='play'||currentPlayer!==0||gameOver)return;
   if(selected.size===0)return;
+  initAudio();
 
   const indices=Array.from(selected).sort((a,b)=>a-b);
   const cards=indices.map(i=>playerCards[i]);
@@ -361,16 +496,17 @@ function handlePlayerPlay(){
     msg='无效的出牌！';render();return;
   }
 
-  lastPlay=comb;lastPlayer=0;
+  lastPlay=comb;lastPlayer=0;passCount=0;
+  lastPlayedCards=cards;
+  playCardSound(cards);
   const sorted=indices.sort((a,b)=>b-a);
   sorted.forEach(i=>playerCards.splice(i,1));
   selected.clear();
 
   if(playerCards.length===0){
     gameOver=true;msg='你赢了！🎉';
-    document.getElementById('playBtn').className='btn-play';
-    document.getElementById('passBtn').className='btn-pass';
-    document.getElementById('resetBtn').className='btn-reset show';
+    playWinSound();
+    hideBtns();document.getElementById('resetBtn').className='btn-reset show';
     render();return;
   }
 
@@ -378,117 +514,140 @@ function handlePlayerPlay(){
   currentPlayer=1;
   render();
 
-  setTimeout(()=>{
-    document.getElementById('playBtn').className='btn-play';
-    document.getElementById('passBtn').className='btn-pass';
-    doAIPlay();
-  },500);
+  setTimeout(()=>{hideBtns();doAIPlay();},500);
 }
 
 function handlePlayerPass(){
   if(phase!=='play'||currentPlayer!==0||gameOver)return;
   if(lastPlayer===0){msg='你必须出牌！';render();return;}
+  initAudio();
+  passCount++;
   msg='你不出';
+  playPassSound();
   currentPlayer=1;
   selected.clear();
+  if(passCount>=2){lastPlay=null;lastPlayer=-1;passCount=0;}
   render();
-  setTimeout(()=>{
-    document.getElementById('playBtn').className='btn-play';
-    document.getElementById('passBtn').className='btn-pass';
-    doAIPlay();
-  },400);
+  setTimeout(()=>{hideBtns();doAIPlay();},400);
 }
 
 function render(){
   ctx.clearRect(0,0,W,H);
-  // table bg
-  const grd=ctx.createRadialGradient(400,300,50,400,300,350);
-  grd.addColorStop(0,'#1a7a1a');grd.addColorStop(1,'#0d4d0d');
+  const grd=ctx.createRadialGradient(400,275,30,400,275,350);
+  grd.addColorStop(0,'#1f8a1f');grd.addColorStop(.5,'#0f5f0f');grd.addColorStop(1,'#083808');
   ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,.012)';
+  for(let i=0;i<W;i+=24)for(let j=0;j<H;j+=24)ctx.fillRect(i,j,1,1);
 
   if(phase==='bid'||phase==='play'){
-    // bottom cards
     if(phase==='play'){
       let bx=290;
       bottomCards.forEach(c=>{
-        ctx.fillStyle='#f5f5f5';ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.2)';
+        ctx.fillStyle='#e8e0d0';ctx.shadowBlur=8;ctx.shadowColor='rgba(0,0,0,.25)';
         roundRect(bx,8,CW-4,CH-4,4);ctx.fill();ctx.shadowBlur=0;
-        ctx.fillStyle='#c0392b';ctx.font='bold 12px serif';
-        ctx.fillText('🃏',bx+8,30);
-        ctx.fillStyle='#333';ctx.font='11px serif';ctx.fillText('?',bx+18,50);
+        ctx.fillStyle='#1526a0';ctx.font='bold 11px serif';ctx.textAlign='center';
+        ctx.fillText('🃏',bx+CW/2-1,30);
+        ctx.fillStyle='#666';ctx.font='10px serif';ctx.fillText('?',bx+CW/2-1,48);
         bx+=30;
       });
     }
 
-    // left player (face down)
+    const activeP=phase==='play'?currentPlayer:-1;
     for(let i=0;i<leftCount;i++){
-      const x=15,y=80+i*16;
-      ctx.fillStyle='#1526a0';ctx.shadowBlur=4;ctx.shadowColor='rgba(0,0,0,.15)';
-      roundRect(x,y,CW-4,CH-4,3);ctx.fill();ctx.shadowBlur=0;
-      ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='14px serif';
-      ctx.fillText('🃏',x+10,y+22);
+      const x=12,y=80+i*16;
+      ctx.shadowBlur=activeP===1?10:4;ctx.shadowColor=activeP===1?'rgba(255,215,0,.5)':'rgba(0,0,0,.15)';
+      ctx.fillStyle='#1526a0';roundRect(x,y,CW-4,CH-4,3);ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,255,255,.12)';ctx.font='13px serif';ctx.textAlign='center';
+      ctx.fillText('🃏',x+CW/2-1,y+22);
     }
 
-    // right player (face down)
     for(let i=0;i<rightCount;i++){
       const x=740,y=80+i*16;
-      ctx.fillStyle='#1526a0';ctx.shadowBlur=4;ctx.shadowColor='rgba(0,0,0,.15)';
-      roundRect(x,y,CW-4,CH-4,3);ctx.fill();ctx.shadowBlur=0;
-      ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='14px serif';
-      ctx.fillText('🃏',x+10,y+22);
+      ctx.shadowBlur=activeP===2?10:4;ctx.shadowColor=activeP===2?'rgba(255,215,0,.5)':'rgba(0,0,0,.15)';
+      ctx.fillStyle='#1526a0';roundRect(x,y,CW-4,CH-4,3);ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,255,255,.12)';ctx.font='13px serif';ctx.textAlign='center';
+      ctx.fillText('🃏',x+CW/2-1,y+22);
     }
 
-    // player hand
     const startX=Math.max(10,400-playerCards.length*28);
+    if(activeP===0){
+      ctx.fillStyle='rgba(255,215,0,.08)';roundRect(startX-8,424,playerCards.length*28+16,68,6);ctx.fill();
+    }
     playerCards.forEach((c,i)=>{
       const x=startX+i*28,sel=selected.has(i);
-      const y=sel?430:452;
+      const y=sel?428:452;
       drawCard(x,y,c,true,sel);
     });
 
-    // labels
-    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='13px sans-serif';ctx.textAlign='center';
-    if(landlord===1)ctx.fillText('👑地主',55,65);
-    if(landlord===2)ctx.fillText('👑地主',780,65);
-    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px sans-serif';
-    ctx.fillText('AI(左)',55,68);
-    ctx.fillText('AI(右)',780,68);
-    ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.fillText('你',400,500);
+    ctx.textAlign='center';
+    const lx=activeP===1?'#ffd700':'rgba(255,255,255,.5)';
+    ctx.fillStyle=landlord===1?'#ffd700':'rgba(255,255,255,.5)';ctx.font='bold 12px sans-serif';
+    ctx.fillText(landlord===1?'👑地主':'AI(左)',55,68);
+    ctx.fillStyle=landlord===2?'#ffd700':'rgba(255,255,255,.5)';ctx.font='bold 12px sans-serif';
+    ctx.fillText(landlord===2?'👑地主':'AI(右)',780,68);
+    ctx.fillStyle=activeP===0?'#ffd700':'#fff';ctx.font='bold 14px sans-serif';
+    ctx.fillText(activeP===0?'👈 你的回合':'你',400,502);
 
-    // last play display
-    if(lastPlay&&lastPlayer!==-1&&currentPlayer!==0&&lastPlayer!==0){
-      const yy=100;
-      ctx.fillStyle='rgba(0,0,0,.3)';ctx.font='13px sans-serif';ctx.textAlign='center';
-      ctx.fillText(msg||'',400,yy-10);
-    }else if(msg){
-      ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='14px sans-serif';ctx.textAlign='center';
-      ctx.fillText(msg,400,110);
+    if(lastPlayedCards&&lastPlayedCards.length>0){
+      const cx=400-lastPlayedCards.length*30;
+      ctx.fillStyle='rgba(0,0,0,.25)';roundRect(cx-10,85,lastPlayedCards.length*60+20,78,10);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;roundRect(cx-10,85,lastPlayedCards.length*60+20,78,10);ctx.stroke();
+      lastPlayedCards.forEach((c,i)=>{
+        drawCard(cx+i*55,90,c,true,false);
+      });
+    }
+    if(msg){
+      ctx.fillStyle='rgba(0,0,0,.55)';roundRect(230,168,340,34,8);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;roundRect(230,168,340,34,8);ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+      ctx.fillText(msg,400,191);
     }
   }
 
   if(gameOver){
-    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#fff';ctx.font='bold 36px sans-serif';ctx.textAlign='center';
-    ctx.fillText(msg,400,280);
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#ffd700';ctx.font='bold 40px sans-serif';ctx.textAlign='center';
+    ctx.shadowBlur=20;ctx.shadowColor='rgba(255,215,0,.3)';ctx.fillText(msg,400,280);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='14px sans-serif';
+    ctx.fillText('点击「重新开始」再来一局',400,320);
   }
 }
 
 function drawCard(x,y,c,faceUp,selected){
   ctx.shadowBlur=selected?15:4;ctx.shadowColor=selected?'rgba(233,69,96,.6)':'rgba(0,0,0,.2)';
-  ctx.fillStyle='#f5f5f5';roundRect(x,y,CW-2,CH-2,4);ctx.fill();ctx.shadowBlur=0;
-
-  if(faceUp){
-    ctx.font='bold 16px serif';ctx.textAlign='left';
-    const isRed=c.suit===1||c.suit===3;
-    ctx.fillStyle=isRed?'#e74c3c':'#333';
-    const rankStr=c.rank<9?RANKS[c.rank]:RANKS[c.rank];
-    ctx.fillText(rankStr,x+5,y+20);
-    ctx.font='12px serif';
-    ctx.fillText(c.suit<4?SUITS[c.suit]:'',x+7,y+38);
-
-    if(c.rank===13){ctx.fillStyle='#333';ctx.font='12px serif';ctx.fillText('小',x+6,y+50);ctx.fillText('王',x+18,y+50);}
-    if(c.rank===14){ctx.fillStyle='#e74c3c';ctx.font='12px serif';ctx.fillText('大',x+6,y+50);ctx.fillText('王',x+18,y+50);}
+  
+  if(!faceUp){
+    ctx.fillStyle='#1a3a8a';roundRect(x,y,CW-2,CH-2,4);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.08)';roundRect(x+4,y+4,CW-10,CH-10,3);ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.12)';ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('🃏',x+CW/2-1,y+CH/2+6);
+    return;
   }
+  
+  ctx.fillStyle='#fff';roundRect(x,y,CW-2,CH-2,4);ctx.fill();ctx.shadowBlur=0;
+  ctx.strokeStyle='#ccc';ctx.lineWidth=.5;roundRect(x,y,CW-2,CH-2,4);ctx.stroke();
+  const cw=CW-2,ch=CH-2;
+  const isRed=c.suit===1||c.suit===3;
+  const col=isRed?'#c0392b':'#2c3e50';
+  
+  if(c.rank===13){
+    ctx.fillStyle='#2c3e50';ctx.font='bold 12px serif';ctx.textAlign='center';
+    ctx.fillText('小',x+cw/2,y+22);ctx.fillText('王',x+cw/2,y+38);
+    ctx.font='10px serif';ctx.fillText('♠',x+cw/2,y+54);
+    return;
+  }
+  if(c.rank===14){
+    ctx.fillStyle='#c0392b';ctx.font='bold 12px serif';ctx.textAlign='center';
+    ctx.fillText('大',x+cw/2,y+22);ctx.fillText('王',x+cw/2,y+38);
+    ctx.font='12px serif';ctx.fillText('★',x+cw/2,y+56);
+    return;
+  }
+  
+  ctx.fillStyle=col;
+  ctx.textAlign='left';ctx.font='bold 13px serif';ctx.fillText(RANKS[c.rank],x+4,y+15);
+  ctx.font='10px serif';ctx.fillText(SUITS[c.suit],x+5,y+28);
+  ctx.textAlign='center';ctx.font='20px serif';ctx.fillText(SUITS[c.suit],x+cw/2,y+44);
+  ctx.textAlign='right';ctx.font='10px serif';ctx.fillText(SUITS[c.suit],x+cw-4,y+56);
+  ctx.font='bold 13px serif';ctx.fillText(RANKS[c.rank],x+cw-4,y+66);
 }
 
 function roundRect(x,y,w,h,r){
@@ -496,6 +655,19 @@ function roundRect(x,y,w,h,r){
   ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
   ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function handleHint(){
+  if(phase!=='play'||currentPlayer!==0||gameOver)return;
+  if(selected.size>0){selected.clear();render();return;}
+  const result=aiPlay(playerCards,lastPlay,lastPlayer,0);
+  if(result.action==='play'&&result.indices){
+    result.indices.forEach(i=>selected.add(i));
+    render();
+  }else{
+    msg='没有合适的牌可出';
+    render();
+  }
 }
 
 canvas.addEventListener('click',e=>{
@@ -517,6 +689,7 @@ document.getElementById('bidBtn').onclick=()=>handlePlayerBid(true);
 document.getElementById('passBidBtn').onclick=()=>handlePlayerBid(false);
 document.getElementById('playBtn').onclick=handlePlayerPlay;
 document.getElementById('passBtn').onclick=handlePlayerPass;
+document.getElementById('hintBtn').onclick=handleHint;
 document.getElementById('resetBtn').onclick=initGame;
 
 initGame();

@@ -41,6 +41,10 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 .start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:.3s;letter-spacing:2px}
 .start-screen .play-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(233,69,96,.5)}
 .start-screen p{color:#555;font-size:13px;margin-top:14px}
+.fullscreen .back-link,.fullscreen .controls,.fullscreen .bottom-bar,.fullscreen .header .high-score{display:none}
+.fullscreen.game-wrapper{border-radius:0;border:none;padding:10px;box-shadow:none;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+.fullscreen .header{justify-content:center;margin-bottom:8px}
+.fullscreen canvas{max-width:100vw;max-height:calc(100dvh - 80px)}
 @media(min-width:600px){.controls{display:none}}
 </style>
 </head>
@@ -83,6 +87,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 </div>
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const wrapper=document.querySelector('.game-wrapper');
 const scoreEl=document.getElementById('score'),highScoreEl=document.getElementById('highScore'),finalScoreEl=document.getElementById('finalScore'),gameOverEl=document.getElementById('gameOver');
 const startScreen=document.getElementById('startScreen'),startBtn=document.getElementById('startBtn');
 
@@ -368,6 +373,7 @@ function endGame(){
   finalScoreEl.textContent='得分: '+score;
   gameOverEl.style.display='block';
   if(animId)cancelAnimationFrame(animId);
+  exitFullscreen();
 }
 
 function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);}
@@ -377,6 +383,11 @@ function beginPlay(){
   started=true;
   if(musicOn&&!musicPlaying)startMusic();
   if(!animId)loop();
+  try{wrapper.requestFullscreen()}catch(e){}
+}
+
+function exitFullscreen(){
+  if(document.fullscreenElement)document.exitFullscreen();
 }
 
 function startGame(){
@@ -421,6 +432,8 @@ document.getElementById('restartBtn').onclick=startGame;
 startBtn.onclick=beginPlay;
 
 startGame();
+document.addEventListener('fullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.fullscreenElement));
+document.addEventListener('webkitfullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.webkitfullscreenElement));
 </script>
 </body>
 </html>
