@@ -3,52 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>贪吃蛇（新）</title>
+<title>贪吃蛇（手机版）</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a1a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
-.game-wrapper{padding:20px;background:linear-gradient(145deg,#111133,#0d0d24);border-radius:20px;box-shadow:0 0 40px rgba(233,69,96,.15),0 8px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.05)}
-canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:100%;max-width:500px;aspect-ratio:1}
-@media(min-width:768px){.game-wrapper{padding:24px}canvas{max-width:1500px}}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:0 6px}
-.score{font-size:20px;font-weight:700;color:#e94560;text-shadow:0 0 10px rgba(233,69,96,.3)}
-.score span{font-size:28px}
-.high-score{font-size:14px;color:#555;letter-spacing:.5px}
+body{background:#0a0a1a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;touch-action:none}
+.game-wrapper{padding:10px;background:linear-gradient(145deg,#111133,#0d0d24);border-radius:6px;box-shadow:0 0 40px rgba(233,69,96,.15),0 8px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.05)}
+canvas{display:block;margin:0 auto;border-radius:8px;touch-action:none;width:100%;max-width:500px;aspect-ratio:1}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px}
+.score{font-size:16px;font-weight:700;color:#e94560;text-shadow:0 0 10px rgba(233,69,96,.3)}
+.score span{font-size:22px}
+.high-score{font-size:12px;color:#555}
 .high-score span{color:#888}
-.controls{display:grid;grid-template-columns:repeat(3,64px);gap:8px;justify-content:center;margin-top:16px}
-.controls button{height:58px;border:none;border-radius:14px;background:linear-gradient(145deg,#1a1a40,#12122e);color:#fff;font-size:22px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:.1s}
-.controls button:active{transform:scale(.92);background:#0f3460}
-.controls .placeholder{visibility:hidden}
-.bottom-bar{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap}
-.bottom-bar button{padding:10px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
-.btn-restart{background:linear-gradient(135deg,#e94560,#c23152);color:#fff}
-.btn-restart:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(233,69,96,.4)}
-.diff-btn{padding:8px 18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:#666;font-size:13px;cursor:pointer;transition:.2s;font-weight:500}
-.diff-btn:hover{border-color:#e94560;color:#e94560}
-.diff-btn.active{background:#e94560;color:#fff;border-color:#e94560}
-.diff-label{color:#555;font-size:13px;display:flex;align-items:center;gap:6px}
-.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none;background:rgba(0,0,0,.85);padding:30px 40px;border-radius:16px;backdrop-filter:blur(8px)}
-.game-over h2{font-size:32px;margin-bottom:6px;color:#e94560}
-.game-over p{font-size:14px;opacity:.6;margin-bottom:4px}
-.game-over .final-score{font-size:22px;color:#fff;margin:10px 0}
-.back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 10px;border-radius:6px}
+.back-link{display:inline-flex;align-items:center;gap:4px;margin-bottom:8px;color:#555;font-size:13px;text-decoration:none;transition:.2s;padding:4px 8px;border-radius:6px}
 .back-link:hover{color:#e94560;background:rgba(233,69,96,.08)}
-.music-btn{background:none;border:1px solid rgba(255,255,255,.08);color:#555;font-size:13px;cursor:pointer;padding:4px 10px;border-radius:6px;transition:.2s}
-.music-btn:hover{border-color:#e94560;color:#e94560}
+.music-btn{background:none;border:1px solid rgba(255,255,255,.08);color:#555;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px}
 .music-btn.on{color:#53d769;border-color:rgba(83,215,105,.3)}
-.start-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,26,.7);border-radius:12px;backdrop-filter:blur(4px);z-index:2}
-.start-screen h2{font-size:30px;color:#fff;margin-bottom:20px;text-shadow:0 0 20px rgba(233,69,96,.4)}
-.start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:.3s;letter-spacing:2px}
-.start-screen .play-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(233,69,96,.5)}
-.start-screen p{color:#555;font-size:13px;margin-top:14px}
-.fullscreen .back-link,.fullscreen .controls,.fullscreen .bottom-bar,.fullscreen .header .high-score{display:none}
-.fullscreen.game-wrapper{border-radius:0;border:none;padding:10px;box-shadow:none;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
-.fullscreen .header{justify-content:center;margin-bottom:8px}
-.fullscreen canvas{max-width:100vw;max-height:calc(100dvh - 80px)}
-@media(min-width:600px){.controls{display:none}}
+.start-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,26,.7);border-radius:8px;backdrop-filter:blur(4px);z-index:10}
+.start-screen h2{font-size:28px;color:#fff;margin-bottom:16px;text-shadow:0 0 20px rgba(233,69,96,.4)}
+.start-screen .play-btn{padding:14px 48px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:18px;font-weight:700;cursor:pointer;letter-spacing:2px}
+.start-screen .play-btn:active{transform:scale(.95)}
+.start-screen p{color:#555;font-size:13px;margin-top:12px}
+.game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;display:none;background:rgba(0,0,0,.85);padding:24px 32px;border-radius:14px;backdrop-filter:blur(8px);z-index:20}
+.game-over h2{font-size:28px;margin-bottom:4px;color:#e94560}
+.game-over .final-score{font-size:20px;color:#fff;margin:8px 0}
+.game-over p{font-size:13px;opacity:.6}
+
+/* Joystick overlay */
+.controls-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5}
+.controls-overlay.active{pointer-events:auto}
+.joystick-base{position:absolute;bottom:20px;left:20px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;touch-action:none}
+.joystick-knob{width:46px;height:46px;border-radius:50%;background:rgba(233,69,96,.5);border:2px solid rgba(233,69,96,.7);transition:transform .05s;touch-action:none}
+.joystick-knob.active{background:rgba(233,69,96,.7)}
+.speed-btn{position:absolute;bottom:20px;right:20px;width:90px;height:90px;border-radius:50%;background:rgba(83,215,105,.12);border:2px solid rgba(83,215,105,.25);display:flex;align-items:center;justify-content:center;font-size:32px;touch-action:none;user-select:none;color:rgba(83,215,105,.5);transition:all .1s}
+.speed-btn.active{background:rgba(83,215,105,.25);border-color:rgba(83,215,105,.6);transform:scale(.92);color:rgba(83,215,105,.9)}
+
+/* Orientation prompt */
+.rotate-hint{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(8,8,26,.95);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;color:#fff}
+.rotate-hint.show{display:flex}
+.rotate-hint .icon{font-size:60px;margin-bottom:20px;animation:rotatePhone 2s ease-in-out infinite}
+.rotate-hint p{font-size:18px;color:#888}
+@keyframes rotatePhone{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}
+
+/* Desktop: hide overlay controls */
+@media(min-width:768px){.controls-overlay{display:none}}
 </style>
 </head>
 <body>
+<div class="rotate-hint" id="rotateHint">
+  <div class="icon">📱</div>
+  <p>请横屏</p>
+</div>
 <div class="game-wrapper">
   <a href="../" class="back-link">← 返回平台</a>
   <div class="header">
@@ -58,31 +62,29 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
   </div>
   <div style="position:relative">
     <canvas id="game" width="500" height="500"></canvas>
+    <div class="controls-overlay" id="controlsOverlay">
+      <div class="joystick-base" id="joystickBase">
+        <div class="joystick-knob" id="joystickKnob"></div>
+      </div>
+      <div class="speed-btn" id="speedBtn">⚡</div>
+    </div>
     <div class="game-over" id="gameOver">
       <h2>游戏结束</h2>
       <div class="final-score" id="finalScore">得分: 0</div>
-      <p>按空格键重新开始</p>
+      <p>点击重新开始</p>
     </div>
     <div class="start-screen" id="startScreen">
-      <h2>🐑 懒洋洋</h2>
+      <h2>🐍 贪吃蛇</h2>
       <button class="play-btn" id="startBtn">开始游戏</button>
-      <p>或按 空格键 / Enter 开始</p>
+      <p>横屏体验更佳</p>
     </div>
   </div>
-  <div class="controls">
-    <button class="placeholder"></button>
-    <button id="up">▲</button>
-    <button class="placeholder"></button>
-    <button id="left">◀</button>
-    <button id="down">▼</button>
-    <button id="right">▶</button>
-  </div>
-  <div class="bottom-bar">
-    <span class="diff-label">难度</span>
-    <button class="diff-btn active" data-speed="1.5">简单</button>
-    <button class="diff-btn" data-speed="2.8">普通</button>
-    <button class="diff-btn" data-speed="4.5">困难</button>
-    <button class="btn-restart" id="restartBtn">重新开始</button>
+  <div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap">
+    <span style="color:#555;font-size:12px;display:flex;align-items:center;gap:4px">难度</span>
+    <button class="diff-btn active" data-speed="1.2" style="padding:6px 14px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.04);color:#666;font-size:12px;cursor:pointer;font-weight:500">简单</button>
+    <button class="diff-btn" data-speed="2.2" style="padding:6px 14px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.04);color:#666;font-size:12px;cursor:pointer;font-weight:500">普通</button>
+    <button class="diff-btn" data-speed="3.8" style="padding:6px 14px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.04);color:#666;font-size:12px;cursor:pointer;font-weight:500">困难</button>
+    <button class="btn-restart" id="restartBtn" style="padding:6px 18px;border:none;border-radius:6px;background:linear-gradient(135deg,#e94560,#c23152);color:#fff;font-size:12px;font-weight:600;cursor:pointer">重新开始</button>
   </div>
 </div>
 <script>
@@ -90,17 +92,35 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const wrapper=document.querySelector('.game-wrapper');
 const scoreEl=document.getElementById('score'),highScoreEl=document.getElementById('highScore'),finalScoreEl=document.getElementById('finalScore'),gameOverEl=document.getElementById('gameOver');
 const startScreen=document.getElementById('startScreen'),startBtn=document.getElementById('startBtn');
+const controlsOverlay=document.getElementById('controlsOverlay');
+const joystickBase=document.getElementById('joystickBase'),joystickKnob=document.getElementById('joystickKnob');
+const speedBtn=document.getElementById('speedBtn');
+const rotateHint=document.getElementById('rotateHint');
 
 const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
 const SEGMENT_SPACING=CELL*0.85;
+const JOYSTICK_RADIUS=46;
 
-let SPEED=1.5,SEG_STEP;
+let SPEED=1.2,SEG_STEP,baseSpeed;
 let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,started,animId;
+let boostSpeed=false;
+let joystickActive=false,jTouchId=-1;
+let speedActive=false,sTouchId=-1;
 
 // Music
 let audioCtx,musicGain,musicPlaying=false,musicNodes=[];
 const musicBtn=document.getElementById('musicBtn');
 let musicOn=localStorage.getItem('snakeMusic')!=='off';
+
+// Orientation check
+function checkOrientation(){
+  const isMobile=window.innerWidth<768;
+  if(isMobile && window.innerHeight>window.innerWidth){
+    rotateHint.classList.add('show');
+  }else{
+    rotateHint.classList.remove('show');
+  }
+}
 
 function toggleMusic(){
   musicOn=!musicOn;
@@ -115,14 +135,12 @@ function startMusic(){
   if(musicPlaying)return;
   if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   musicGain=audioCtx.createGain();
-  musicGain.gain.value=0.08;
+  musicGain.gain.value=0.06;
   musicGain.connect(audioCtx.destination);
   musicPlaying=true;
-
   const bpm=140,bps=bpm/60,beat=1/bps;
   const notes=[262,294,330,349,392,349,330,294,262,294,330,349,392,440,392,349];
   let noteIdx=0,totalTime=audioCtx.currentTime;
-
   function scheduleNext(){
     if(!musicPlaying)return;
     const now=audioCtx.currentTime;
@@ -132,7 +150,7 @@ function startMusic(){
         const noteGain=audioCtx.createGain();
         osc.type='square';
         osc.frequency.value=notes[(noteIdx++)%notes.length];
-        noteGain.gain.setValueAtTime(0.08,totalTime);
+        noteGain.gain.setValueAtTime(0.06,totalTime);
         noteGain.gain.exponentialRampToValueAtTime(0.001,totalTime+beat*0.6);
         osc.connect(noteGain);
         noteGain.connect(musicGain);
@@ -145,8 +163,6 @@ function startMusic(){
     if(musicPlaying)setTimeout(scheduleNext,100);
   }
   scheduleNext();
-
-  // Hi-hat
   function hiHat(){
     if(!musicPlaying)return;
     const now=audioCtx.currentTime;
@@ -158,7 +174,7 @@ function startMusic(){
       const src=audioCtx.createBufferSource();
       src.buffer=buf;
       const g=audioCtx.createGain();
-      g.gain.setValueAtTime(0.03,now+i*beat/2);
+      g.gain.setValueAtTime(0.02,now+i*beat/2);
       g.gain.exponentialRampToValueAtTime(0.001,now+i*beat/2+0.04);
       src.connect(g);g.connect(musicGain);
       src.start(now+i*beat/2);
@@ -190,7 +206,7 @@ function playEatSound(){
     osc.type='sine';
     osc.frequency.setValueAtTime(600,audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(1200,audioCtx.currentTime+0.08);
-    gain.gain.setValueAtTime(0.15,audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.12,audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
     osc.connect(gain);gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime);
@@ -198,18 +214,22 @@ function playEatSound(){
   }catch(e){}
 }
 
-function recalcStep(){SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);}
+function recalcStep(){
+  baseSpeed=SPEED;
+  SEG_STEP=Math.floor(SEGMENT_SPACING/SPEED);
+}
 
 function init(){
   headX=CELL*10;headY=CELL*10;
   dirX=1;dirY=0;targetDirX=1;targetDirY=0;
   trail=[];segCount=5;
-  score=0;started=false;
+  score=0;started=false;boostSpeed=false;
   highScore=parseInt(localStorage.getItem('snakeHighScore')||'0');
   highScoreEl.textContent=highScore;
   scoreEl.textContent='0';
   gameOver=false;gameOverEl.style.display='none';
   startScreen.style.display='flex';
+  controlsOverlay.classList.remove('active');
   spawnFood();
 }
 
@@ -245,7 +265,8 @@ function update(){
   if(gameOver||!started)return;
 
   dirX=targetDirX;dirY=targetDirY;
-  headX+=dirX*SPEED;headY+=dirY*SPEED;
+  const currentSpeed=boostSpeed?SPEED*2.8:SPEED;
+  headX+=dirX*currentSpeed;headY+=dirY*currentSpeed;
 
   trail.push({x:headX,y:headY});
   if(trail.length>segCount*SEG_STEP+10)trail.shift();
@@ -368,10 +389,11 @@ function draw(){
 }
 
 function endGame(){
-  gameOver=true;
+  gameOver=true;boostSpeed=false;
   if(score>highScore){highScore=score;localStorage.setItem('snakeHighScore',highScore);highScoreEl.textContent=highScore;}
   finalScoreEl.textContent='得分: '+score;
   gameOverEl.style.display='block';
+  controlsOverlay.classList.remove('active');
   if(animId)cancelAnimationFrame(animId);
   exitFullscreen();
 }
@@ -381,9 +403,12 @@ function loop(){update();draw();if(!gameOver)animId=requestAnimationFrame(loop);
 function beginPlay(){
   startScreen.style.display='none';
   started=true;
+  boostSpeed=false;
+  controlsOverlay.classList.add('active');
   if(musicOn&&!musicPlaying)startMusic();
   if(!animId)loop();
   try{wrapper.requestFullscreen()}catch(e){}
+  checkOrientation();
 }
 
 function exitFullscreen(){
@@ -394,46 +419,153 @@ function startGame(){
   if(animId)cancelAnimationFrame(animId);
   animId=null;
   recalcStep();init();draw();
+  controlsOverlay.classList.remove('active');
 }
 
-document.querySelectorAll('.diff-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    SPEED=parseFloat(btn.dataset.speed);
-    startGame();
-  });
+// Joystick touch handling
+function getCanvasRect(){
+  return canvas.getBoundingClientRect();
+}
+
+function handleJoystickStart(touch){
+  const rect=getCanvasRect();
+  const scaleX=canvas.width/rect.width,scaleY=canvas.height/rect.height;
+  const baseRect=joystickBase.getBoundingClientRect();
+  const baseCX=baseRect.left+baseRect.width/2;
+  const baseCY=baseRect.top+baseRect.height/2;
+  const dx=touch.clientX-baseCX;
+  const dy=touch.clientY-baseCY;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const maxR=JOYSTICK_RADIUS;
+  const clampedDist=Math.min(dist,maxR);
+  const angle=Math.atan2(dy,dx);
+  jTouchId=touch.identifier;
+  joystickActive=true;
+  // Move knob
+  const knobX=Math.cos(angle)*clampedDist;
+  const knobY=Math.sin(angle)*clampedDist;
+  joystickKnob.style.transform=`translate(${knobX}px,${knobY}px)`;
+  // Set direction
+  if(dist>15){
+    if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);
+    else setDir(0,dy>0?1:-1);
+  }
+  joystickKnob.classList.add('active');
+}
+
+function handleJoystickMove(touch){
+  if(!joystickActive)return;
+  const baseRect=joystickBase.getBoundingClientRect();
+  const baseCX=baseRect.left+baseRect.width/2;
+  const baseCY=baseRect.top+baseRect.height/2;
+  const dx=touch.clientX-baseCX;
+  const dy=touch.clientY-baseCY;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const maxR=JOYSTICK_RADIUS;
+  const clampedDist=Math.min(dist,maxR);
+  const angle=Math.atan2(dy,dx);
+  const knobX=Math.cos(angle)*clampedDist;
+  const knobY=Math.sin(angle)*clampedDist;
+  joystickKnob.style.transform=`translate(${knobX}px,${knobY}px)`;
+  if(dist>15){
+    if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);
+    else setDir(0,dy>0?1:-1);
+  }
+}
+
+function handleJoystickEnd(){
+  jTouchId=-1;
+  joystickActive=false;
+  joystickKnob.style.transform='translate(0,0)';
+  joystickKnob.classList.remove('active');
+}
+
+function handleSpeedStart(touch){
+  sTouchId=touch.identifier;
+  speedActive=true;
+  boostSpeed=true;
+  speedBtn.classList.add('active');
+}
+
+function handleSpeedEnd(){
+  sTouchId=-1;
+  speedActive=false;
+  boostSpeed=false;
+  speedBtn.classList.remove('active');
+}
+
+// Multi-touch controller
+canvas.addEventListener('touchstart',e=>{
+  if(!started||gameOver)return;
+  e.preventDefault();
+  for(let t of e.changedTouches){
+    const rect=canvas.getBoundingClientRect();
+    const relX=t.clientX-rect.left;
+    const relY=t.clientY-rect.top;
+    const inCanvas=relX>=0&&relX<=rect.width&&relY>=0&&relY<=rect.height;
+    if(!inCanvas)continue;
+    // Left half = joystick, right half = speed
+    if(relX<rect.width/2 && jTouchId<0){
+      handleJoystickStart(t);
+    }else if(relX>=rect.width/2 && sTouchId<0){
+      handleSpeedStart(t);
+    }
+  }
 });
 
-let touchStartX,touchStartY;
-canvas.addEventListener('touchstart',e=>{const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;});
+canvas.addEventListener('touchmove',e=>{
+  if(!started||gameOver)return;
+  e.preventDefault();
+  for(let t of e.changedTouches){
+    if(t.identifier===jTouchId)handleJoystickMove(t);
+  }
+});
+
 canvas.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-touchStartX,dy=e.changedTouches[0].clientY-touchStartY;
-  if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
-  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);
+  e.preventDefault();
+  for(let t of e.changedTouches){
+    if(t.identifier===jTouchId)handleJoystickEnd();
+    if(t.identifier===sTouchId)handleSpeedEnd();
+  }
 });
 
+canvas.addEventListener('touchcancel',e=>{
+  handleJoystickEnd();
+  handleSpeedEnd();
+});
+
+// Keyboard (desktop testing)
 document.addEventListener('keydown',e=>{
   switch(e.key){
     case'ArrowUp':e.preventDefault();if(started)setDir(0,-1);break;
     case'ArrowDown':e.preventDefault();if(started)setDir(0,1);break;
     case'ArrowLeft':e.preventDefault();if(started)setDir(-1,0);break;
     case'ArrowRight':e.preventDefault();if(started)setDir(1,0);break;
-    case' ':case'Space':e.preventDefault();if(gameOver)startGame();else if(!started)beginPlay();break;
+    case' ':case'Space':e.preventDefault();if(gameOver){startGame();beginPlay();}else if(!started)beginPlay();break;
     case'Enter':e.preventDefault();if(!started)beginPlay();break;
   }
 });
 
-document.getElementById('up').onclick=()=>started&&setDir(0,-1);
-document.getElementById('down').onclick=()=>started&&setDir(0,1);
-document.getElementById('left').onclick=()=>started&&setDir(-1,0);
-document.getElementById('right').onclick=()=>started&&setDir(1,0);
-document.getElementById('restartBtn').onclick=startGame;
+// Difficulty
+document.querySelectorAll('.diff-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.diff-btn').forEach(b=>b.style.background='rgba(255,255,255,.04)');
+    btn.style.background='#e94560';btn.style.borderColor='#e94560';btn.style.color='#fff';
+    SPEED=parseFloat(btn.dataset.speed);
+    startGame();
+  });
+});
+
+document.getElementById('restartBtn').onclick=()=>{startGame();beginPlay();};
 startBtn.onclick=beginPlay;
 
 startGame();
-document.addEventListener('fullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.fullscreenElement));
-document.addEventListener('webkitfullscreenchange',()=>wrapper.classList.toggle('fullscreen',!!document.webkitfullscreenElement));
+
+// Orientation & fullscreen listeners
+window.addEventListener('resize',checkOrientation);
+window.addEventListener('orientationchange',()=>setTimeout(checkOrientation,300));
+document.addEventListener('fullscreenchange',()=>{wrapper.classList.toggle('fullscreen',!!document.fullscreenElement);checkOrientation();});
+document.addEventListener('webkitfullscreenchange',()=>{wrapper.classList.toggle('fullscreen',!!document.webkitfullscreenElement);checkOrientation();});
 </script>
 </body>
 </html>
