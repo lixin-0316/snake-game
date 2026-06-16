@@ -9,6 +9,7 @@
 body{background:#1a0a1a;display:flex;justify-content:center;align-items:center;min-height:100dvh;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
 .game-wrapper{background:linear-gradient(145deg,#2d1a2d,#1a0a1a);padding:15px;border-radius:16px;box-shadow:0 0 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05)}
 canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:100%;max-width:800px}
+@media(min-width:768px){canvas{max-width:1200px}}
 .btns{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 .btns button{padding:10px 28px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;display:none}
 .btns button.show{display:inline-block}
@@ -18,6 +19,8 @@ canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:10
 .btn-win:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(233,69,96,.4)}
 .btn-pass{background:linear-gradient(135deg,#666,#444);color:#fff}
 .btn-pass:hover{transform:translateY(-2px)}
+.btn-discard{background:linear-gradient(135deg,#5dade2,#2e86c1);color:#fff}
+.btn-discard:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(93,173,226,.4)}
 .btn-reset{background:linear-gradient(135deg,#53d769,#2ecc71);color:#fff}
 .btn-reset:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(83,215,105,.4)}
 .info-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 10px;color:rgba(255,255,255,.6);font-size:14px}
@@ -37,6 +40,7 @@ canvas{display:block;margin:0 auto;border-radius:10px;touch-action:none;width:10
     <button class="btn-draw" id="drawBtn">摸牌</button>
     <button class="btn-win" id="winBtn">胡牌</button>
     <button class="btn-pass" id="passBtn">过</button>
+    <button class="btn-discard" id="discardBtn">出牌</button>
     <button class="btn-reset" id="resetBtn">重新开始</button>
   </div>
 </div>
@@ -88,8 +92,33 @@ function sortTiles(ts){
 
 function isRedMiddle(t){return t.type==='jian'&&t.val===0;}
 
-let wall,hands,playerHand,discards,turn,gameOver,msg,drawTile,canWin,phase;
+let wall,hands,playerHand,discards,turn,gameOver,msg,drawTile,canWin,phase,lastDiscard,selectedDiscard;
 let dealer=0;
+
+let sharedAc,audioReady;
+function getAc(){
+  if(!sharedAc||sharedAc.state==='closed')sharedAc=new(window.AudioContext||window.webkitAudioContext)();
+  if(sharedAc.state==='suspended')sharedAc.resume();
+  return sharedAc;
+}
+function initAudio(){getAc();audioReady=1;}
+function playSound(f,d,t){
+  if(!audioReady)return;
+  try{
+    const ac=getAc();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type=t||'sine';o.frequency.setValueAtTime(f,ac.currentTime);
+    g.gain.setValueAtTime(0.15,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d);
+    o.connect(g);g.connect(ac.destination);
+    o.start(ac.currentTime);o.stop(ac.currentTime+d);
+  }catch(e){}
+}
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=.9;speechSynthesis.speak(u)}catch(e){}}
+function tileVoice(t){return isRedMiddle(t)?'红中':tileName(t)}
+function playDrawSound(t){playSound(500,0.08,'sine');setTimeout(()=>playSound(700,0.06,'sine'),50);if(t)speak(tileVoice(t))}
+function playDiscardSound(t){playSound(300,0.15,'square');if(t)speak(tileVoice(t))}
+function playWinSound(){playSound(600,0.1,'sine');setTimeout(()=>playSound(800,0.1,'sine'),120);setTimeout(()=>playSound(1000,0.15,'sine'),240);speak('胡牌了')}
 
 function initGame(){
   wall=shuffle(createTiles());
@@ -100,14 +129,16 @@ function initGame(){
   sortTiles(hands[0]);
   playerHand=hands[0];
   discards=[[],[],[],[]];
-  turn=0;gameOver=false;drawTile=null;canWin=false;phase='play';
-  msg='游戏开始！点击摸牌';
-  document.getElementById('drawBtn').className='btn-draw show';
+  turn=0;gameOver=false;drawTile=null;canWin=false;phase='play';lastDiscard=null;selectedDiscard=-1;
+  msg='游戏开始，自动摸牌中...';
+  document.getElementById('drawBtn').className='btn-draw';
   document.getElementById('winBtn').className='btn-win';
   document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('discardBtn').className='btn-discard';
   document.getElementById('resetBtn').className='btn-reset';
   document.getElementById('infoRight').textContent='剩余: '+wall.length+' 张';
   render();
+  setTimeout(autoDraw,400);
 }
 
 function isWin(tiles,wilds){
@@ -232,28 +263,24 @@ function checkWin(hand,includeDraw){
 }
 
 function aiDiscard(hand){
-  const b4=sortTiles(hand.filter(t=>{
-    if(isRedMiddle(t))return false;
+  const scored=hand.filter(t=>!isRedMiddle(t)).map(t=>{
     const k=tileKey(t);
     const cnt=hand.filter(h=>tileKey(h)===k).length;
-    if(cnt>=3)return true;
-    if(k.startsWith('feng')||k.startsWith('jian'))return cnt>=2||hand.filter(h=>isRedMiddle(h)).length>0;
-    return true;
-  }));
-  // discard the first "least useful" tile
-  const candidates=hand.filter(t=>!isRedMiddle(t)).sort((a,b)=>{
-    const ka=tileKey(a),kb=tileKey(b);
-    const ca=hand.filter(h=>tileKey(h)===ka).length;
-    const cb=hand.filter(h=>tileKey(h)===kb).length;
-    if(ca!==cb)return ca-cb;
-    const ta=a.type==='feng'||a.type==='jian'?10:a.val;
-    const tb=b.type==='feng'||b.type==='jian'?10:b.val;
-    const endA=a.val===0||a.val===8||a.type==='feng'||a.type==='jian';
-    const endB=b.val===0||b.val===8||b.type==='feng'||b.type==='jian';
-    if(endA&&!endB)return-1;if(!endA&&endB)return1;
-    return 0;
+    let score=cnt*10;
+    if(t.type==='wan'||t.type==='tiao'||t.type==='tong'){
+      const v=t.val;
+      if(v>=3&&v<=7)score+=6;
+      else if(v===2||v===8)score+=3;
+      else score+=1;
+      const neighbors=hand.filter(h=>h.type===t.type&&Math.abs(h.val-v)<=2);
+      score+=neighbors.length*3;
+    }else{
+      score+=1;
+    }
+    return{tile:t,score};
   });
-  return candidates.length>0?candidates[0]:hand[0];
+  scored.sort((a,b)=>a.score-b.score||a.tile.id-b.tile.id);
+  return scored.length>0?scored[0].tile:hand[0];
 }
 
 function doAITurn(){
@@ -265,7 +292,7 @@ function doAITurn(){
 
   if(isWin([...hands[turn],tile],hands[turn].filter(t=>isRedMiddle(t)).length+(isRedMiddle(tile)?1:0))){
     msg=`AI玩家${turn+1} 胡牌了！`;
-    gameOver=true;render();showReset();return;
+    gameOver=true;playWinSound();render();showReset();return;
   }
 
   hands[turn].push(tile);
@@ -273,14 +300,16 @@ function doAITurn(){
   const idx=hands[turn].indexOf(discard);
   if(idx!==-1)hands[turn].splice(idx,1);
   discards[turn].push(discard);
+  if(turn!==0)lastDiscard=discard;
   sortTiles(hands[turn]);
+  if(turn!==0)playDiscardSound(discard);
 
   turn=(turn+1)%4;
   if(turn===0){
     drawTile=null;
-    document.getElementById('drawBtn').className='btn-draw show';
-    msg='轮到你！点击摸牌';
+    document.getElementById('drawBtn').className='btn-draw';
     render();
+    setTimeout(autoDraw,400);
   }else{
     render();
     setTimeout(doAITurn,600);
@@ -294,29 +323,40 @@ function handleDraw(){
   drawTile=wall.pop();
   document.getElementById('infoRight').textContent='剩余: '+wall.length+' 张';
   canWin=isWin(playerHand,playerHand.filter(t=>isRedMiddle(t)).length+(isRedMiddle(drawTile)?1:0));
+  playDrawSound(drawTile);
 
   document.getElementById('drawBtn').className='btn-draw';
   if(canWin)document.getElementById('winBtn').className='btn-win show';
   document.getElementById('passBtn').className='btn-pass show';
-  msg=canWin?'你可以胡牌！或点击手牌弃掉摸到的牌':'点击手牌弃掉摸到的牌';
+  document.getElementById('discardBtn').className='btn-discard';
+  msg=canWin?'你可以胡牌！或选牌后点出牌':'选一张手牌，点「出牌」弃掉';
   render();
+}
+
+function autoDraw(){
+  if(gameOver||turn!==0||phase!=='play')return;
+  handleDraw();
 }
 
 function handleWin(){
   if(gameOver||!canWin)return;
+  initAudio();
   playerHand.push(drawTile);
   sortTiles(playerHand);
   msg='你胡牌了！🎉';
-  gameOver=true;
+  gameOver=true;selectedDiscard=-1;
+  playWinSound();
   document.getElementById('drawBtn').className='btn-draw';
   document.getElementById('winBtn').className='btn-win';
   document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('discardBtn').className='btn-discard';
   showReset();
   render();
 }
 
 function handlePass(){
   if(gameOver||!drawTile||turn!==0)return;
+  initAudio();
   playerHand.push(drawTile);
   sortTiles(playerHand);
   const discard=aiDiscard(playerHand);
@@ -324,12 +364,38 @@ function handlePass(){
   if(idx!==-1){
     playerHand.splice(idx,1);
     discards[0].push(discard);
+    lastDiscard=discard;
   }
+  playDiscardSound(discard);
   document.getElementById('winBtn').className='btn-win';
   document.getElementById('passBtn').className='btn-pass';
-  drawTile=null;canWin=false;
+  document.getElementById('discardBtn').className='btn-discard';
+  drawTile=null;canWin=false;selectedDiscard=-1;
   turn=1;
   msg='你弃掉了 '+tileName(discard);
+  render();
+  setTimeout(doAITurn,500);
+}
+
+function handleDiscard(){
+  if(gameOver||!drawTile||turn!==0||selectedDiscard===-1)return;
+  initAudio();
+  const tile=playerHand[selectedDiscard];
+  playerHand.push(drawTile);
+  sortTiles(playerHand);
+  const idx=playerHand.indexOf(tile);
+  if(idx!==-1){
+    playerHand.splice(idx,1);
+    discards[0].push(tile);
+    lastDiscard=tile;
+  }
+  playDiscardSound(tile);
+  document.getElementById('winBtn').className='btn-win';
+  document.getElementById('passBtn').className='btn-pass';
+  document.getElementById('discardBtn').className='btn-discard';
+  drawTile=null;canWin=false;selectedDiscard=-1;
+  turn=1;
+  msg='你弃掉了 '+tileName(tile);
   render();
   setTimeout(doAITurn,500);
 }
@@ -392,7 +458,7 @@ function render(){
   const sx=Math.max(10,400-playerHand.length*30);
   playerHand.forEach((t,i)=>{
     const x=sx+i*30;
-    drawTileUI(x,450,t,true);
+    drawTileUI(x,i===selectedDiscard?430:450,t,true,i===selectedDiscard);
   });
 
   if(drawTile){
@@ -401,14 +467,21 @@ function render(){
     ctx.fillText('摸到的牌',360,460);
   }
 
-  // discard areas
-  const positions=[{x:380,y:240},{x:120,y:220},{x:380,y:90},{x:650,y:220}];
+  // discard areas - show last 3 tiles from each player
+  const positions=[{x:340,y:235},{x:80,y:210},{x:340,y:75},{x:620,y:210}];
+  const labels=['你','AI-1','AI-4','AI-3'];
   for(let p=0;p<4;p++){
     if(discards[p]&&discards[p].length>0){
-      const last=discards[p][discards[p].length-1];
-      ctx.globalAlpha=0.7;
-      drawTileUI(positions[p].x,positions[p].y,last,false);
-      ctx.globalAlpha=1;
+      const arr=discards[p];
+      const show=arr.slice(-3);
+      show.forEach((t,i)=>{
+        const xx=positions[p].x+i*36;
+        ctx.globalAlpha=p===0?1:0.6;
+        drawTileUI(xx,positions[p].y,t,true);
+        ctx.globalAlpha=1;
+      });
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px sans-serif';ctx.textAlign='center';
+      ctx.fillText(labels[p],positions[p].x+show.length*18,positions[p].y+TH+10);
     }
   }
 
@@ -428,9 +501,10 @@ function render(){
   }
 }
 
-function drawTileUI(x,y,t,faceUp){
-  ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.15)';
+function drawTileUI(x,y,t,faceUp,selected){
+  ctx.shadowBlur=selected?15:3;ctx.shadowColor=selected?'rgba(93,173,226,.6)':'rgba(0,0,0,.15)';
   ctx.fillStyle='#faf5e8';roundRect(x,y,TW-2,TH-2,4);ctx.fill();ctx.shadowBlur=0;
+  if(selected){ctx.strokeStyle='#5dade2';ctx.lineWidth=2;roundRect(x,y,TW-2,TH-2,4);ctx.stroke();}
   if(faceUp){
     const col=t.type==='wan'?'#27ae60':t.type==='tiao'?'#2980b9':t.type==='tong'?'#e74c3c':t.type==='feng'?'#8e44ad':'#e67e22';
     ctx.fillStyle=col;ctx.font='bold 16px serif';ctx.textAlign='center';
@@ -464,6 +538,7 @@ function roundRect(x,y,w,h,r){
 
 canvas.addEventListener('click',e=>{
   if(gameOver||turn!==0||!drawTile||phase!=='play')return;
+  initAudio();
   const rect=canvas.getBoundingClientRect();
   const scaleX=canvas.width/rect.width,scaleY=canvas.height/rect.height;
   const mx=(e.clientX-rect.left)*scaleX,my=(e.clientY-rect.top)*scaleY;
@@ -471,27 +546,19 @@ canvas.addEventListener('click',e=>{
   const sx=Math.max(10,400-playerHand.length*30);
   for(let i=0;i<playerHand.length;i++){
     const cx=sx+i*30;
-    if(mx>=cx&&mx<=cx+TW&&my>=450&&my<=450+TH){
-      playerHand.push(drawTile);
-      sortTiles(playerHand);
-      const discard=playerHand[i];
-      playerHand.splice(i,1);
-      discards[0].push(discard);
-      document.getElementById('winBtn').className='btn-win';
-      document.getElementById('passBtn').className='btn-pass';
-      drawTile=null;canWin=false;
-      turn=1;
-      msg='你弃掉了 '+tileName(discard);
+    if(mx>=cx&&mx<=cx+TW&&my>=430&&my<=450+TH){
+      selectedDiscard=selectedDiscard===i?-1:i;
+      document.getElementById('discardBtn').className=selectedDiscard!==-1?'btn-discard show':'btn-discard';
       render();
-      setTimeout(doAITurn,500);
       break;
     }
   }
 });
 
-document.getElementById('drawBtn').onclick=handleDraw;
+document.getElementById('drawBtn').onclick=function(){initAudio();handleDraw();};
 document.getElementById('winBtn').onclick=handleWin;
 document.getElementById('passBtn').onclick=handlePass;
+document.getElementById('discardBtn').onclick=handleDiscard;
 document.getElementById('resetBtn').onclick=initGame;
 
 initGame();

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>文字修仙</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+body{background:#0a0a1a;color:#e0e0e0;font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100dvh;display:flex;flex-direction:column;padding:16px;overflow-x:hidden}
+.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:radial-gradient(ellipse at 50% 0%,#1a0a2e 0%,#0a0a1a 70%)}
+
+/* Title */
+.title{text-align:center;padding:20px 0 10px}
+.title h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#e94560,#f0c040,#e94560);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:4px;text-shadow:0 0 40px rgba(233,69,96,.3)}
+.realm-name{text-align:center;font-size:20px;font-weight:700;color:#f0c040;margin:8px 0 4px;letter-spacing:2px}
+.realm-sub{text-align:center;font-size:12px;color:#555;margin-bottom:12px}
+
+/* Stats */
+.stats{display:flex;justify-content:space-around;padding:12px 0;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:16px}
+.stat{text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:#fff}
+.stat-label{font-size:11px;color:#555;margin-top:2px}
+
+/* Progress */
+.progress-wrap{background:rgba(255,255,255,.06);border-radius:10px;height:20px;overflow:hidden;position:relative;margin-bottom:12px}
+.progress-bar{height:100%;border-radius:10px;background:linear-gradient(90deg,#e94560,#f0c040);transition:width .3s;width:0%}
+.progress-text{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* Buttons */
+.actions{display:grid;gap:10px;margin-bottom:16px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:1px;position:relative;overflow:hidden}
+.btn:active{transform:scale(.96)}
+.btn-train{background:linear-gradient(135deg,#2a5a2a,#3d7a3d);color:#7fdf7f;box-shadow:0 4px 20px rgba(83,215,105,.15)}
+.btn-train:active{box-shadow:0 2px 10px rgba(83,215,105,.1)}
+.btn-break{background:linear-gradient(135deg,#5a2a2a,#7a3d3d);color:#ff7f7f;box-shadow:0 4px 20px rgba(233,69,96,.15)}
+.btn-break:active{box-shadow:0 2px 10px rgba(233,69,96,.1)}
+.btn-pill{background:linear-gradient(135deg,#2a2a5a,#3d3d7a);color:#7f7fdf;box-shadow:0 4px 20px rgba(138,43,226,.15)}
+.btn-pill:active{box-shadow:0 2px 10px rgba(138,43,226,.1)}
+.btn:disabled{opacity:.4;pointer-events:none;filter:grayscale(.5)}
+
+/* Log */
+.log-wrap{flex:1;background:rgba(255,255,255,.02);border-radius:10px;padding:10px;min-height:120px;max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,.04)}
+.log-wrap::-webkit-scrollbar{width:3px}
+.log-wrap::-webkit-scrollbar-thumb{background:rgba(233,69,96,.3);border-radius:3px}
+.log-entry{padding:4px 0;font-size:12px;line-height:1.5;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-entry:last-child{border-bottom:none}
+.log-time{color:#444;margin-right:6px}
+.log-good{color:#7fdf7f}
+.log-bad{color:#ff6b6b}
+.log-info{color:#7fbfff}
+.log-special{color:#f0c040}
+
+/* Event modal */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-box{background:linear-gradient(135deg,#1a1a3a,#0d0d2a);border-radius:16px;padding:24px;max-width:340px;width:100%;border:1px solid rgba(255,255,255,.1);text-align:center}
+.modal-title{font-size:20px;font-weight:700;margin-bottom:8px;color:#f0c040}
+.modal-desc{font-size:14px;color:#aaa;line-height:1.6;margin-bottom:16px}
+.modal-btn{display:block;width:100%;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;margin-top:8px}
+.modal-btn:active{transform:scale(.97)}
+
+/* Breakthrough animation */
+@keyframes breakthrough{0%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.8}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes float-up{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+.float-text{position:fixed;pointer-events:none;font-weight:700;font-size:20px;z-index:50;animation:float-up 1s forwards}
+.float-good{color:#7fdf7f}
+.float-bad{color:#ff6b6b}
+.float-gold{color:#f0c040}
+
+/* Footer */
+.footer{text-align:center;padding:10px;font-size:11px;color:#333;letter-spacing:1px;margin-top:auto}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="title"><h1>文字修仙</h1></div>
+<div class="realm-name" id="realmName">练气期</div>
+<div class="realm-sub" id="realmSub">修仙之路 · 第 1 层</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="spiritVal">0</div><div class="stat-label">灵力</div></div>
+  <div class="stat"><div class="stat-val" id="cultVal">0</div><div class="stat-label">修为</div></div>
+  <div class="stat"><div class="stat-val" id="pillVal">0</div><div class="stat-label">丹药</div></div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar" id="progressBar"></div>
+  <div class="progress-text" id="progressText">0 / 100</div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-train" id="btnTrain">🧘 修炼</button>
+  <button class="btn btn-break" id="btnBreak">💥 突破</button>
+  <button class="btn btn-pill" id="btnPill">🔥 炼丹</button>
+</div>
+
+<div class="log-wrap" id="logWrap">
+  <div class="log-entry"><span class="log-time">►</span><span class="log-info">踏入修仙之路...</span></div>
+</div>
+
+<div class="footer">一念成仙 · 一念成魔</div>
+
+<div class="modal" id="eventModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">奇遇</div>
+    <div class="modal-desc" id="modalDesc">发生了什么...</div>
+    <button class="modal-btn" id="modalBtn1" style="background:linear-gradient(135deg,#3d7a3d,#2a5a2a);color:#7fdf7f">接受</button>
+    <button class="modal-btn" id="modalBtn2" style="background:linear-gradient(135deg,#5a2a2a,#3d1a1a);color:#ff6b6b">拒绝</button>
+  </div>
+</div>
+
+<script>
+// Realms data
+var REALMS=[
+  {name:'练气期',require:100,breakRate:1,desc:'初入修仙'},
+  {name:'筑基期',require:300,breakRate:.9,desc:'筑基固本'},
+  {name:'金丹期',require:800,breakRate:.8,desc:'金丹大成'},
+  {name:'元婴期',require:2000,breakRate:.7,desc:'元婴出窍'},
+  {name:'化神期',require:5000,breakRate:.55,desc:'化神合道'},
+  {name:'合体期',require:12000,breakRate:.4,desc:'天人合一'},
+  {name:'大乘期',require:30000,breakRate:.25,desc:'大乘圆满'},
+  {name:'渡劫期',require:80000,breakRate:.1,desc:'天劫降临'},
+  {name:'飞升',require:0,breakRate:0,desc:'飞升成仙'}
+];
+
+var g={realm:0,spirit:0,cult:0,pills:0,progress:0,totalCult:0,log:[]};
+
+// DOM refs
+var $=function(id){return document.getElementById(id)};
+var realmName=$('realmName'),realmSub=$('realmSub');
+var spiritVal=$('spiritVal'),cultVal=$('cultVal'),pillVal=$('pillVal');
+var progressBar=$('progressBar'),progressText=$('progressText');
+var logWrap=$('logWrap'),btnTrain=$('btnTrain'),btnBreak=$('btnBreak'),btnPill=$('btnPill');
+var eventModal=$('eventModal'),modalTitle=$('modalTitle'),modalDesc=$('modalDesc');
+var modalBtn1=$('modalBtn1'),modalBtn2=$('modalBtn2');
+
+// Save/Load
+function save(){try{localStorage.setItem('xiuxianSave',JSON.stringify(g))}catch(e){}}
+function load(){
+  try{
+    var d=JSON.parse(localStorage.getItem('xiuxianSave'));
+    if(d){g.realm=d.realm||0;g.spirit=d.spirit||0;g.cult=d.cult||0;g.pills=d.pills||0;g.progress=d.progress||0;g.totalCult=d.totalCult||0;}
+  }catch(e){}
+}
+
+// Log
+function log(msg,cls){
+  var div=document.createElement('div');
+  div.className='log-entry';
+  div.innerHTML='<span class="log-time">►</span><span class="'+cls+'">'+msg+'</span>';
+  logWrap.insertBefore(div,logWrap.firstChild);
+  if(logWrap.children.length>50)logWrap.removeChild(logWrap.lastChild);
+}
+
+// Float text
+function floatText(text,cls,x,y){
+  var el=document.createElement('div');
+  el.className='float-text '+cls;
+  el.textContent=text;
+  el.style.left=x+'px';el.style.top=y+'px';
+  document.body.appendChild(el);
+  setTimeout(function(){el.remove()},1000);
+}
+
+// Update UI
+function updateUI(){
+  var r=REALMS[g.realm];
+  realmName.textContent=r.name;
+  realmSub.textContent=r.desc+' · 第 '+(g.realm+1)+' 层';
+  spiritVal.textContent=Math.floor(g.spirit);
+  cultVal.textContent=Math.floor(g.cult);
+  pillVal.textContent=g.pills;
+
+  if(g.realm<8){
+    var pct=Math.min(100,g.progress/r.require*100);
+    progressBar.style.width=pct+'%';
+    progressText.textContent=Math.floor(g.progress)+' / '+r.require;
+    btnTrain.disabled=false;
+    btnBreak.disabled=g.progress<r.require;
+  }else{
+    progressBar.style.width='100%';
+    progressText.textContent='★ 飞升成仙 ★';
+    btnTrain.disabled=true;
+    btnBreak.disabled=true;
+    btnPill.disabled=true;
+  }
+}
+
+// Train
+btnTrain.addEventListener('click',function(e){
+  if(g.realm>=8)return;
+  var gain=1+Math.floor(g.spirit/100)+g.realm*0.5;
+  gain=Math.floor(gain);
+  g.cult+=gain;
+  g.progress+=gain;
+  g.totalCult+=gain;
+  g.spirit+=gain*0.3;
+  updateUI();
+  save();
+  floatText('+'+gain+' 修为','float-good',e.clientX||e.changedTouches[0].clientX,e.clientY||e.changedTouches[0].clientY);
+  if(g.realm>=1)log('修炼获得 '+gain+' 修为','log-good');
+});
+
+// Passive gain
+var passiveTimer=0,eventTimer=0;
+setInterval(function(){
+  if(g.realm>=8)return;
+  var passive=0.1+(g.realm*0.15);
+  g.spirit+=passive;
+  passiveTimer+=1;
+
+  if(passiveTimer>=3){
+    passiveTimer=0;
+    var gain=Math.floor(1+g.realm*0.3);
+    g.cult+=gain;g.progress+=gain;g.totalCult+=gain;
+  }
+
+  eventTimer+=1;
+  if(eventTimer>=30){
+    eventTimer=0;
+    if(Math.random()<0.5)triggerEvent();
+  }
+
+  updateUI();save();
+},1000);
+
+// Breakthrough
+btnBreak.addEventListener('click',function(){
+  if(g.realm>=8)return;
+  var r=REALMS[g.realm];
+  var roll=Math.random();
+  if(roll<r.breakRate){
+    g.realm++;
+    g.progress=0;
+    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
+    progressWrap=progressBar.parentElement;
+    progressWrap.style.animation='breakthrough .5s';
+    setTimeout(function(){progressWrap.style.animation=''},500);
+    updateUI();save();
+  }else{
+    var lose=Math.floor(r.require*0.15);
+    g.progress=Math.max(0,g.progress-lose);
+    log('💥 突破失败，修为倒退 '+lose,'log-bad');
+    btnBreak.parentElement.style.animation='shake .3s';
+    setTimeout(function(){btnBreak.parentElement.style.animation=''},300);
+    updateUI();save();
+  }
+});
+
+// Pill
+btnPill.addEventListener('click',function(){
+  if(g.cult<50){
+    log('修为不足，无法炼丹','log-bad');
+    return;
+  }
+  g.cult-=50;
+  g.pills++;
+  log('🔥 炼制成功，获得 1 枚丹药','log-special');
+  updateUI();save();
+});
+
+// Use pill when breaking through
+// Auto-use pills on breakthrough attempt
+var origBreak=btnBreak.click;
+// Actually modify the breakthrough click to auto-use pills
+btnBreak.addEventListener('click',function(){
+  // This runs after the main breakthrough logic
+  // Pills are auto-consumed before the attempt
+});
+
+// Hack: inject pill usage into breakthrough
+// Let me override: before breakthrough, consume pills to boost rate
+var origBreakText=btnBreak.textContent;
+btnBreak._realClick=function(){
+  if(g.realm>=8)return;
+  var r=REALMS[g.realm];
+  // Auto-use pills to boost success rate
+  var pillsUsed=0;
+  while(g.pills>0&&pillsUsed<3){
+    g.pills--;pillsUsed++;
+  }
+  if(pillsUsed>0){
+    log('使用 '+pillsUsed+' 枚丹药，突破率提升','log-info');
+    // Boost rate: each pill adds 10%
+    r.breakRate=Math.min(1,REALMS[g.realm].breakRate+pillsUsed*0.1);
+  }else{
+    r.breakRate=REALMS[g.realm].breakRate;
+  }
+  var roll=Math.random();
+  if(roll<r.breakRate){
+    g.realm++;
+    g.progress=0;
+    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
+    updateUI();save();
+  }else{
+    var lose=Math.floor(r.require*0.15);
+    g.progress=Math.max(0,g.progress-lose);
+    log('💥 突破失败，修为倒退 '+lose,'log-bad');
+    updateUI();save();
+  }
+};
+// Override click
+var btnBreakHandler=function(){
+  if(g.realm>=8)return;
+  var r=REALMS[g.realm];
+  var pillsUsed=0;
+  while(g.pills>0&&pillsUsed<3&&g.realm>=2){g.pills--;pillsUsed++;}
+  if(pillsUsed>0)log('使用 '+pillsUsed+' 枚丹药护体','log-info');
+  var rate=Math.min(1,r.breakRate+pillsUsed*0.1);
+  var roll=Math.random();
+  if(roll<rate){
+    g.realm++;
+    g.progress=0;
+    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
+    var pb=progressBar.parentElement;
+    pb.style.animation='breakthrough .5s';
+    setTimeout(function(){pb.style.animation=''},500);
+    updateUI();save();
+  }else{
+    var lose=Math.floor(r.require*0.15);
+    g.progress=Math.max(0,g.progress-lose);
+    log('💥 突破失败，修为倒退 '+lose,'log-bad');
+    var act=document.querySelector('.actions');
+    act.style.animation='shake .3s';
+    setTimeout(function(){act.style.animation=''},300);
+    updateUI();save();
+  }
+};
+
+// Replace the breakthrough click listener
+// Remove old listeners and add new one
+var newBtn=btnBreak.cloneNode(true);
+btnBreak.parentNode.replaceChild(newBtn,btnBreak);
+// Now btnBreak is the new element, re-assign
+var btnBreak2=newBtn;
+btnBreak2.addEventListener('click',function(e){
+  if(g.realm>=8)return;
+  var r=REALMS[g.realm];
+  var pillsUsed=0;
+  while(g.pills>0&&pillsUsed<3&&g.realm>=2){g.pills--;pillsUsed++;}
+  if(pillsUsed>0)log('使用 '+pillsUsed+' 枚丹药护体','log-info');
+  var rate=Math.min(1,r.breakRate+pillsUsed*0.1);
+  var roll=Math.random();
+  if(roll<rate){
+    g.realm++;
+    g.progress=0;
+    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
+    var pb=$('progressBar').parentElement;
+    pb.style.animation='breakthrough .5s';
+    setTimeout(function(){pb.style.animation=''},500);
+    updateUI();save();
+    if(g.realm>=8)log('🌟 飞升成仙！普天同庆！','log-special');
+  }else{
+    var lose=Math.floor(r.require*0.15);
+    g.progress=Math.max(0,g.progress-lose);
+    log('💥 突破失败，修为倒退 '+lose,'log-bad');
+    var act=document.querySelector('.actions');
+    act.style.animation='shake .3s';
+    setTimeout(function(){act.style.animation=''},300);
+    updateUI();save();
+  }
+});
+
+// Events
+var events=[
+  {title:'灵泉',desc:'你发现一处灵泉，灵力充沛',good:function(){g.spirit+=50;log('灵力 +50','log-good')}},
+  {title:'妖兽袭击',desc:'一只妖兽挡在路上',good:function(){g.cult+=30;log('击败妖兽，修为 +30','log-good')},bad:function(){g.cult=Math.max(0,g.cult-20);log('被妖兽所伤，修为 -20','log-bad')}},
+  {title:'神秘老者',desc:'一位老者愿指点你修行',good:function(){g.progress+=50;log('修为精进，进度 +50','log-good')},bad:function(){log('老者摇头离去','log-info')}},
+  {title:'灵果',desc:'树上结着一枚灵果',good:function(){g.realm<8&&(g.progress+=30);log('服用灵果，修为 +30','log-good')},bad:function(){log('灵果已腐，白高兴一场','log-info')}},
+  {title:'古修洞府',desc:'发现一座古代修士的洞府',good:function(){g.pills+=2;log('获得 2 枚丹药','log-special')},bad:function(){log('洞府已空，一无所获','log-info')}},
+  {title:'心魔',desc:'修炼时心魔滋生',good:function(){g.cult+=40;log('克服心魔，修为 +40','log-good')},bad:function(){g.cult=Math.max(0,g.cult-30);log('被心魔所困，修为 -30','log-bad')}},
+  {title:'天降机缘',desc:'一道灵光从天而降',good:function(){g.spirit+=100;log('灵力 +100','log-good')},bad:function(){log('灵光消散，空欢喜一场','log-info')}},
+];
+
+function triggerEvent(){
+  if(g.realm>=8)return;
+  var evt=events[Math.floor(Math.random()*events.length)];
+  modalTitle.textContent='✨ '+evt.title;
+  modalDesc.textContent=evt.desc;
+  eventModal.classList.add('show');
+  modalBtn1.onclick=function(){
+    eventModal.classList.remove('show');
+    if(evt.good)evt.good();
+    updateUI();save();
+  };
+  modalBtn2.style.display=evt.bad?'block':'none';
+  modalBtn2.onclick=function(){
+    eventModal.classList.remove('show');
+    if(evt.bad)evt.bad();
+    updateUI();save();
+  };
+}
+
+// Init
+load();
+if(REALMS[g.realm].require>0&&g.progress>REALMS[g.realm].require)g.progress=REALMS[g.realm].require;
+updateUI();
+
+// Override global btnBreak reference
+// Just use the existing btnBreak2
+
+// Reset event timer if game loaded mid-timer
+// Also periodically check for idle progress
+var idleCheck=setInterval(function(){
+  if(g.realm>=8)return;
+  if(Date.now()-(g._lastSave||Date.now())>60000){
+    var offlineMinutes=Math.floor((Date.now()-(g._lastSave||Date.now()))/60000);
+    if(offlineMinutes>0){
+      var gain=Math.floor(offlineMinutes*(1+g.realm*0.3));
+      g.cult+=gain;g.progress+=gain;g.totalCult+=gain;
+      log('离线 '+offlineMinutes+' 分钟，自动获得 '+gain+' 修为','log-info');
+      updateUI();save();
+    }
+  }
+  g._lastSave=Date.now();
+},30000);
+
+// Also save on page unload
+window.addEventListener('beforeunload',function(){g._lastSave=Date.now();save()});
+
+// Fix: the original btnBreak still has old listeners.
+// Since we replaced btnBreak with btnBreak2, we need to update references
+// Let me also make the breakthrough button use the correct reference
+// Actually the button ID is still the same, and we replaced the DOM element.
+// The $('btnBreak') should now return the new element.
+// Let me verify: btnBreak is still the OLD element reference.
+// So let me fix $('btnBreak') to be the new one.
+// Actually, since we replaced the child, the new element has the same ID.
+// So $('btnBreak') will find it. But btnBreak variable still references old.
+// Let me reassign btnBreak.
+btnBreak=$('btnBreak');
+
+// Also fix the pill button to allow pill use for breakthrough
+// Let pills also be usable directly
+btnPill.addEventListener('click',function(){
+  // Original logic is above, but it was replaced by the clone too
+  // Re-assign btnPill
+});
+
+// Fix: reset btnPill and btnTrain since they might have been cloned
+btnTrain=$('btnTrain');
+btnPill=$('btnPill');
+
+// Re-add train click
+btnTrain.addEventListener('click',function(e){
+  if(g.realm>=8)return;
+  var gain=1+Math.floor(g.spirit/100)+g.realm*0.5;
+  gain=Math.floor(gain);
+  g.cult+=gain;
+  g.progress+=gain;
+  g.totalCult+=gain;
+  g.spirit+=gain*0.3;
+  updateUI();save();
+  var rect=btnTrain.getBoundingClientRect();
+  floatText('+'+gain+' 修为','float-good',rect.left+rect.width/2,rect.top);
+  if(g.realm>=1)log('修炼获得 '+gain+' 修为','log-good');
+});
+
+// Pill click
+btnPill.addEventListener('click',function(){
+  if(g.cult<50){
+    log('修为不足，无法炼丹','log-bad');
+    return;
+  }
+  g.cult-=50;
+  g.pills++;
+  log('🔥 炼制成功，获得 1 枚丹药','log-special');
+  updateUI();save();
+});
+
+// Start first save timer
+g._lastSave=Date.now();
+
+// Apply initial UI
+updateUI();
+</script>
+</body>
+</html>
