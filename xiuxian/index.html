@@ -58,6 +58,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 .btn-challenge{background:linear-gradient(135deg,#3a2a1a,#5a3a2a);color:#ff9f43;box-shadow:0 3px 12px rgba(255,159,67,.1)}
 .btn-sect{background:linear-gradient(135deg,#1a2a3a,#2a3a5a);color:#7fbfff;box-shadow:0 3px 12px rgba(127,191,255,.1)}
 .btn-tech{background:linear-gradient(135deg,#2a1a2a,#3a2a3a);color:#c084fc;box-shadow:0 3px 12px rgba(192,132,252,.1)}
+.btn-close{background:linear-gradient(135deg,#2a1a3a,#4a2a5a);color:#c084fc;box-shadow:0 3px 12px rgba(192,132,252,.15)}
 .btn:disabled{opacity:.35;pointer-events:none;filter:grayscale(.4)}
 .btn .btn-sub{font-size:8px;opacity:.6;font-weight:400;display:block;margin-top:1px}
 .log-wrap{flex:1;background:rgba(255,255,255,.02);border-radius:10px;padding:8px;min-height:60px;max-height:130px;overflow-y:auto;border:1px solid rgba(255,255,255,.04)}
@@ -282,6 +283,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
   <button class="btn btn-break" id="btnBreak">💥 突破<span class="btn-sub">消耗 30 日</span></button>
   <button class="btn btn-pill" id="btnPill">🔥 炼丹<span class="btn-sub">消耗 50修为</span></button>
   <button class="btn btn-travel" id="btnTravel">🌊 云游<span class="btn-sub">消耗 10 日</span></button>
+  <button class="btn btn-close" id="btnClose" style="display:none">🧘 闭关<span class="btn-sub">消耗 90 日</span></button>
 </div>
 <div class="actions" id="actionRow2">
   <button class="btn btn-bag" id="btnBag">🎒 背包</button>
@@ -588,7 +590,7 @@ var SECT_RANKS = [
   eventTimer:0, passiveTimer:0, gameOver:false, started:false, originEvil:false,
   inventory:{}, equippedItems:{weapon:null,armor:null,accessory:null,tool:null},
   challengeWins:0, challengeLosses:0, challengeStreak:0, challengeCooldown:0,
-  sect:null, _lastSave:Date.now()
+  closeCooldown:0, sect:null, _lastSave:Date.now()
 };
 var g={};
 var prevStats={};
@@ -603,7 +605,7 @@ var cultVal=$('cultVal'),pillVal=$('pillVal');
 var progressBar=$('progressBar'),progressText=$('progressText');
 var techRowEl=$('techRow');
 var logWrap=$('logWrap');
-var btnTrain=$('btnTrain'),btnBreak=$('btnBreak'),btnPill=$('btnPill'),btnTravel=$('btnTravel');
+var btnTrain=$('btnTrain'),btnBreak=$('btnBreak'),btnPill=$('btnPill'),btnTravel=$('btnTravel'),btnClose=$('btnClose');
 var btnBag=$('btnBag'),btnChallenge=$('btnChallenge'),btnSect=$('btnSect'),btnTech=$('btnTech');
 var originModal=$('originModal'),originGrid=$('originGrid'),originConfirm=$('originConfirm');
 var rootModal=$('rootModal'),rootDesc=$('rootDesc'),rootAnim=$('rootAnim');
@@ -764,12 +766,37 @@ function updateUI(){
     btnTrain.disabled=false; btnBreak.disabled=g.progress<req||g.gameOver;
     if(g.progress>=req&&!g.gameOver)btnBreak.classList.add('btn-break-ready');else btnBreak.classList.remove('btn-break-ready');
     btnPill.disabled=g.gameOver; btnTravel.disabled=g.gameOver;
+    // Preview gains on buttons
+    var trainPreview=calcTrainGain();
+    btnTrain.innerHTML='🧘 修炼<span class="btn-sub">+'+trainPreview+' 消耗 1 日</span>';
+    var breakRate=g.realm<8?Math.round(calcBreakRate(Math.min(3,g.pills))*100):0;
+    btnBreak.innerHTML='💥 突破<span class="btn-sub">成功率 '+(g.progress>=req?breakRate+'%':'修为不足')+'</span>';
+    var pillYield=1+Math.floor((g.pillBonus||0));
+    btnPill.innerHTML='🔥 炼丹<span class="btn-sub">消耗50修为 得'+pillYield+'枚</span>';
+    // 闭关 button
+    if(g.realm>=2&&!g.gameOver){
+      btnClose.style.display='';
+      var closeGain=trainPreview*(8+g.realm);
+      var subText='+'+closeGain+' 消耗 90 日';
+      if(g.closeCooldown>Date.now()){
+        var remain=Math.ceil((g.closeCooldown-Date.now())/1000);
+        subText='冷却 '+remain+'s';
+        btnClose.disabled=true;
+      }else{
+        btnClose.disabled=false;
+      }
+      btnClose.innerHTML='🧘 闭关<span class="btn-sub">'+subText+'</span>';
+    }else{
+      btnClose.style.display='none';
+    }
   }else if(g.gameOver){
     progressBar.style.width='0%'; progressText.textContent='— 道消身陨 —';
     btnTrain.disabled=true; btnBreak.disabled=true; btnPill.disabled=true; btnTravel.disabled=true;
+    btnClose.style.display='none';
   }else{
     progressBar.style.width='100%'; progressText.textContent='★ 飞升成仙 ★';
     btnTrain.disabled=true; btnBreak.disabled=true; btnPill.disabled=true; btnTravel.disabled=true;
+    btnClose.style.display='none';
   }
   var maxEquip=getEquipSlots();
   var techRow=techRowEl; techRow.innerHTML='';
@@ -849,6 +876,20 @@ btnPill.addEventListener('click',function(){
 btnTravel.addEventListener('click',function(){
   if(g.gameOver||!g.started)return;
   advanceDays(10); triggerEvent();
+});
+btnClose.addEventListener('click',function(){
+  if(g.gameOver||g.realm<2||!g.started)return;
+  if(g.closeCooldown>Date.now()){ log('闭关还在冷却中','log-bad'); return; }
+  var gain=calcTrainGain()*(8+g.realm)+Math.floor(Math.random()*10);
+  g.cult+=gain; g.progress+=gain;
+  advanceDays(90);
+  g.closeCooldown=Date.now()+30000;
+  addTechExp(3);
+  log('🧘 闭关结束！修为+'+gain+'，感悟良多','log-special');
+  floatText('闭关+'+gain+'修为','float-purple');
+  flashScreen('purple');
+  burstParticles(window.innerWidth/2,window.innerHeight/2,'#c084fc',10);
+  updateUI();save();
 });
 btnBag.addEventListener('click',function(){ if(g.started&&!g.gameOver)showBagModal(); });
 btnChallenge.addEventListener('click',function(){ if(g.started&&!g.gameOver)showChallengeModal(); });
