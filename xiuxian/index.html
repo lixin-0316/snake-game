@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -9,20 +9,15 @@
 body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif;min-height:100dvh;display:flex;flex-direction:column;padding:10px 12px;overflow-x:hidden}
 .bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:radial-gradient(ellipse at 50% 0%,#1a0a2e 0%,#0a0a1a 70%)}
 .bg::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5L35 20L50 20L38 30L42 45L30 36L18 45L22 30L10 20L25 20Z' fill='%23ffffff' opacity='0.015'/%3E%3C/svg%3E") repeat;pointer-events:none}
-
 .title{text-align:center;padding:8px 0 4px}
 .title h1{font-size:26px;font-weight:800;background:linear-gradient(135deg,#e94560,#f0c040,#e94560);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:6px;text-shadow:0 0 40px rgba(233,69,96,.2)}
-
 .char-info{text-align:center;font-size:12px;color:#888;margin:2px 0 6px;letter-spacing:1px}
 .char-info span{color:#c0a060}
-
 .realm-name{text-align:center;font-size:19px;font-weight:700;color:#f0c040;margin:2px 0 1px;letter-spacing:2px}
 .realm-sub{text-align:center;font-size:12px;color:#7fbfff;margin-bottom:2px;letter-spacing:1px}
-
 .age-display{text-align:center;font-size:12px;color:#999;margin-bottom:6px;letter-spacing:1px}
 .age-display .warn{color:#ff6b6b}
 .age-display .safe{color:#7fdf7f}
-
 .stats{display:flex;justify-content:space-around;padding:6px 0;border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);margin-bottom:6px;gap:2px}
 .stat{text-align:center;flex:1;min-width:0}
 .stat-val{font-size:16px;font-weight:700}
@@ -33,36 +28,39 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 .stat-mind .stat-val{color:#c084fc}
 .stat-virtue .stat-val{color:#f0c040}
 .stat-evil .stat-val{color:#e94560}
-
-.techs{display:flex;gap:4px;justify-content:center;margin-bottom:6px;padding:4px 0}
-.tech-slot{width:48px;height:48px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;color:#555;transition:all .3s;gap:2px}
-.tech-slot .tech-icon{font-size:16px}
-.tech-slot .tech-name{font-size:8px;color:#888;white-space:nowrap}
-.tech-slot.learned{background:rgba(240,192,64,.08);border-color:rgba(240,192,64,.25)}
-.tech-slot.learned .tech-icon{color:#f0c040}
-.tech-slot.learned .tech-name{color:#f0c040}
-
+.extra-info{text-align:center;font-size:10px;color:#666;margin-bottom:4px;letter-spacing:0.5px;line-height:1.6}
+.extra-info span{color:#aaa}
+.techs{display:flex;gap:4px;justify-content:center;margin-bottom:6px;padding:4px 0;flex-wrap:wrap}
+.tech-slot{width:52px;height:52px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;color:#555;transition:all .3s;gap:1px;cursor:pointer;position:relative}
+.tech-slot .tech-icon{font-size:18px}
+.tech-slot .tech-name{font-size:7px;color:#888;white-space:nowrap}
+.tech-slot .tech-lv{font-size:7px;color:#f0c040;position:absolute;top:1px;right:3px}
+.tech-slot.equipped{background:rgba(240,192,64,.08);border-color:rgba(240,192,64,.25)}
+.tech-slot.equipped .tech-icon{color:#f0c040}
+.tech-slot.equipped .tech-name{color:#f0c040}
+.tech-slot.empty{opacity:.4}
 .resources-bar{border-top:none;margin-bottom:4px;padding:4px 0}
 .resources-bar .stat-val{font-size:17px;color:#fff}
 .resources-bar .stat-label{color:#777;font-size:10px}
-
 .progress-wrap{background:rgba(255,255,255,.06);border-radius:10px;height:18px;overflow:hidden;position:relative;margin-bottom:8px;border:1px solid rgba(255,255,255,.04)}
 .progress-bar{height:100%;border-radius:10px;background:linear-gradient(90deg,#e94560,#f0c040);transition:width .3s;width:0%;position:relative}
 .progress-bar::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shimmer 2s infinite}
 @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .progress-text{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.7)}
-
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;letter-spacing:1px;position:relative;overflow:hidden}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.btn{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 6px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;letter-spacing:1px;position:relative;overflow:hidden}
 .btn:active{transform:scale(.95)}
 .btn-train{background:linear-gradient(135deg,#1a3a1a,#2a5a2a);color:#6fcf6f;box-shadow:0 3px 12px rgba(83,215,105,.1)}
 .btn-break{background:linear-gradient(135deg,#3a1a1a,#5a2a2a);color:#ff6b6b;box-shadow:0 3px 12px rgba(233,69,96,.1)}
 .btn-pill{background:linear-gradient(135deg,#1a1a3a,#2a2a5a);color:#7f7fdf;box-shadow:0 3px 12px rgba(138,43,226,.1)}
 .btn-travel{background:linear-gradient(135deg,#2a1a3a,#3a2a5a);color:#c084fc;box-shadow:0 3px 12px rgba(192,132,252,.1)}
+.btn-bag{background:linear-gradient(135deg,#1a2a1a,#2a3a2a);color:#7fdf7f;box-shadow:0 3px 12px rgba(127,223,127,.1)}
+.btn-challenge{background:linear-gradient(135deg,#3a2a1a,#5a3a2a);color:#ff9f43;box-shadow:0 3px 12px rgba(255,159,67,.1)}
+.btn-sect{background:linear-gradient(135deg,#1a2a3a,#2a3a5a);color:#7fbfff;box-shadow:0 3px 12px rgba(127,191,255,.1)}
+.btn-tech{background:linear-gradient(135deg,#2a1a2a,#3a2a3a);color:#c084fc;box-shadow:0 3px 12px rgba(192,132,252,.1)}
 .btn:disabled{opacity:.35;pointer-events:none;filter:grayscale(.4)}
-.btn .btn-sub{font-size:9px;opacity:.6;font-weight:400;display:block;margin-top:1px}
-
-.log-wrap{flex:1;background:rgba(255,255,255,.02);border-radius:10px;padding:8px;min-height:80px;max-height:160px;overflow-y:auto;border:1px solid rgba(255,255,255,.04)}
+.btn .btn-sub{font-size:8px;opacity:.6;font-weight:400;display:block;margin-top:1px}
+.log-wrap{flex:1;background:rgba(255,255,255,.02);border-radius:10px;padding:8px;min-height:60px;max-height:130px;overflow-y:auto;border:1px solid rgba(255,255,255,.04)}
 .log-wrap::-webkit-scrollbar{width:3px}
 .log-wrap::-webkit-scrollbar-thumb{background:rgba(233,69,96,.3);border-radius:3px}
 .log-entry{padding:3px 0;font-size:11px;line-height:1.5;border-bottom:1px solid rgba(255,255,255,.02)}
@@ -73,25 +71,25 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 .log-info{color:#7fbfff}
 .log-special{color:#f0c040}
 .log-evil{color:#e94560}
-
 .footer{text-align:center;padding:8px;font-size:10px;color:#333;letter-spacing:2px;margin-top:auto}
-
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .modal.show{display:flex}
-.modal-box{background:linear-gradient(160deg,#1a1a3a,#0d0d2a);border-radius:16px;padding:24px 20px;max-width:340px;width:100%;border:1px solid rgba(255,255,255,.08);text-align:center;max-height:80vh;overflow-y:auto}
-.modal-box.wide{max-width:380px}
-.modal-title{font-size:20px;font-weight:700;margin-bottom:6px;color:#f0c040;letter-spacing:2px}
-.modal-sub{font-size:12px;color:#888;margin-bottom:12px}
-.modal-desc{font-size:13px;color:#aaa;line-height:1.7;margin-bottom:14px}
-.modal-btn{display:block;width:100%;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;margin-top:6px;letter-spacing:1px}
+.modal-box{background:linear-gradient(160deg,#1a1a3a,#0d0d2a);border-radius:16px;padding:20px 16px;max-width:360px;width:100%;border:1px solid rgba(255,255,255,.08);text-align:center;max-height:85vh;overflow-y:auto}
+.modal-box.wide{max-width:400px}
+.modal-box.big{max-width:440px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:4px;color:#f0c040;letter-spacing:2px}
+.modal-sub{font-size:11px;color:#888;margin-bottom:10px}
+.modal-desc{font-size:13px;color:#aaa;line-height:1.7;margin-bottom:12px}
+.modal-btn{display:block;width:100%;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;margin-top:4px;letter-spacing:1px}
 .modal-btn:active{transform:scale(.97)}
 .modal-btn.primary{background:linear-gradient(135deg,#3d7a3d,#2a5a2a);color:#7fdf7f}
 .modal-btn.secondary{background:linear-gradient(135deg,#5a2a2a,#3d1a1a);color:#ff6b6b}
 .modal-btn.tertiary{background:linear-gradient(135deg,#3a2a5a,#2a1a3a);color:#c084fc}
 .modal-btn.gold{background:linear-gradient(135deg,#8a6a10,#5a4a08);color:#f0c040}
 .modal-btn.danger{background:linear-gradient(135deg,#5a1a1a,#3a0a0a);color:#ff4444}
-.modal-btn.full{margin-top:14px}
-
+.modal-btn.full{margin-top:12px}
+.modal-btn.small{padding:6px 10px;font-size:11px;width:auto;display:inline-block}
+.modal-btn:disabled{opacity:.4;pointer-events:none;filter:grayscale(.5)}
 .origin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .origin-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 8px;color:#ccc;cursor:pointer;transition:all .12s;text-align:center;font-family:inherit}
 .origin-btn:active{transform:scale(.96);background:rgba(255,255,255,.08)}
@@ -99,18 +97,15 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 .origin-btn .origin-buff{font-size:10px;color:#888;display:block;margin-top:3px;line-height:1.4}
 .origin-btn .origin-desc{font-size:10px;color:#666;display:block;margin-top:2px}
 .origin-btn.selected{border-color:#f0c040;background:rgba(240,192,64,.1);box-shadow:0 0 20px rgba(240,192,64,.1)}
-
 .root-anim{font-size:28px;font-weight:700;color:#f0c040;margin:10px 0;min-height:40px;letter-spacing:4px;animation:pulse 0.5s ease-in-out infinite alternate}
 @keyframes pulse{from{opacity:.6}to{opacity:1}}
 .root-result{font-size:32px;font-weight:800;color:#f0c040;margin:12px 0;letter-spacing:4px;text-shadow:0 0 30px rgba(240,192,64,.3)}
 .root-rate{font-size:16px;color:#7fbfff;margin:6px 0}
-
 .death-screen{text-align:center;padding:10px 0}
 .death-screen .death-icon{font-size:48px;margin-bottom:8px}
 .death-screen .death-title{font-size:22px;font-weight:700;color:#e94560;margin-bottom:10px}
 .death-screen .death-stat{font-size:13px;color:#aaa;line-height:2;letter-spacing:1px}
 .death-screen .death-stat span{color:#f0c040;font-weight:700}
-
 @keyframes breakthrough{0%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:.85}100%{transform:scale(1);opacity:1}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes float-up{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-50px) scale(1.2)}}
@@ -120,27 +115,92 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 .float-gold{color:#f0c040}
 .float-blue{color:#7fbfff}
 .float-purple{color:#c084fc}
-
+.tabs{display:flex;gap:2px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:0}
+.tab{padding:6px 10px;border-radius:6px 6px 0 0;font-size:11px;color:#666;cursor:pointer;transition:all .12s;background:transparent;border:none;font-family:inherit;font-weight:600}
+.tab.active{color:#f0c040;background:rgba(240,192,64,.06);border-bottom:2px solid #f0c040}
+.tab:active{background:rgba(255,255,255,.04)}
+.tech-list{text-align:left;margin:6px 0}
+.tech-item{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,.02);margin-bottom:4px;border:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .12s}
+.tech-item:active{background:rgba(255,255,255,.06)}
+.tech-item .ti-icon{font-size:20px;width:28px;text-align:center}
+.tech-item .ti-info{flex:1}
+.tech-item .ti-name{font-size:13px;color:#d0d0d0;font-weight:600}
+.tech-item .ti-desc{font-size:10px;color:#666}
+.tech-item .ti-lv{font-size:10px;color:#f0c040}
+.tech-item .ti-exp-wrap{height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:3px;overflow:hidden}
+.tech-item .ti-exp-bar{height:100%;background:linear-gradient(90deg,#f0c040,#e94560);border-radius:2px;transition:width .3s}
+.tech-item.equipped{border-color:rgba(240,192,64,.2);background:rgba(240,192,64,.04)}
+.tech-item .ti-tag{font-size:8px;padding:1px 5px;border-radius:4px;background:rgba(240,192,64,.1);color:#f0c040}
+.tech-item .ti-tag.t2{background:rgba(127,191,255,.1);color:#7fbfff}
+.tech-item .ti-tag.t3{background:rgba(192,132,252,.1);color:#c084fc}
+.tech-item .ti-tag.t4{background:rgba(255,159,67,.1);color:#ff9f43}
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0;text-align:left}
+.inv-item{display:flex;align-items:center;gap:6px;padding:6px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .12s}
+.inv-item:active{background:rgba(255,255,255,.06)}
+.inv-item .ii-icon{font-size:18px}
+.inv-item .ii-info{flex:1;min-width:0}
+.inv-item .ii-name{font-size:11px;color:#ccc}
+.inv-item .ii-count{font-size:10px;color:#f0c040}
+.inv-item .ii-desc{font-size:9px;color:#666}
+.inv-cat{font-size:12px;color:#888;margin:6px 0 3px;padding:2px 4px;border-bottom:1px solid rgba(255,255,255,.04);font-weight:600}
+.equip-slots{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}
+.equip-slot{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:6px;text-align:center;font-size:10px;color:#666;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.equip-slot .es-icon{font-size:16px}
+.equip-slot .es-name{font-size:9px;color:#aaa;margin-top:2px}
+.equip-slot.filled{border-color:rgba(240,192,64,.15);background:rgba(240,192,64,.03)}
+.opp-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px;margin-bottom:6px;text-align:left}
+.opp-card .oc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.opp-card .oc-name{font-size:14px;font-weight:600;color:#f0c040}
+.opp-card .oc-realm{font-size:10px;color:#888}
+.opp-card .oc-stats{font-size:11px;color:#aaa;line-height:1.6}
+.opp-card .oc-reward{font-size:10px;color:#7fdf7f}
+.opp-card .oc-rate{font-size:12px;font-weight:700;color:#7fbfff}
+.sect-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px;margin-bottom:6px;text-align:left;cursor:pointer;transition:all .12s}
+.sect-card:active{background:rgba(255,255,255,.04)}
+.sect-card .sc-name{font-size:14px;font-weight:600;color:#f0c040}
+.sect-card .sc-desc{font-size:10px;color:#888;margin:3px 0}
+.sect-card .sc-bonus{font-size:10px;color:#7fdf7f}
+.sect-card .sc-req{font-size:9px;color:#e94560}
+.sect-card .sc-req.met{color:#7fdf7f}
+.sect-card.joined{border-color:rgba(240,192,64,.2);background:rgba(240,192,64,.04)}
+.mission-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px;margin-bottom:6px;text-align:left;cursor:pointer;transition:all .12s}
+.mission-card:active{background:rgba(255,255,255,.04)}
+.mission-card .mc-name{font-size:13px;font-weight:600;color:#7fbfff}
+.mission-card .mc-desc{font-size:10px;color:#888}
+.mission-card .mc-reward{font-size:10px;color:#7fdf7f;margin-top:3px}
+.mission-card .mc-days{font-size:9px;color:#666}
+.shop-item{display:flex;align-items:center;gap:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);margin-bottom:4px;text-align:left;cursor:pointer;transition:all .12s}
+.shop-item:active{background:rgba(255,255,255,.06)}
+.shop-item .si-icon{font-size:18px}
+.shop-item .si-info{flex:1}
+.shop-item .si-name{font-size:12px;color:#d0d0d0}
+.shop-item .si-desc{font-size:9px;color:#666}
+.shop-item .si-cost{font-size:11px;color:#f0c040;white-space:nowrap}
+.shop-item.locked{opacity:.5;pointer-events:none}
+.contribution{font-size:12px;color:#f0c040;margin-bottom:6px;text-align:center;letter-spacing:1px}
+.challenge-stat{text-align:center;font-size:11px;color:#888;margin-bottom:6px;letter-spacing:0.5px}
+.challenge-stat span{color:#f0c040;font-weight:600}
+.cooldown-text{font-size:11px;color:#e94560;text-align:center;margin-bottom:4px}
 @media(max-width:360px){
   body{padding:6px 8px}
   .title h1{font-size:22px}
   .realm-name{font-size:17px}
   .stat-val{font-size:14px}
-  .btn{font-size:12px;padding:10px 6px}
-  .tech-slot{width:42px;height:42px}
+  .btn{font-size:11px;padding:8px 4px}
+  .tech-slot{width:44px;height:44px}
   .origin-grid{grid-template-columns:1fr}
+  .equip-slots{grid-template-columns:1fr 1fr}
+  .inv-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 <div class="bg"></div>
-
 <div class="title"><h1>问道修仙</h1></div>
 <div class="char-info" id="charInfo">出身: <span>待选择</span> | 灵根: <span>待检测</span></div>
 <div class="realm-name" id="realmName">练气期</div>
 <div class="realm-sub" id="realmSub">练气期 · 初</div>
 <div class="age-display" id="ageDisplay">年龄: <span class="safe">16</span>岁 / 寿元: <span>50</span>年</div>
-
 <div class="stats">
   <div class="stat stat-wit"><div class="stat-val" id="statWit">5</div><div class="stat-label">悟性</div></div>
   <div class="stat stat-power"><div class="stat-val" id="statPower">5</div><div class="stat-label">根骨</div></div>
@@ -149,38 +209,32 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
   <div class="stat stat-virtue"><div class="stat-val" id="statVirtue">0</div><div class="stat-label">功德</div></div>
   <div class="stat stat-evil"><div class="stat-val" id="statEvil">0</div><div class="stat-label">煞气</div></div>
 </div>
-
-<div class="techs" id="techRow">
-  <div class="tech-slot" id="tech0"><span class="tech-icon">❓</span><span class="tech-name">?</span></div>
-  <div class="tech-slot" id="tech1"><span class="tech-icon">❓</span><span class="tech-name">?</span></div>
-  <div class="tech-slot" id="tech2"><span class="tech-icon">❓</span><span class="tech-name">?</span></div>
-  <div class="tech-slot" id="tech3"><span class="tech-icon">❓</span><span class="tech-name">?</span></div>
-  <div class="tech-slot" id="tech4"><span class="tech-icon">❓</span><span class="tech-name">?</span></div>
-</div>
-
+<div class="extra-info" id="extraInfo"></div>
+<div class="techs" id="techRow"></div>
 <div class="stats resources-bar">
   <div class="stat"><div class="stat-val" id="cultVal">0</div><div class="stat-label">修为</div></div>
   <div class="stat"><div class="stat-val" id="pillVal">0</div><div class="stat-label">丹药</div></div>
 </div>
-
 <div class="progress-wrap">
   <div class="progress-bar" id="progressBar"></div>
   <div class="progress-text" id="progressText">0 / 300</div>
 </div>
-
-<div class="actions">
+<div class="actions" id="actionRow1">
   <button class="btn btn-train" id="btnTrain">🧘 修炼<span class="btn-sub">消耗 1 日</span></button>
   <button class="btn btn-break" id="btnBreak">💥 突破<span class="btn-sub">消耗 30 日</span></button>
   <button class="btn btn-pill" id="btnPill">🔥 炼丹<span class="btn-sub">消耗 50修为</span></button>
   <button class="btn btn-travel" id="btnTravel">🌊 云游<span class="btn-sub">消耗 10 日</span></button>
 </div>
-
+<div class="actions" id="actionRow2">
+  <button class="btn btn-bag" id="btnBag">🎒 背包</button>
+  <button class="btn btn-challenge" id="btnChallenge">⚔️ 挑战</button>
+  <button class="btn btn-sect" id="btnSect">🏛️ 宗门</button>
+  <button class="btn btn-tech" id="btnTech">📖 功法</button>
+</div>
 <div class="log-wrap" id="logWrap">
   <div class="log-entry"><span class="log-time">►</span><span class="log-info">踏上漫漫修仙路...</span></div>
 </div>
-
-<div class="footer">天行健 · 君子以自强不息</div>
-
+<div class="footer">天行健 · 君子以自强不息</div><!-- Origin Modal -->
 <div class="modal" id="originModal">
   <div class="modal-box wide">
     <div class="modal-title">选择出身</div>
@@ -189,7 +243,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
     <button class="modal-btn gold full" id="originConfirm" disabled>确认出身</button>
   </div>
 </div>
-
+<!-- Root Modal -->
 <div class="modal" id="rootModal">
   <div class="modal-box">
     <div class="modal-title">灵根检测</div>
@@ -200,7 +254,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
     <button class="modal-btn gold full" id="rootConfirm" style="display:none">踏入修仙路</button>
   </div>
 </div>
-
+<!-- Event Modal -->
 <div class="modal" id="eventModal">
   <div class="modal-box">
     <div class="modal-title" id="eventTitle">奇遇</div>
@@ -209,7 +263,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
     <button class="modal-btn secondary" id="eventBtn2">拒绝</button>
   </div>
 </div>
-
+<!-- Death Modal -->
 <div class="modal" id="deathModal">
   <div class="modal-box">
     <div class="death-screen">
@@ -223,11 +277,56 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
     </div>
   </div>
 </div>
-
-<script>
-// ===== DATA DEFINITIONS =====
-var SUB_LAYERS = ['初', '中', '后', '巔峰'];
-
+<!-- Technique Modal -->
+<div class="modal" id="techModal">
+  <div class="modal-box big">
+    <div class="modal-title">📖 功法</div>
+    <div class="modal-sub" id="techSlotsInfo">已装备: 0 / 2</div>
+    <div class="equip-slots" id="techEquipSlots"></div>
+    <div style="margin:8px 0 4px;font-size:12px;color:#888;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:4px">已习得功法</div>
+    <div id="techList" style="max-height:280px;overflow-y:auto"></div>
+    <button class="modal-btn secondary full" id="techClose">关闭</button>
+  </div>
+</div>
+<!-- Backpack Modal -->
+<div class="modal" id="bagModal">
+  <div class="modal-box big">
+    <div class="modal-title">🎒 背包</div>
+    <div class="modal-sub" id="bagSub">容量: 0 / 20</div>
+    <div style="margin-bottom:6px;font-size:11px;color:#888;text-align:left">装备栏</div>
+    <div class="equip-slots" id="equipSlots"></div>
+    <div id="bagContent" style="max-height:280px;overflow-y:auto"></div>
+    <button class="modal-btn secondary full" id="bagClose">关闭</button>
+  </div>
+</div>
+<!-- Challenge Modal -->
+<div class="modal" id="challengeModal">
+  <div class="modal-box big">
+    <div class="modal-title">⚔️ 挑战</div>
+    <div class="challenge-stat">记录: <span id="challengeRecord">0胜 0败</span> | 连胜: <span id="challengeStreak">0</span></div>
+    <div class="cooldown-text" id="cooldownText"></div>
+    <div id="opponentList"></div>
+    <button class="modal-btn secondary full" id="challengeClose">关闭</button>
+  </div>
+</div>
+<!-- Sect Modal -->
+<div class="modal" id="sectModal">
+  <div class="modal-box big">
+    <div class="modal-title">🏛️ 宗门</div>
+    <div class="tabs" id="sectTabs">
+      <button class="tab active" data-tab="sectList">宗门列表</button>
+      <button class="tab" data-tab="sectInfo">宗门信息</button>
+      <button class="tab" data-tab="sectMissions">宗门任务</button>
+      <button class="tab" data-tab="sectShop">宗门商店</button>
+    </div>
+    <div id="sectList"></div>
+    <div id="sectInfo" style="display:none"></div>
+    <div id="sectMissions" style="display:none"></div>
+    <div id="sectShop" style="display:none"></div>
+    <button class="modal-btn secondary full" id="sectClose">关闭</button>
+  </div>
+</div><script>
+var SUB_LAYERS = ['初','中','后','巔峰'];
 var REALMS = [
   { name:'练气期', require:300, breakRate:1.0, lifeBonus:30, desc:'引气入体' },
   { name:'筑基期', require:1500, breakRate:0.9, lifeBonus:50, desc:'筑基固本' },
@@ -239,7 +338,6 @@ var REALMS = [
   { name:'渡劫期', require:280000, breakRate:0.25, lifeBonus:1000, desc:'渡劫飞升' },
   { name:'飞升', require:500000, breakRate:0.1, lifeBonus:9999, desc:'飞升成仙' }
 ];
-
 var ORIGINS = [
   { id:'orphan', name:'山野孤儿', desc:'自幼在山野中长大，运气不错但心性单纯。', buffs:{ luck:2, mind:-1 } },
   { id:'expelled', name:'宗门弃徒', desc:'曾被逐出宗门，悟性过人却心有不甘。', buffs:{ wit:2, mind:-1 } },
@@ -247,7 +345,6 @@ var ORIGINS = [
   { id:'transmigrator', name:'穿越者', desc:'异界灵魂，悟性超群但气运不稳。', buffs:{ wit:3, luck:-1 } },
   { id:'demon', name:'魔修遗孤', desc:'魔道后裔，天生根骨强大，易染煞气。', buffs:{ power:2, evilGain:1 } }
 ];
-
 var ROOTS = [
   { id:'heaven', name:'天灵根', rate:2.0, weight:1, desc:'万中无一的修炼奇才！' },
   { id:'single', name:'单灵根', rate:1.5, weight:8, desc:'资质上佳，修炼一日千里。' },
@@ -256,284 +353,198 @@ var ROOTS = [
   { id:'mixed', name:'杂灵根', rate:0.7, weight:35, desc:'资质驳杂，修炼艰难。' },
   { id:'none', name:'无灵根', rate:0.4, weight:21, desc:'毫无修炼天赋...' }
 ];
-
 var TECHNIQUES = [
-  { id:'tuna', name:'吐纳术', desc:'修炼速度+3', icon:'🧘', effect:'train' },
-  { id:'peiyuan', name:'培元功', desc:'突破率+3%', icon:'💪', effect:'break' },
-  { id:'qingxin', name:'清心咒', desc:'心境+2', icon:'🧠', effect:'mind' },
-  { id:'xuesha', name:'血煞诀', desc:'修炼速度+8', icon:'⚡', effect:'speed' },
-  { id:'zaohua', name:'造化诀', desc:'修炼速度+8, 气运+1', icon:'✨', effect:'trainLuck' }
+  { id:'tuna', name:'吐纳术', tier:1, desc:'修炼+3', icon:'🧘', effect:function(g,level){ g.trainBonus+=2+level*0.5; } },
+  { id:'jianshen', name:'健身术', tier:1, desc:'根骨+1', icon:'💪', effect:function(g,level){ g.powerBonus+=0.5+level*0.3; } },
+  { id:'jizhong', name:'集中术', tier:1, desc:'悟性+1', icon:'🧠', effect:function(g,level){ g.witBonus+=0.3+level*0.2; } },
+  { id:'mingxiang', name:'冥想', tier:1, desc:'心境+1', icon:'🕯️', effect:function(g,level){ g.mindBonus+=0.3+level*0.2; } },
+  { id:'peiyuan', name:'培元功', tier:2, desc:'突破+3%', icon:'💎', effect:function(g,level){ g.breakBonus+=0.02+level*0.005; } },
+  { id:'qingxin', name:'清心咒', tier:2, desc:'心境+2', icon:'🧿', effect:function(g,level){ g.mindBonus+=1+level*0.2; } },
+  { id:'lianti', name:'炼体诀', tier:2, desc:'根骨+2', icon:'🔥', effect:function(g,level){ g.powerBonus+=1+level*0.3; } },
+  { id:'yanshen', name:'眼神通', tier:2, desc:'悟性+2', icon:'👁️', effect:function(g,level){ g.witBonus+=1+level*0.2; } },
+  { id:'yushi', name:'御兽术', tier:2, desc:'修炼+5', icon:'🐉', effect:function(g,level){ g.trainBonus+=4+level*0.5; } },
+  { id:'xuesha', name:'血煞诀', tier:3, desc:'修炼+10', icon:'⚡', effect:function(g,level){ g.trainBonus+=8+level; } },
+  { id:'zaohua', name:'造化诀', tier:3, desc:'修炼+8,气运+1', icon:'✨', effect:function(g,level){ g.trainBonus+=6+level; g.luckBonus+=0.5+level*0.2; } },
+  { id:'tianyan', name:'天眼通', tier:3, desc:'突破+6%', icon:'🔮', effect:function(g,level){ g.breakBonus+=0.04+level*0.008; } },
+  { id:'dunshu', name:'遁术', tier:3, desc:'云游效果翻倍', icon:'💨' },
+  { id:'jindan', name:'金丹诀', tier:4, desc:'炼丹效率+100%', icon:'💊', effect:function(g,level){ g.pillBonus+=0.5+level*0.1; } },
+  { id:'shenxiang', name:'神象镇狱', tier:4, desc:'根骨+4,挑战+20%', icon:'🐘', effect:function(g,level){ g.powerBonus+=2+level*0.5; g.challengeBonus+=0.1+level*0.02; } },
+  { id:'wanjian', name:'万剑诀', tier:4, desc:'挑战+30%', icon:'⚔️', effect:function(g,level){ g.challengeBonus+=0.2+level*0.03; } },
+  { id:'tianzun', name:'天尊道体', tier:4, desc:'所有效果+50%', icon:'👑', effect:function(g,level){ g.allBonus+=0.3+level*0.05; } }
 ];
-
-var EVENTS = [
-  {
-    title:'灵泉淬体',
-    desc:'你在山涧中发现一处灵泉，泉水蕴含浓郁的灵气，散发着淡淡灵光。',
+var TECH_TIER_NAMES = {1:'凡阶',2:'灵阶',3:'玄阶',4:'地阶'};
+var TECH_TIER_COLORS = {1:'',2:'t2',3:'t3',4:'t4'};
+var ITEMS = [
+  { id:'cult_pill', name:'修为丹', type:'pill', desc:'修为+50', icon:'💊', effect:function(g){ g.cult+=50; } },
+  { id:'big_cult_pill', name:'大还丹', type:'pill', desc:'修为+200', icon:'💊', effect:function(g){ g.cult+=200; } },
+  { id:'root_pill', name:'洗髓丹', type:'pill', desc:'根骨+1', icon:'💊', effect:function(g){ g.power+=1; } },
+  { id:'wit_pill', name:'启智丹', type:'pill', desc:'悟性+1', icon:'💊', effect:function(g){ g.wit+=1; } },
+  { id:'life_pill', name:'延寿丹', type:'pill', desc:'寿元+10', icon:'💊', effect:function(g){ g.maxAge+=10; } },
+  { id:'break_pill', name:'破境丹', type:'pill', desc:'突破+15%', icon:'💊' },
+  { id:'virtue_pill', name:'功德丹', type:'pill', desc:'功德+5', icon:'💊', effect:function(g){ g.virtue+=5; } },
+  { id:'spirit_herb', name:'灵草', type:'material', desc:'炼丹材料', icon:'🌿' },
+  { id:'spirit_stone', name:'灵石', type:'material', desc:'通用货币', icon:'💎' },
+  { id:'demon_core', name:'妖丹', type:'material', desc:'妖兽内丹', icon:'🔴' },
+  { id:'jade', name:'灵玉', type:'material', desc:'稀有材料', icon:'🟢' },
+  { id:'spirit_sword', name:'飞剑', type:'artifact', desc:'根骨+2', icon:'🗡️', slot:'weapon', effect:function(g,eq){ if(eq)g.powerBonus+=2; } },
+  { id:'defense_robe', name:'玄铁甲', type:'artifact', desc:'挑战+15%', icon:'🛡️', slot:'armor', effect:function(g,eq){ if(eq)g.challengeBonus+=0.15; } },
+  { id:'meditation_beads', name:'念珠', type:'artifact', desc:'心境+2', icon:'📿', slot:'accessory', effect:function(g,eq){ if(eq)g.mindBonus+=2; } },
+  { id:'spirit_ring', name:'储物戒', type:'artifact', desc:'背包+10', icon:'💍', slot:'accessory', effect:function(g,eq){ if(eq)g.inventorySlots+=10; } },
+  { id:'cultivation_pot', name:'炼丹炉', type:'artifact', desc:'炼丹效率+50%', icon:'🏺', slot:'tool', effect:function(g,eq){ if(eq)g.pillBonus+=0.5; } }
+];
+var EQUIP_SLOTS = ['weapon','armor','accessory','tool'];
+var EQUIP_SLOT_NAMES = {weapon:'武器',armor:'护甲',accessory:'饰品',tool:'法宝'};var EVENTS = [
+  { title:'灵泉淬体', desc:'你在山涧中发现一处灵泉，泉水蕴含浓郁的灵气，散发着淡淡灵光。',
     option1:{ text:'浸泡吸收', effect:function(g){
-      if(g.power>=6){
-        g.power+=1; g.cult+=50;
-        return '灵泉淬炼根骨，根骨+1，修为+50';
-      } else {
-        var dmg=20-g.power*3; if(dmg<0)dmg=0;
-        g.cult=Math.max(0,g.cult-dmg);
-        return '灵泉能量过于狂暴，你受了些伤，修为-'+dmg;
-      }
+      if(g.power>=6){ g.power+=1; g.cult+=50; return '灵泉淬炼根骨，根骨+1，修为+50'; }
+      var dmg=20-g.power*3; if(dmg<0)dmg=0; g.cult=Math.max(0,g.cult-dmg);
+      return '灵泉能量过于狂暴，你受了些伤，修为-'+dmg;
     }},
     option2:{ text:'取水饮用', effect:function(g){
-      var gain=30+g.luck*3;
-      g.cult+=gain;
-      return '饮下灵泉之水，修为+'+gain;
+      var gain=30+g.luck*3; g.cult+=gain; return '饮下灵泉之水，修为+'+gain;
     }}
   },
-  {
-    title:'妖兽袭击',
-    desc:'一头妖兽拦住去路，目露凶光，显然来者不善。',
+  { title:'妖兽袭击', desc:'一头妖兽拦住去路，目露凶光，显然来者不善。',
     option1:{ text:'正面迎战', effect:function(g){
-      if(g.power>=5){
-        var gain=30+g.realm*5+Math.floor(Math.random()*20);
-        g.cult+=gain;
-        return '你击败了妖兽！修为+'+gain;
-      } else {
-        var lose=10+Math.floor(Math.random()*20);
-        g.cult=Math.max(0,g.cult-lose);
-        return '你不是妖兽的对手，负伤而逃，修为-'+lose;
-      }
+      if(g.power>=5){ var gain=30+g.realm*5+Math.floor(Math.random()*20); g.cult+=gain; return '你击败了妖兽！修为+'+gain; }
+      var lose=10+Math.floor(Math.random()*20); g.cult=Math.max(0,g.cult-lose);
+      return '你不是妖兽的对手，负伤而逃，修为-'+lose;
     }},
     option2:{ text:'绕道躲避', effect:function(g){
-      if(g.luck>=6){
-        g.cult+=15;
-        return '你绕路时发现一株灵草，修为+15';
-      }
+      if(g.luck>=6){ g.cult+=15; return '你绕路时发现一株灵草，修为+15'; }
       return '你安全绕开了妖兽，什么也没发生。';
     }}
   },
-  {
-    title:'神秘商人',
-    desc:'一位云游商人出现在你面前，手中捧着几瓶丹药。',
+  { title:'神秘商人', desc:'一位云游商人出现在你面前，手中捧着几瓶丹药。',
     option1:{ text:'购买丹药', effect:function(g){
       var cost=30+g.realm*5;
-      if(g.cult>=cost){
-        g.cult-=cost;
-        var pillsGain=2+Math.floor(g.luck/3);
-        g.pills+=pillsGain;
-        return '花费'+cost+'修为，购得'+pillsGain+'枚丹药';
-      }
+      if(g.cult>=cost){ g.cult-=cost; var pg=2+Math.floor(g.luck/3); g.pills+=pg; return '花费'+cost+'修为，购得'+pg+'枚丹药'; }
       return '囊中羞涩，买不起...';
     }},
     option2:{ text:'以物易物', effect:function(g){
-      if(g.pills>=3){
-        g.pills-=3; g.wit+=1;
-        return '你用3枚丹药换得一份修炼心得，悟性+1';
-      }
+      if(g.pills>=3){ g.pills-=3; g.wit+=1; return '你用3枚丹药换得一份修炼心得，悟性+1'; }
       return '商人看不上你身上的东西，摇了摇头走了。';
     }}
   },
-  {
-    title:'古修遗迹',
-    desc:'发现一座古老修士留下的洞府遗迹，石门半掩。',
+  { title:'古修遗迹', desc:'发现一座古老修士留下的洞府遗迹，石门半掩。',
     option1:{ text:'仔细探索', effect:function(g){
-      if(Math.random()<0.4+g.luck*0.02){
-        g.pills+=3; g.cult+=40;
-        return '你在遗迹中找到丹药和功法残篇，丹药+3，修为+40';
-      }
-      g.pills+=1;
-      return '遗迹中只有些许残留，丹药+1';
+      if(Math.random()<0.4+g.luck*0.02){ g.pills+=3; g.cult+=40; return '你在遗迹中找到丹药和功法残篇，丹药+3，修为+40'; }
+      g.pills+=1; return '遗迹中只有些许残留，丹药+1';
     }},
-    option2:{ text:'参悟壁刻', effect:function(g){
-      g.wit+=1; g.cult+=20;
-      return '你从墙壁的刻文中领悟到一些道理，悟性+1，修为+20';
-    }}
+    option2:{ text:'参悟壁刻', effect:function(g){ g.wit+=1; g.cult+=20; return '你从墙壁的刻文中领悟到一些道理，悟性+1，修为+20'; }}
   },
-  {
-    title:'天降灵雨',
-    desc:'天空中下起了蕴含灵气的细雨，大地灵气弥漫。',
-    option1:{ text:'沐浴灵雨', effect:function(g){
-      var gain=20+g.realm*4+Math.floor(Math.random()*30);
-      g.cult+=gain;
-      return '你在灵雨中修炼，修为+'+gain;
-    }},
-    option2:{ text:'收集灵水', effect:function(g){
-      g.pills+=2;
-      return '你收集了一些灵雨凝成的灵露，丹药+2';
-    }}
+  { title:'天降灵雨', desc:'天空中下起了蕴含灵气的细雨，大地灵气弥漫。',
+    option1:{ text:'沐浴灵雨', effect:function(g){ var gain=20+g.realm*4+Math.floor(Math.random()*30); g.cult+=gain; return '你在灵雨中修炼，修为+'+gain; }},
+    option2:{ text:'收集灵水', effect:function(g){ g.pills+=2; return '你收集了一些灵雨凝成的灵露，丹药+2'; }}
   },
-  {
-    title:'心魔试炼',
-    desc:'修炼之时，心魔悄然来袭，幻象丛生。',
+  { title:'心魔试炼', desc:'修炼之时，心魔悄然来袭，幻象丛生。',
     option1:{ text:'坚守本心', effect:function(g){
-      if(g.mind>=5){
-        g.mind+=1; g.cult+=30;
-        return '你以坚定意志击退心魔，心境+1，修为+30';
-      }
-      g.cult=Math.max(0,g.cult-20);
-      return '心魔难克，修为倒退20';
+      if(g.mind>=5){ g.mind+=1; g.cult+=30; return '你以坚定意志击退心魔，心境+1，修为+30'; }
+      g.cult=Math.max(0,g.cult-20); return '心魔难克，修为倒退20';
     }},
-    option2:{ text:'借魔炼心', effect:function(g){
-      g.power+=1; g.mind=Math.max(1,g.mind-1);
-      return '你借助心魔之力锤炼自身，根骨+1，心境-1';
-    }}
+    option2:{ text:'借魔炼心', effect:function(g){ g.power+=1; g.mind=Math.max(1,g.mind-1); return '你借助心魔之力锤炼自身，根骨+1，心境-1'; }}
   },
-  {
-    title:'灵药园',
-    desc:'发现一处隐蔽的灵药园，各种灵草茁壮成长。',
-    option1:{ text:'小心采摘', effect:function(g){
-      var gain=1+Math.floor(Math.random()*3);
-      g.pills+=gain;
-      return '你小心翼翼地采摘灵药，获得'+gain+'枚丹药';
-    }},
+  { title:'灵药园', desc:'发现一处隐蔽的灵药园，各种灵草茁壮成长。',
+    option1:{ text:'小心采摘', effect:function(g){ var gain=1+Math.floor(Math.random()*3); g.pills+=gain; return '你小心翼翼地采摘灵药，获得'+gain+'枚丹药'; }},
     option2:{ text:'就地炼丹', effect:function(g){
-      if(g.pills>=2){
-        g.pills-=2;
-        if(Math.random()<0.6){
-          g.cult+=80;
-          return '你利用灵药和丹药炼出一炉好丹，修为+80';
-        }
-        return '炼丹失败，浪费了2枚丹药...';
-      }
+      if(g.pills>=2){ g.pills-=2; if(Math.random()<0.6){ g.cult+=80; return '你利用灵药和丹药炼出一炉好丹，修为+80'; } return '炼丹失败，浪费了2枚丹药...'; }
       return '身上的丹药不够引火，无法炼丹。';
     }}
   },
-  {
-    title:'魔修遗宝',
-    desc:'在一处隐蔽的山洞中发现魔道修士遗留的宝物。',
-    option1:{ text:'将其毁去', effect:function(g){
-      g.virtue+=2;
-      return '你摧毁了魔器，功德+2';
-    }},
-    option2:{ text:'据为己用', effect:function(g){
-      g.power+=1;
-      var evilGain=1+(g.originEvil?1:0);
-      g.evil+=evilGain;
-      return '你吸收了魔宝的力量，根骨+1，煞气+'+evilGain;
-    }}
+  { title:'魔修遗宝', desc:'在一处隐蔽的山洞中发现魔道修士遗留的宝物。',
+    option1:{ text:'将其毁去', effect:function(g){ g.virtue+=2; return '你摧毁了魔器，功德+2'; }},
+    option2:{ text:'据为己用', effect:function(g){ g.power+=1; var eg=g.originEvil?1:0; g.evil+=eg; return '你吸收了魔宝的力量，根骨+1，煞气+'+eg; }}
   },
-  {
-    title:'论道大会',
-    desc:'几位修士正在山巅论道，各抒己见。',
-    option1:{ text:'参与论道', effect:function(g){
-      if(g.wit>=6){
-        g.wit+=1; g.cult+=40;
-        return '你以精辟见解折服众人，悟性+1，修为+40';
-      }
-      g.cult+=25;
-      return '你勉强跟上讨论，修为+25';
-    }},
-    option2:{ text:'旁听学习', effect:function(g){
-      g.cult+=15; g.mind+=1;
-      return '你静静聆听，获益良多，修为+15，心境+1';
-    }}
+  { title:'论道大会', desc:'几位修士正在山巅论道，各抒己见。',
+    option1:{ text:'参与论道', effect:function(g){ if(g.wit>=6){ g.wit+=1; g.cult+=40; return '你以精辟见解折服众人，悟性+1，修为+40'; } g.cult+=25; return '你勉强跟上讨论，修为+25'; }},
+    option2:{ text:'旁听学习', effect:function(g){ g.cult+=15; g.mind+=1; return '你静静聆听，获益良多，修为+15，心境+1'; }}
   },
-  {
-    title:'秘境裂缝',
-    desc:'前方的空间出现一道裂缝，隐约能看到另一番天地。',
+  { title:'秘境裂缝', desc:'前方的空间出现一道裂缝，隐约能看到另一番天地。',
     option1:{ text:'冒险进入', effect:function(g){
-      if(Math.random()<0.3+g.luck*0.03){
-        var bigGain=80+g.realm*10;
-        g.cult+=bigGain; g.pills+=3;
-        return '你在秘境中获得大量资源，修为+'+bigGain+'，丹药+3';
-      }
-      var lose=Math.floor(30+Math.random()*40);
-      g.cult=Math.max(0,g.cult-lose);
-      return '秘境中危险重重，你受伤退出，修为-'+lose;
+      if(Math.random()<0.3+g.luck*0.03){ var bg=80+g.realm*10; g.cult+=bg; g.pills+=3; return '你在秘境中获得大量资源，修为+'+bg+'，丹药+3'; }
+      var lose=Math.floor(30+Math.random()*40); g.cult=Math.max(0,g.cult-lose); return '秘境中危险重重，你受伤退出，修为-'+lose;
     }},
-    option2:{ text:'记录位置', effect:function(g){
-      g.wit+=1;
-      return '你记下裂缝的位置，留待日后准备充分再来，悟性+1';
-    }}
+    option2:{ text:'记录位置', effect:function(g){ g.wit+=1; return '你记下裂缝的位置，留待日后准备充分再来，悟性+1'; }}
   },
-  {
-    title:'天劫余威',
-    desc:'远处有天劫余波传来，空气中弥漫着狂暴的雷电之力。',
-    option1:{ text:'吸收雷力', effect:function(g){
-      if(g.power>=5){
-        g.power+=1; g.cult=Math.max(0,g.cult-10);
-        return '你以肉身吸收雷力淬体，根骨+1，但受了些轻伤修为-10';
-      }
-      g.cult=Math.max(0,g.cult-30);
-      return '雷力过于霸道，你被电伤，修为-30';
-    }},
-    option2:{ text:'观摩感悟', effect:function(g){
-      g.wit+=1; g.mind+=1;
-      return '你从天劫余威中感悟天道，悟性+1，心境+1';
-    }}
+  { title:'天劫余威', desc:'远处有天劫余波传来，空气中弥漫着狂暴的雷电之力。',
+    option1:{ text:'吸收雷力', effect:function(g){ if(g.power>=5){ g.power+=1; g.cult=Math.max(0,g.cult-10); return '你以肉身吸收雷力淬体，根骨+1，但受了些轻伤修为-10'; } g.cult=Math.max(0,g.cult-30); return '雷力过于霸道，你被电伤，修为-30'; }},
+    option2:{ text:'观摩感悟', effect:function(g){ g.wit+=1; g.mind+=1; return '你从天劫余威中感悟天道，悟性+1，心境+1'; }}
   },
-  {
-    title:'仙鹤送书',
-    desc:'一只仙鹤衔着一卷古书落在你面前。',
+  { title:'仙鹤送书', desc:'一只仙鹤衔着一卷古书落在你面前。',
     option1:{ text:'学习功法', effect:function(g){
-        var unlearned=[];
-        for(var ti=0;ti<5;ti++){if(g.techniques.indexOf(ti)<0)unlearned.push(ti);}
-        if(unlearned.length>0){
-          var rnd=unlearned[Math.floor(Math.random()*unlearned.length)];
-          g.techniques.push(rnd);
-          return '你学会了「'+TECHNIQUES[rnd].name+'」！';
-        }
+      var unlearned=TECHNIQUES.filter(function(t){ return !g.techniques[t.id]; });
+      if(unlearned.length>0){ var rnd=unlearned[Math.floor(Math.random()*unlearned.length)]; learnTech(rnd.id); return '你学会了「'+rnd.name+'」！'; }
       return '你已学会所有功法，将古书珍藏起来。';
     }},
-    option2:{ text:'放生仙鹤', effect:function(g){
-      g.virtue+=2;
-      return '你放归仙鹤，积攒功德，功德+2';
-    }}
+    option2:{ text:'放生仙鹤', effect:function(g){ g.virtue+=2; return '你放归仙鹤，积攒功德，功德+2'; }}
   },
-  {
-    title:'深渊魔气',
-    desc:'一道深渊中涌出浓郁的魔气，腐蚀着周围的一切。',
+  { title:'深渊魔气', desc:'一道深渊中涌出浓郁的魔气，腐蚀着周围的一切。',
     option1:{ text:'净化魔气', effect:function(g){
-      var cost=Math.floor(20+Math.random()*30);
-      g.cult=Math.max(0,g.cult-cost);
-      g.virtue+=2;
-      var evilGain=g.originEvil?1:0;
-      g.evil=Math.max(0,g.evil-evilGain);
-      return '你耗费'+cost+'修为净化魔气，功德+2'+(evilGain>0?'，煞气-1':'');
+      var cost=Math.floor(20+Math.random()*30); g.cult=Math.max(0,g.cult-cost); g.virtue+=2;
+      var eg=g.originEvil?1:0; g.evil=Math.max(0,g.evil-eg);
+      return '你耗费'+cost+'修为净化魔气，功德+2'+(eg>0?'，煞气-1':'');
     }},
-    option2:{ text:'吸收修炼', effect:function(g){
-      g.cult+=40;
-      var evilGain=2+(g.originEvil?1:0);
-      g.evil+=evilGain;
-      return '你吸收魔气修炼，修为+40，煞气+'+evilGain;
-    }}
+    option2:{ text:'吸收修炼', effect:function(g){ g.cult+=40; var eg=2+(g.originEvil?1:0); g.evil+=eg; return '你吸收魔气修炼，修为+40，煞气+'+eg; }}
   },
-  {
-    title:'洞天福地',
-    desc:'找到一处灵气充沛的隐蔽洞府，适合闭关修炼。',
+  { title:'洞天福地', desc:'找到一处灵气充沛的隐蔽洞府，适合闭关修炼。',
     option1:{ text:'闭关修炼', effect:function(g){
-        var days=10+Math.floor(Math.random()*20);
-          var gain=10*Math.max(1,g.realm)+g.wit*3;
-          g.cult+=gain;
-          g.totalDays+=days; checkAge();
-          return '你闭关'+days+'天，修为+'+gain;
+      var days=10+Math.floor(Math.random()*20); var gain=10*Math.max(1,g.realm)+g.wit*3; g.cult+=gain; g.totalDays+=days; checkAge(); return '你闭关'+days+'天，修为+'+gain;
     }},
-    option2:{ text:'布置洞府', effect:function(g){
-      g.mind+=1;
-      return '你用心布置了洞府，心境+1';
-    }}
+    option2:{ text:'布置洞府', effect:function(g){ g.mind+=1; return '你用心布置了洞府，心境+1'; }}
   }
+];var SECTS = [
+  { id:'qingyun', name:'青云宗', desc:'正道之首，剑法无双', bonus:'根骨+1, 挑战+10%', joinReq:{realm:1,virtue:0}, effect:function(g,joined){ if(joined){ g.powerBonus+=1; g.challengeBonus+=0.1; } } },
+  { id:'tianji', name:'天机阁', desc:'精通阵法，洞悉天机', bonus:'悟性+1, 气运+1', joinReq:{realm:1,wit:6}, effect:function(g,joined){ if(joined){ g.witBonus+=1; g.luckBonus+=1; } } },
+  { id:'fomo', name:'金刚寺', desc:'佛门圣地，金刚不坏', bonus:'根骨+2, 寿元+20', joinReq:{realm:1,evil:0}, effect:function(g,joined){ if(joined){ g.powerBonus+=2; g.maxAge+=20; } } },
+  { id:'xuesha', name:'血煞教', desc:'以杀证道，弱肉强食', bonus:'根骨+2, 挑战+15%', joinReq:{realm:2,evil:5}, effect:function(g,joined){ if(joined){ g.powerBonus+=2; g.challengeBonus+=0.15; } } },
+  { id:'wanfa', name:'万法宗', desc:'博览群经，法通天地', bonus:'悟性+2, 功法经验+50%', joinReq:{realm:2,wit:7}, effect:function(g,joined){ if(joined){ g.witBonus+=2; g.techExpBonus+=0.5; } } },
+  { id:'yaowang', name:'药王谷', desc:'丹道至尊，妙手回春', bonus:'丹药+5, 炼丹效率+30%', joinReq:{realm:1,pills:3}, effect:function(g,joined){ if(joined){ g.pillBonus+=0.3; } } }
 ];
-
-// ===== GAME STATE =====
-var DEFAULT_STATE={
+var SECT_SHOP = [
+  { id:'cult_pill', cost:10, reqRank:0 }, { id:'big_cult_pill', cost:40, reqRank:0 },
+  { id:'life_pill', cost:60, reqRank:0 }, { id:'root_pill', cost:80, reqRank:1 },
+  { id:'wit_pill', cost:80, reqRank:1 }, { id:'break_pill', cost:100, reqRank:1 },
+  { id:'spirit_sword', cost:120, reqRank:1 }, { id:'defense_robe', cost:180, reqRank:2 },
+  { id:'meditation_beads', cost:250, reqRank:2 }, { id:'spirit_ring', cost:350, reqRank:3 },
+  { id:'dunshu', cost:400, reqRank:2, isTech:true }, { id:'tianyan', cost:500, reqRank:3, isTech:true },
+  { id:'jindan', cost:700, reqRank:4, isTech:true }, { id:'wanjian', cost:900, reqRank:4, isTech:true }
+];
+var CHALLENGE_TYPES = [
+  { id:'beast', name:'妖兽', icon:'🐻', diff:0 }, { id:'rogue', name:'散修', icon:'🥋', diff:1 },
+  { id:'demon', name:'魔修', icon:'👹', diff:2 }, { id:'arena', name:'擂台', icon:'🏟️', diff:1 }
+];
+var MISSION_TYPES = [
+  { id:'treasure', name:'寻宝', desc:'寻找天材地宝', icon:'🔍' },
+  { id:'hunt', name:'除妖', desc:'剿灭作乱妖兽', icon:'⚔️' },
+  { id:'deliver', name:'送信', desc:'传递宗门密信', icon:'✉️' },
+  { id:'collect', name:'采集', desc:'采集灵草矿石', icon:'🌿' },
+  { id:'patrol', name:'巡视', desc:'巡视宗门领地', icon:'👁️' }
+];
+var SECT_RANKS = [
+  { name:'外门弟子', req:0 }, { name:'内门弟子', req:51 },
+  { name:'核心弟子', req:201 }, { name:'长老', req:501 }, { name:'掌门', req:1000 }
+];var DEFAULT_STATE={
   origin:-1, root:-1, realm:0, progress:0, cult:0, pills:0,
   wit:5, power:5, luck:5, mind:5, virtue:0, evil:0,
-  techniques:[], totalDays:0, maxAge:50, eventTimer:0,
-  passiveTimer:0, gameOver:false, started:false, originEvil:false,
-  _lastSave:Date.now()
+  techniques:{}, equippedTechs:[], totalDays:0, maxAge:50,
+  eventTimer:0, passiveTimer:0, gameOver:false, started:false, originEvil:false,
+  inventory:{}, equippedItems:{weapon:null,armor:null,accessory:null,tool:null},
+  challengeWins:0, challengeLosses:0, challengeStreak:0, challengeCooldown:0,
+  sect:null, _lastSave:Date.now()
 };
-
 var g={};
-function resetState(){
-  g=JSON.parse(JSON.stringify(DEFAULT_STATE));
-}
-
-// ===== DOM REFS =====
+function resetState(){ g=JSON.parse(JSON.stringify(DEFAULT_STATE)); }
 var $=function(id){return document.getElementById(id)};
 var realmName=$('realmName'),realmSub=$('realmSub');
-var ageDisplay=$('ageDisplay'),charInfo=$('charInfo');
+var ageDisplay=$('ageDisplay'),charInfo=$('charInfo'),extraInfo=$('extraInfo');
 var statWit=$('statWit'),statPower=$('statPower'),statLuck=$('statLuck'),statMind=$('statMind');
 var statVirtue=$('statVirtue'),statEvil=$('statEvil');
 var cultVal=$('cultVal'),pillVal=$('pillVal');
 var progressBar=$('progressBar'),progressText=$('progressText');
+var techRowEl=$('techRow');
 var logWrap=$('logWrap');
 var btnTrain=$('btnTrain'),btnBreak=$('btnBreak'),btnPill=$('btnPill'),btnTravel=$('btnTravel');
+var btnBag=$('btnBag'),btnChallenge=$('btnChallenge'),btnSect=$('btnSect'),btnTech=$('btnTech');
 var originModal=$('originModal'),originGrid=$('originGrid'),originConfirm=$('originConfirm');
 var rootModal=$('rootModal'),rootDesc=$('rootDesc'),rootAnim=$('rootAnim');
 var rootResult=$('rootResult'),rootRate=$('rootRate'),rootConfirm=$('rootConfirm');
@@ -541,26 +552,16 @@ var eventModal=$('eventModal'),eventTitle=$('eventTitle'),eventDesc=$('eventDesc
 var eventBtn1=$('eventBtn1'),eventBtn2=$('eventBtn2');
 var deathModal=$('deathModal'),deathRestart=$('deathRestart');
 var deathAge=$('deathAge'),deathRealm=$('deathRealm'),deathCult=$('deathCult'),deathVirtue=$('deathVirtue');
+var techModal=$('techModal'),techSlotsInfo=$('techSlotsInfo'),techEquipSlots=$('techEquipSlots'),techList=$('techList'),techClose=$('techClose');
+var bagModal=$('bagModal'),bagSub=$('bagSub'),equipSlots=$('equipSlots'),bagContent=$('bagContent'),bagClose=$('bagClose');
+var challengeModal=$('challengeModal'),challengeRecord=$('challengeRecord'),challengeStreak=$('challengeStreak'),cooldownText=$('cooldownText'),opponentList=$('opponentList'),challengeClose=$('challengeClose');
+var sectModal=$('sectModal'),sectTabs=$('sectTabs'),sectList=$('sectList'),sectInfo=$('sectInfo'),sectMissions=$('sectMissions'),sectShop=$('sectShop'),sectClose=$('sectClose');
 
-// ===== SAVE / LOAD =====
-function save(){
-  try{
-    g._lastSave=Date.now();
-    localStorage.setItem('xiuxianSave2',JSON.stringify(g));
-  }catch(e){}
-}
+function save(){ try{ g._lastSave=Date.now(); localStorage.setItem('xiuxianSave3',JSON.stringify(g)); }catch(e){} }
 function load(){
-  try{
-    var d=JSON.parse(localStorage.getItem('xiuxianSave2'));
-    if(d&&d.origin>=0&&d.root>=0){
-      g=d;
-      return true;
-    }
-  }catch(e){}
+  try{ var d=JSON.parse(localStorage.getItem('xiuxianSave3')); if(d&&d.origin>=0&&d.root>=0){ g=d; return true; } }catch(e){}
   return false;
 }
-
-// ===== LOG =====
 function log(msg,cls){
   var div=document.createElement('div');
   div.className='log-entry';
@@ -568,258 +569,245 @@ function log(msg,cls){
   logWrap.insertBefore(div,logWrap.firstChild);
   if(logWrap.children.length>50)logWrap.removeChild(logWrap.lastChild);
 }
-
-// ===== FLOAT TEXT =====
 function floatText(text,cls){
-  var el=document.createElement('div');
-  el.className='float-text '+cls;
-  el.textContent=text;
-  var x=40+Math.random()*20;
-  var y=30+Math.random()*20;
-  el.style.left=x+'%';
-  el.style.top=y+'%';
-  el.style.transform='translateX(-50%)';
-  document.body.appendChild(el);
-  setTimeout(function(){el.remove()},1200);
+  var el=document.createElement('div'); el.className='float-text '+cls;
+  el.textContent=text; var x=40+Math.random()*20, y=30+Math.random()*20;
+  el.style.left=x+'%'; el.style.top=y+'%'; el.style.transform='translateX(-50%)';
+  document.body.appendChild(el); setTimeout(function(){el.remove()},1200);
 }
-
-// ===== TIME =====
-function advanceDays(days){
-  g.totalDays+=days;
-  checkAge();
+function advanceDays(days){ g.totalDays+=days; checkAge(); }
+function getAge(){ return 16+Math.floor(g.totalDays/360); }
+function checkAge(){ var age=getAge(); if(age>=g.maxAge&&!g.gameOver){g.gameOver=true;showDeath();} }
+function getTechById(id){ for(var i=0;i<TECHNIQUES.length;i++){if(TECHNIQUES[i].id===id)return TECHNIQUES[i];} return null; }
+function getItemById(id){ for(var i=0;i<ITEMS.length;i++){if(ITEMS[i].id===id)return ITEMS[i];} return null; }
+function getSectById(id){ for(var i=0;i<SECTS.length;i++){if(SECTS[i].id===id)return SECTS[i];} return null; }
+function invAdd(id,count){
+  if(!count)count=1;
+  var maxSlots=20; if(g.inventorySlots)maxSlots=g.inventorySlots;
+  var curTypes=0; for(var k in g.inventory){if(g.inventory[k]>0)curTypes++;}
+  if(!g.inventory[id]&&curTypes>=maxSlots)return false;
+  g.inventory[id]=(g.inventory[id]||0)+count; return true;
 }
-
-function getAge(){
-  return 16+Math.floor(g.totalDays/360);
+function invRemove(id,count){
+  if(!count)count=1;
+  if(!g.inventory[id]||g.inventory[id]<count)return false;
+  g.inventory[id]-=count; if(g.inventory[id]<=0)delete g.inventory[id]; return true;
 }
-
-function checkAge(){
-  var age=getAge();
-  if(age>=g.maxAge&&!g.gameOver){
-    g.gameOver=true;
-    showDeath();
+function hasItem(id){ return g.inventory[id]&&g.inventory[id]>0; }
+function countItem(id){ return g.inventory[id]||0; }
+function learnTech(id){ if(g.techniques[id])return; g.techniques[id]={level:1,exp:0}; }
+function getSectRank(){ if(!g.sect)return null; var c=g.sect.contribution; for(var i=SECT_RANKS.length-1;i>=0;i--){if(c>=SECT_RANKS[i].req)return i;} return 0; }
+function getEquipSlots(){ return 2+g.realm; }function calcBonuses(){
+  g.trainBonus=0; g.powerBonus=0; g.witBonus=0; g.mindBonus=0;
+  g.luckBonus=0; g.breakBonus=0; g.challengeBonus=0; g.pillBonus=0;
+  g.allBonus=0; g.techExpBonus=0; g.inventorySlots=20;
+  for(var ei=0;ei<g.equippedTechs.length;ei++){
+    var tid=g.equippedTechs[ei]; if(!tid)continue;
+    var tec=getTechById(tid); if(!tec)continue;
+    var lv=g.techniques[tid]?g.techniques[tid].level:1;
+    if(tec.effect)tec.effect(g,lv);
+  }
+  for(var s in g.equippedItems){
+    var iid=g.equippedItems[s]; if(!iid)continue;
+    var item=getItemById(iid); if(!item||!item.effect)continue;
+    item.effect(g,true);
+  }
+  if(g.sect){
+    var sect=getSectById(g.sect.id);
+    if(sect&&sect.effect)sect.effect(g,true);
+  }
+  if(g.allBonus>0){
+    g.trainBonus*=(1+g.allBonus); g.powerBonus*=(1+g.allBonus);
+    g.witBonus*=(1+g.allBonus); g.mindBonus*=(1+g.allBonus);
+    g.luckBonus*=(1+g.allBonus); g.breakBonus*=(1+g.allBonus);
+    g.challengeBonus*=(1+g.allBonus); g.pillBonus*=(1+g.allBonus);
   }
 }
-
-// ===== CULTIVATION CALC =====
 function calcTrainGain(){
   if(g.root<0)return 1;
-  var base=1+g.wit*0.5;
+  calcBonuses();
+  var base=1+g.wit*0.5+g.witBonus;
   var rootRate=ROOTS[g.root].rate;
-  var techBonus=0;
-  if(g.techniques.indexOf(0)>=0)techBonus+=3;
-  if(g.techniques.indexOf(3)>=0)techBonus+=8;
-  if(g.techniques.indexOf(4)>=0)techBonus+=8;
-  return Math.floor((base+techBonus)*rootRate);
+  return Math.floor((base+g.trainBonus)*rootRate);
 }
-
 function calcBreakRate(pillsUsed){
   if(g.realm>=8)return 0;
+  calcBonuses();
   var r=REALMS[g.realm];
   var rate=r.breakRate;
-  rate+=g.power*0.008;
-  rate+=g.luck*0.005;
-  rate+=g.virtue*0.003;
-  rate-=g.evil*0.004;
-  if(g.techniques.indexOf(1)>=0)rate+=0.03;
-  rate+=pillsUsed*0.08;
+  rate+=g.power*0.008+g.powerBonus*0.008;
+  rate+=g.luck*0.005+g.luckBonus*0.005;
+  rate+=g.virtue*0.003; rate-=g.evil*0.004;
+  rate+=g.breakBonus; rate+=pillsUsed*0.08;
+  if(hasItem('break_pill')){ invRemove('break_pill'); rate+=0.15; }
   return Math.max(0.05,Math.min(0.95,rate));
 }
-
 function getSubLayer(){
   if(g.realm>=8)return 3;
-  var r=REALMS[g.realm];
-  var pct=g.progress/r.require;
-  if(pct>=1)return 3;
-  if(pct>=0.75)return 3;
-  if(pct>=0.50)return 2;
-  if(pct>=0.25)return 1;
-  return 0;
+  var r=REALMS[g.realm]; var pct=g.progress/r.require;
+  if(pct>=1)return 3; if(pct>=0.75)return 3; if(pct>=0.50)return 2; if(pct>=0.25)return 1; return 0;
 }
-
-// ===== UPDATE UI =====
+function addTechExp(amount){
+  for(var ei=0;ei<g.equippedTechs.length;ei++){
+    var tid=g.equippedTechs[ei]; if(!tid||!g.techniques[tid])continue;
+    var t=g.techniques[tid]; if(t.level>=10)continue;
+    var gain=amount+(g.techExpBonus||0)*amount;
+    t.exp+=gain;
+    while(t.level<10&&t.exp>=t.level*10){
+      t.exp-=t.level*10; t.level++;
+      log('🌟 '+getTechById(tid).name+' 升至 '+t.level+' 级！','log-special');
+      floatText(getTechById(tid).name+' Lv'+t.level,'float-gold');
+    }
+  }
+}
 function updateUI(){
   if(!g.started)return;
-  // Realm
+  calcBonuses();
   var r=REALMS[g.realm];
   realmName.textContent=r.name;
   var subIdx=getSubLayer();
   if(g.realm>=8)realmSub.textContent=r.name+' · 巔峰';
   else realmSub.textContent=r.name+' · '+SUB_LAYERS[subIdx];
-
-  // Age
   var age=getAge();
   var ageCls=age>=g.maxAge-10?'warn':'safe';
   ageDisplay.innerHTML='年龄: <span class="'+ageCls+'">'+age+'</span>岁 / 寿元: <span>'+(g.gameOver?'已尽':g.maxAge+'年')+'</span>';
-
-  // Char info
   if(g.origin>=0&&g.root>=0){
     charInfo.innerHTML='出身: <span>'+ORIGINS[g.origin].name+'</span> | 灵根: <span>'+ROOTS[g.root].name+'</span>';
   }
-
-  // Stats
-  statWit.textContent=Math.floor(g.wit);
-  statPower.textContent=Math.floor(g.power);
-  statLuck.textContent=Math.floor(g.luck);
-  statMind.textContent=Math.floor(g.mind);
+  statWit.textContent=Math.floor(g.wit+g.witBonus);
+  statPower.textContent=Math.floor(g.power+g.powerBonus);
+  statLuck.textContent=Math.floor(g.luck+g.luckBonus);
+  statMind.textContent=Math.floor(g.mind+g.mindBonus);
   statVirtue.textContent=Math.floor(g.virtue);
   statEvil.textContent=Math.floor(g.evil);
-
-  // Resources
   cultVal.textContent=Math.floor(g.cult);
   pillVal.textContent=g.pills;
-
-  // Progress
+  var extra='';
+  if(g.sect&&getSectById(g.sect.id))extra+='宗门: <span>'+getSectById(g.sect.id).name+'</span> | ';
+  var eqStr='';
+  for(var si=0;si<EQUIP_SLOTS.length;si++){
+    var s=EQUIP_SLOTS[si]; var iid=g.equippedItems[s];
+    if(iid){ var item=getItemById(iid); if(item)eqStr+=item.name+' '; }
+  }
+  if(eqStr)extra+='装备: <span>'+eqStr.trim()+'</span>';
+  if(g.sect)extra+=' | 贡献: <span>'+g.sect.contribution+'</span>';
+  extraInfo.innerHTML=extra;
   if(g.realm<8&&!g.gameOver){
-    var req=r.require;
-    var pct=Math.min(100,g.progress/req*100);
+    var req=r.require; var pct=Math.min(100,g.progress/req*100);
     progressBar.style.width=pct+'%';
     progressText.textContent=Math.floor(g.progress)+' / '+req+' ('+SUB_LAYERS[subIdx]+')';
-    btnTrain.disabled=false;
-    btnBreak.disabled=g.progress<req||g.gameOver;
-    btnPill.disabled=g.gameOver;
-    btnTravel.disabled=g.gameOver;
+    btnTrain.disabled=false; btnBreak.disabled=g.progress<req||g.gameOver;
+    btnPill.disabled=g.gameOver; btnTravel.disabled=g.gameOver;
   }else if(g.gameOver){
-    progressBar.style.width='0%';
-    progressText.textContent='— 道消身陨 —';
-    btnTrain.disabled=true;
-    btnBreak.disabled=true;
-    btnPill.disabled=true;
-    btnTravel.disabled=true;
+    progressBar.style.width='0%'; progressText.textContent='— 道消身陨 —';
+    btnTrain.disabled=true; btnBreak.disabled=true; btnPill.disabled=true; btnTravel.disabled=true;
   }else{
-    progressBar.style.width='100%';
-    progressText.textContent='★ 飞升成仙 ★';
-    btnTrain.disabled=true;
-    btnBreak.disabled=true;
-    btnPill.disabled=true;
-    btnTravel.disabled=true;
+    progressBar.style.width='100%'; progressText.textContent='★ 飞升成仙 ★';
+    btnTrain.disabled=true; btnBreak.disabled=true; btnPill.disabled=true; btnTravel.disabled=true;
   }
-
-  // Techniques
-  for(var i=0;i<5;i++){
-    var slot=$(('tech')+i);
-    if(g.techniques.indexOf(i)>=0){
-      slot.className='tech-slot learned';
-      slot.innerHTML='<span class="tech-icon">'+TECHNIQUES[i].icon+'</span><span class="tech-name">'+TECHNIQUES[i].name+'</span>';
+  var maxEquip=getEquipSlots();
+  var techRow=techRowEl; techRow.innerHTML='';
+  for(var i=0;i<Math.max(maxEquip,2);i++){
+    var slot=document.createElement('div');
+    if(g.equippedTechs[i]){
+      var tid=g.equippedTechs[i]; var tec=getTechById(tid); var lv=g.techniques[tid]?g.techniques[tid].level:1;
+      slot.className='tech-slot equipped';
+      slot.innerHTML='<span class="tech-icon">'+tec.icon+'</span><span class="tech-name">'+tec.name+'</span><span class="tech-lv">L'+lv+'</span>';
     }else{
-      slot.className='tech-slot';
-      slot.innerHTML='<span class="tech-icon">❓</span><span class="tech-name">?</span>';
+      slot.className='tech-slot empty';
+      slot.innerHTML='<span class="tech-icon">❓</span><span class="tech-name">空闲</span>';
     }
+    slot.addEventListener('click',function(){ showTechModal(); });
+    techRow.appendChild(slot);
   }
-}
-
-// ===== ACTIONS =====
-// Train
-btnTrain.addEventListener('click',function(e){
+}btnTrain.addEventListener('click',function(){
   if(g.gameOver||g.realm>=8||!g.started)return;
-  var gain=calcTrainGain();
-  g.cult+=gain;
-  g.progress+=gain;
-  advanceDays(g.realm+1);
-  log('修炼获得 '+gain+' 修为', 'log-good');
-  floatText('+'+gain+' 修为', 'float-good');
-  var spGain=g.wit*0.05+gain*0.1;
-  g.wit+=spGain*0.01;
+  var gain=calcTrainGain(); g.cult+=gain; g.progress+=gain;
+  advanceDays(g.realm+1); addTechExp(1);
+  log('修炼获得 '+gain+' 修为','log-good');
+  floatText('+'+gain+' 修为','float-good');
+  var spGain=g.wit*0.05+gain*0.1; g.wit+=spGain*0.01;
   updateUI();save();
 });
-
-// Breakthrough
 btnBreak.addEventListener('click',function(){
   if(g.gameOver||g.realm>=8||!g.started)return;
   var r=REALMS[g.realm];
-  if(g.progress<r.require){
-    log('修为不足，无法突破', 'log-bad');
-    return;
-  }
-  // Auto-use pills
-  var pillsUsed=0;
-  while(g.pills>0&&pillsUsed<3){
-    g.pills--;pillsUsed++;
-  }
-  var rate=calcBreakRate(pillsUsed);
-  var roll=Math.random();
+  if(g.progress<r.require){ log('修为不足，无法突破','log-bad'); return; }
+  var pillsUsed=0; while(g.pills>0&&pillsUsed<3){g.pills--;pillsUsed++;}
+  var rate=calcBreakRate(pillsUsed); var roll=Math.random();
   advanceDays(30);
   if(roll<rate){
-    g.realm++;
-    g.progress=0;
-    g.maxAge+=REALMS[g.realm].lifeBonus;
-    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！', 'log-special');
-    floatText('突破成功！', 'float-gold');
-    var pb=$('progressBar').parentElement;
+    g.realm++; g.progress=0; g.maxAge+=REALMS[g.realm].lifeBonus;
+    log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
+    floatText('突破成功！','float-gold');
+    var pb=progressBar.parentElement;
     pb.style.animation='breakthrough .6s';
     setTimeout(function(){pb.style.animation=''},600);
     updateUI();save();
-    if(g.realm>=8)log('🌟 飞升成仙！与天地同寿！', 'log-special');
+    if(g.realm>=8)log('🌟 飞升成仙！与天地同寿！','log-special');
   }else{
     var lose=Math.floor(r.require*0.12);
     g.progress=Math.max(0,g.progress-lose);
-    log('💥 突破失败，修为倒退 '+lose, 'log-bad');
-    floatText('突破失败', 'float-bad');
-    var act=document.querySelector('.actions');
-    act.style.animation='shake .4s';
-    setTimeout(function(){act.style.animation=''},400);
+    log('💥 突破失败，修为倒退 '+lose,'log-bad');
+    floatText('突破失败','float-bad');
+    var acts=document.querySelector('.actions');
+    acts.style.animation='shake .4s';
+    setTimeout(function(){acts.style.animation=''},400);
     updateUI();save();
   }
 });
-
-// Pill
 btnPill.addEventListener('click',function(){
   if(g.gameOver||!g.started)return;
-  if(g.cult<50){
-    log('修为不足，无法炼丹', 'log-bad');
-    return;
-  }
-  g.cult-=50;
-  g.pills++;
+  if(g.cult<50){ log('修为不足，无法炼丹','log-bad'); return; }
+  g.cult-=50; calcBonuses();
+  var yield=1+Math.floor(g.pillBonus); g.pills+=yield;
   advanceDays(15);
-  log('🔥 炼制成功，获得 1 枚丹药', 'log-special');
-  floatText('丹药+1', 'float-blue');
+  log('🔥 炼丹成功，获得 '+yield+' 枚丹药','log-special');
+  floatText('丹药+'+yield,'float-blue');
   updateUI();save();
 });
-
-// Travel
 btnTravel.addEventListener('click',function(){
   if(g.gameOver||!g.started)return;
-  advanceDays(10);
-  triggerEvent();
+  advanceDays(10); triggerEvent();
 });
-
-// ===== EVENTS =====
-function triggerEvent(){
+btnBag.addEventListener('click',function(){ if(g.started&&!g.gameOver)showBagModal(); });
+btnChallenge.addEventListener('click',function(){ if(g.started&&!g.gameOver)showChallengeModal(); });
+btnSect.addEventListener('click',function(){ if(g.started&&!g.gameOver)showSectModal(); });
+btnTech.addEventListener('click',function(){ if(g.started&&!g.gameOver)showTechModal(); });function triggerEvent(){
   if(g.gameOver||g.realm>=8)return;
   var evt=EVENTS[Math.floor(Math.random()*EVENTS.length)];
   eventTitle.textContent='✨ '+evt.title;
   eventDesc.textContent=evt.desc;
   eventModal.classList.add('show');
-
-  var cleanup=function(){
-    eventBtn1.onclick=null;
-    eventBtn2.onclick=null;
-  };
-
+  var cleanup=function(){ eventBtn1.onclick=null;eventBtn2.onclick=null; };
   eventBtn1.textContent=evt.option1.text;
   eventBtn1.className='modal-btn primary';
   eventBtn1.onclick=function(){
     eventModal.classList.remove('show');
     var result=evt.option1.effect(g);
-    log(result, 'log-good');
-    updateUI();save();
-    cleanup();
+    if(hasEquippedTech('dunshu')&&result.indexOf('修为+')>=0&&evt.title!='仙鹤送书'){
+      var match=result.match(/修为\+(\d+)/);
+      if(match){ var extra=parseInt(match[1]); g.cult+=extra; result+=' (遁术翻倍)'; }
+    }
+    log(result,'log-good'); updateUI();save(); cleanup();
   };
-
   eventBtn2.textContent=evt.option2.text;
   eventBtn2.className='modal-btn secondary';
   eventBtn2.style.display='block';
   eventBtn2.onclick=function(){
     eventModal.classList.remove('show');
     var result=evt.option2.effect(g);
-    log(result, result.indexOf('煞气')>=0?'log-evil':'log-info');
-    updateUI();save();
-    cleanup();
+    if(hasEquippedTech('dunshu')&&result.indexOf('修为+')>=0){
+      var match=result.match(/修为\+(\d+)/);
+      if(match){ var extra=parseInt(match[1]); g.cult+=extra; result+=' (遁术翻倍)'; }
+    }
+    log(result,result.indexOf('煞气')>=0?'log-evil':'log-info');
+    updateUI();save(); cleanup();
   };
 }
+function hasEquippedTech(id){ for(var i=0;i<g.equippedTechs.length;i++){if(g.equippedTechs[i]===id)return true;} return false; }
+function countEquipped(){ var c=0; for(var i=0;i<g.equippedTechs.length;i++){if(g.equippedTechs[i])c++;} return c; }
 
-// ===== DEATH =====
 function showDeath(){
   var age=getAge();
   deathAge.textContent='享年: '+age+'岁';
@@ -827,35 +815,25 @@ function showDeath(){
   deathCult.textContent='总修为: '+Math.floor(g.cult);
   deathVirtue.textContent='功德: '+Math.floor(g.virtue)+' | 煞气: '+Math.floor(g.evil);
   deathModal.classList.add('show');
-  log('🕯️ 寿元已尽，享年'+age+'岁...', 'log-bad');
+  log('🕯️ 寿元已尽，享年'+age+'岁...','log-bad');
 }
-
 deathRestart.addEventListener('click',function(){
-  deathModal.classList.remove('show');
-  resetState();
-  localStorage.removeItem('xiuxianSave2');
-  showOriginModal();
+  deathModal.classList.remove('show'); resetState();
+  localStorage.removeItem('xiuxianSave3'); showOriginModal();
 });
 
-// ===== ORIGIN SELECTION =====
 var selectedOrigin=-1;
-
 function showOriginModal(){
-  selectedOrigin=-1;
-  originConfirm.disabled=true;
+  selectedOrigin=-1; originConfirm.disabled=true;
   originGrid.innerHTML='';
   for(var i=0;i<ORIGINS.length;i++){
-    var o=ORIGINS[i];
-    var div=document.createElement('div');
+    var o=ORIGINS[i]; var div=document.createElement('div');
     div.className='origin-btn';
-    var buffText='';
-    var buffNames={wit:'悟性',power:'根骨',luck:'气运',mind:'心境',pills:'丹药'};
+    var buffText=''; var buffNames={wit:'悟性',power:'根骨',luck:'气运',mind:'心境',pills:'丹药'};
     for(var key in o.buffs){
-      var val=o.buffs[key];
-      if(key==='evilGain')continue;
+      var val=o.buffs[key]; if(key==='evilGain')continue;
       var label=buffNames[key]||key;
-      if(val>0)buffText+=label+'+'+val+' ';
-      if(val<0)buffText+=label+val+' ';
+      if(val>0)buffText+=label+'+'+val+' '; if(val<0)buffText+=label+val+' ';
     }
     if(o.buffs.evilGain)buffText+='煞气+1';
     div.innerHTML='<span class="origin-name">'+o.name+'</span><span class="origin-buff">'+buffText+'</span><span class="origin-desc">'+o.desc+'</span>';
@@ -863,107 +841,362 @@ function showOriginModal(){
     div.addEventListener('click',function(){
       var idx=parseInt(this.dataset.idx);
       document.querySelectorAll('.origin-btn').forEach(function(el){el.classList.remove('selected')});
-      this.classList.add('selected');
-      selectedOrigin=idx;
-      originConfirm.disabled=false;
+      this.classList.add('selected'); selectedOrigin=idx; originConfirm.disabled=false;
     });
     originGrid.appendChild(div);
   }
   originModal.classList.add('show');
 }
-
 originConfirm.addEventListener('click',function(){
   if(selectedOrigin<0)return;
   var o=ORIGINS[selectedOrigin];
   g.origin=selectedOrigin;
-  g.wit=5+(o.buffs.wit||0);
-  g.power=5+(o.buffs.power||0);
-  g.luck=5+(o.buffs.luck||0);
-  g.mind=5+(o.buffs.mind||0);
+  g.wit=5+(o.buffs.wit||0); g.power=5+(o.buffs.power||0);
+  g.luck=5+(o.buffs.luck||0); g.mind=5+(o.buffs.mind||0);
   g.pills=(o.buffs.pills||0);
   g.originEvil=!!o.buffs.evilGain;
   if(g.originEvil)g.evil=1;
   g.maxAge=50+REALMS[0].lifeBonus;
+  if(g.pills>0){ invAdd('cult_pill',g.pills); g.pills=0; }
   originModal.classList.remove('show');
-  log('出身选定：「'+o.name+'」', 'log-special');
+  log('出身选定：「'+o.name+'」','log-special');
   rollRoot();
-});
-
-// ===== ROOT ROLLING =====
-function rollRoot(){
+});function rollRoot(){
   rootModal.classList.add('show');
   rootDesc.textContent='天道昭昭，灵根显现...';
-  rootAnim.style.display='block';
-  rootAnim.textContent='✦ 检测中 ✦';
-  rootResult.style.display='none';
-  rootRate.style.display='none';
-  rootConfirm.style.display='none';
-
-  // Weighted roll
-  var total=0;
-  for(var i=0;i<ROOTS.length;i++)total+=ROOTS[i].weight;
-  var r=Math.random()*total;
-  var cum=0;
-  var resultIdx=0;
-  for(var i=0;i<ROOTS.length;i++){
-    cum+=ROOTS[i].weight;
-    if(r<cum){resultIdx=i;break;}
-  }
-
-  // Animation: cycle through roots then stop
-  var cycles=0;
-  var maxCycles=15+Math.floor(Math.random()*10);
+  rootAnim.style.display='block'; rootAnim.textContent='✦ 检测中 ✦';
+  rootResult.style.display='none'; rootRate.style.display='none'; rootConfirm.style.display='none';
+  var total=0; for(var i=0;i<ROOTS.length;i++)total+=ROOTS[i].weight;
+  var r=Math.random()*total; var cum=0; var resultIdx=0;
+  for(var i=0;i<ROOTS.length;i++){cum+=ROOTS[i].weight;if(r<cum){resultIdx=i;break;}}
+  var cycles=0; var maxCycles=15+Math.floor(Math.random()*10);
   var animInterval=setInterval(function(){
     var rand=Math.floor(Math.random()*ROOTS.length);
     rootAnim.textContent='✦ '+ROOTS[rand].name+' ✦';
     cycles++;
     if(cycles>=maxCycles){
       clearInterval(animInterval);
-      var root=ROOTS[resultIdx];
-      g.root=resultIdx;
+      var root=ROOTS[resultIdx]; g.root=resultIdx;
       rootAnim.style.display='none';
-      rootResult.style.display='block';
-      rootResult.textContent='✦ '+root.name+' ✦';
+      rootResult.style.display='block'; rootResult.textContent='✦ '+root.name+' ✦';
       rootRate.style.display='block';
       rootRate.innerHTML='修炼速度: ×'+root.rate+'<br><span style="font-size:13px;color:#aaa">'+root.desc+'</span>';
-      rootConfirm.style.display='block';
-      rootConfirm.textContent='踏入修仙路';
+      rootConfirm.style.display='block'; rootConfirm.textContent='踏入修仙路';
     }
   },100);
-
   rootConfirm.onclick=function(){
-    rootModal.classList.remove('show');
-    g.started=true;
-    updateUI();
-    log('灵根检测：「'+ROOTS[g.root].name+'」修炼速度 ×'+ROOTS[g.root].rate, 'log-special');
-    save();
+    rootModal.classList.remove('show'); g.started=true;
+    updateUI(); log('灵根检测：「'+ROOTS[g.root].name+'」修炼速度 ×'+ROOTS[g.root].rate,'log-special'); save();
   };
 }
 
-// ===== PASSIVE LOOP =====
+function showTechModal(){
+  var slots=getEquipSlots();
+  techSlotsInfo.textContent='已装备: '+countEquipped()+' / '+slots+' (境界+2)';
+  techEquipSlots.innerHTML='';
+  for(var i=0;i<slots;i++){
+    var s=document.createElement('div'); s.className='equip-slot';
+    if(g.equippedTechs[i]){
+      var tid=g.equippedTechs[i]; var tc=getTechById(tid);
+      var lv=g.techniques[tid]?g.techniques[tid].level:1;
+      s.className='equip-slot filled';
+      s.innerHTML='<span class="es-icon">'+tc.icon+'</span><span class="es-name">'+tc.name+' L'+lv+'</span>';
+      s.addEventListener('click',(function(idx){return function(){
+        var remId=g.equippedTechs[idx]; if(!remId)return;
+        g.equippedTechs.splice(idx,1); showTechModal(); updateUI();save();
+      };})(i));
+    }else{
+      s.innerHTML='<span class="es-icon">⬜</span><span class="es-name">空</span>';
+    }
+    techEquipSlots.appendChild(s);
+  }
+  techList.innerHTML='';
+  var learned=0;
+  for(var ti=0;ti<TECHNIQUES.length;ti++){
+    var tech=TECHNIQUES[ti];
+    if(!g.techniques[tech.id])continue;
+    learned++;
+    var lv=g.techniques[tech.id].level; var exp=g.techniques[tech.id].exp;
+    var expNeeded=lv<10?lv*10:0; var pct=expNeeded>0?Math.min(100,exp/expNeeded*100):100;
+    var isEq=hasEquippedTech(tech.id);
+    var tierTag='<span class="ti-tag '+(TECH_TIER_COLORS[tech.tier]||'')+'">T'+tech.tier+'</span>';
+    var div=document.createElement('div');
+    div.className='tech-item'+(isEq?' equipped':'');
+    div.innerHTML='<span class="ti-icon">'+tech.icon+'</span><span class="ti-info"><span class="ti-name">'+tech.name+'</span> '+tierTag+'<br><span class="ti-desc">'+tech.desc+'</span></span><span class="ti-lv">Lv'+lv+'</span>';
+    if(expNeeded>0){
+      var expDiv=document.createElement('div'); expDiv.className='ti-exp-wrap';
+      var expBar=document.createElement('div'); expBar.className='ti-exp-bar'; expBar.style.width=pct+'%';
+      expDiv.appendChild(expBar); div.querySelector('.ti-info').appendChild(expDiv);
+    }
+    div.addEventListener('click',(function(tid){return function(){
+      if(hasEquippedTech(tid)){
+        for(var i=0;i<g.equippedTechs.length;i++){if(g.equippedTechs[i]===tid){g.equippedTechs.splice(i,1);break;}}
+      }else{
+        if(countEquipped()>=getEquipSlots()){ log('装备槽已满！','log-bad'); return; }
+        g.equippedTechs.push(tid);
+      }
+      showTechModal(); updateUI();save();
+    };})(tech.id));
+    techList.appendChild(div);
+  }
+  if(learned===0)techList.innerHTML='<div style="color:#666;font-size:12px;padding:10px">暂未习得任何功法</div>';
+  techModal.classList.add('show');
+}
+techClose.addEventListener('click',function(){techModal.classList.remove('show');});function showBagModal(){
+  calcBonuses();
+  var used=0; for(var k in g.inventory)if(g.inventory[k]>0)used++;
+  bagSub.textContent='容量: '+used+' / '+g.inventorySlots;
+  equipSlots.innerHTML='';
+  for(var si=0;si<EQUIP_SLOTS.length;si++){
+    var s=EQUIP_SLOTS[si]; var div=document.createElement('div'); div.className='equip-slot';
+    var iid=g.equippedItems[s];
+    if(iid){
+      var item=getItemById(iid);
+      div.className='equip-slot filled';
+      div.innerHTML='<span class="es-icon">'+item.icon+'</span><span class="es-name">'+item.name+'</span>';
+      div.addEventListener('click',(function(slot){return function(){
+        g.equippedItems[slot]=null; showBagModal(); updateUI();save();
+      };})(s));
+    }else{
+      div.innerHTML='<span class="es-icon">⬜</span><span class="es-name">'+EQUIP_SLOT_NAMES[s]+'</span>';
+    }
+    equipSlots.appendChild(div);
+  }
+  bagContent.innerHTML='';
+  var cats={pill:'丹药',material:'材料',artifact:'法宝'};
+  for(var ct in cats){
+    var has=false;
+    for(var k in g.inventory){
+      if(g.inventory[k]<=0)continue;
+      var item=getItemById(k); if(!item||item.type!==ct)continue;
+      if(!has){ has=true; var catDiv=document.createElement('div'); catDiv.className='inv-cat'; catDiv.textContent=cats[ct]; bagContent.appendChild(catDiv); }
+      var div=document.createElement('div'); div.className='inv-item';
+      div.innerHTML='<span class="ii-icon">'+item.icon+'</span><span class="ii-info"><span class="ii-name">'+item.name+'</span><br><span class="ii-desc">'+item.desc+'</span></span><span class="ii-count">×'+g.inventory[k]+'</span>';
+      div.addEventListener('click',(function(iid){return function(){
+        var item=getItemById(iid); if(!item)return;
+        if(item.type==='pill'){
+          if(item.id==='break_pill'){ log('破境丹在突破时自动使用','log-info'); }
+          else if(item.effect){ item.effect(g); invRemove(iid); log('使用 '+item.name+', '+item.desc,'log-good'); floatText(item.desc,'float-blue'); }
+        }else if(item.type==='artifact'){
+          var slot=item.slot;
+          if(g.equippedItems[slot]===iid){ g.equippedItems[slot]=null; }
+          else{ g.equippedItems[slot]=iid; }
+          log((g.equippedItems[slot]===iid?'装备':'卸下')+'了 '+item.name,'log-info');
+        }
+        showBagModal(); updateUI();save();
+      };})(k));
+      bagContent.appendChild(div);
+    }
+  }
+  if(!bagContent.children.length)bagContent.innerHTML='<div style="color:#666;font-size:12px;padding:10px">背包空空如也</div>';
+  bagModal.classList.add('show');
+}
+bagClose.addEventListener('click',function(){bagModal.classList.remove('show');});function showChallengeModal(){
+  challengeRecord.textContent=g.challengeWins+'胜 '+g.challengeLosses+'败';
+  var se=challengeStreak; if(se)se.textContent=g.challengeStreak;
+  var cd=g.challengeCooldown;
+  cooldownText.textContent=(cd>0&&g.totalDays<cd)?'冷却中... 还需 '+(cd-g.totalDays)+' 天':'';
+  opponentList.innerHTML='';
+  for(var ci=0;ci<CHALLENGE_TYPES.length;ci++){
+    var ct=CHALLENGE_TYPES[ci]; var targetRealm=g.realm;
+    if(ct.id==='beast')targetRealm=Math.max(0,g.realm-1);
+    else if(ct.id==='demon')targetRealm=Math.min(7,g.realm+1);
+    var opower=4+targetRealm*2.5; var owit=3+targetRealm*2;
+    if(ct.id==='beast'){opower=3+(targetRealm+1)*2;owit=2+(targetRealm+1)*1.5;}
+    else if(ct.id==='demon'){opower=5+(targetRealm+1)*3;owit=4+(targetRealm+1)*2.5;}
+    else if(ct.id==='arena'){opower=4+g.realm*3+g.challengeStreak*0.5;owit=3+g.realm*2.5+g.challengeStreak*0.5;}
+    opower=Math.floor(opower); owit=Math.floor(owit);
+    var pScore=g.power*2+g.wit+g.luck*0.5+g.challengeBonus;
+    var oScore=opower*2+owit;
+    var winRate=Math.min(0.95,Math.max(0.05,pScore/(pScore+oScore)));
+    var rewards='修为+'+(20+g.realm*10);
+    if(ct.id==='rogue')rewards='修为+'+(40+g.realm*15)+', 贡献';
+    else if(ct.id==='demon')rewards='修为+'+(80+g.realm*20)+', 稀有物品';
+    else if(ct.id==='arena')rewards='修为+'+(30+g.realm*12)+', 连胜奖励';
+    var card=document.createElement('div'); card.className='opp-card';
+    card.innerHTML='<div class="oc-header"><span class="oc-name">'+ct.icon+' '+ct.name+'</span><span class="oc-realm">'+(targetRealm<=7?REALMS[targetRealm].name:'巅峰')+'</span></div><div class="oc-stats">根骨:'+opower+' 悟性:'+owit+' | 战力: '+Math.floor(oScore)+'</div><div class="oc-reward">奖励: '+rewards+'</div><div class="oc-rate">胜率: '+(winRate*100).toFixed(0)+'%</div>';
+    if(g.totalDays>=cd||cd<=0){
+      var bt=document.createElement('button'); bt.className='modal-btn primary'; bt.textContent='⚔️ 挑战';
+      bt.addEventListener('click',(function(ct2,wr,op,ow,tg){return function(){ doChallenge(ct2,wr,op,ow,tg); };})(ct,winRate,opower,owit,targetRealm));
+      card.appendChild(bt);
+    }
+    opponentList.appendChild(card);
+  }
+  challengeModal.classList.add('show');
+}
+function doChallenge(ct,winRate,opower,owit,targetRealm){
+  if(g.totalDays<g.challengeCooldown){ log('挑战还在冷却中','log-bad'); return; }
+  var roll=Math.random();
+  var cdDays=Math.max(1,Math.floor(5-g.realm*0.3));
+  g.challengeCooldown=g.totalDays+cdDays;
+  if(roll<winRate){
+    g.challengeWins++; g.challengeStreak++;
+    var cultReward=20+g.realm*10;
+    if(ct.id==='rogue')cultReward=40+g.realm*15;
+    else if(ct.id==='demon')cultReward=80+g.realm*20;
+    else if(ct.id==='arena')cultReward=30+g.realm*12+g.challengeStreak*5;
+    g.cult+=cultReward;
+    log('⚔️ 挑战 '+ct.name+' 胜利！修为+'+cultReward,'log-good');
+    floatText('挑战胜利！','float-gold');
+    if(g.challengeStreak%5===0){
+      var bonus=50+g.realm*10; g.cult+=bonus;
+      log('🔥 连胜 '+g.challengeStreak+' 场！额外获得 '+bonus+' 修为！','log-special');
+      floatText('连胜奖励！','float-gold');
+    }
+    if(ct.id==='rogue'||ct.id==='demon'){
+      if(g.sect){ g.sect.contribution+=Math.floor(3+g.realm*2); }
+      if(Math.random()<0.3){ invAdd('spirit_herb'); log('获得灵草×1','log-info'); }
+    }
+    if(ct.id==='demon'&&Math.random()<0.2){ invAdd('demon_core'); log('获得妖丹×1','log-info'); }
+    if(ct.id==='arena'&&Math.random()<0.15&&g.realm>=3){
+      var unlearned=TECHNIQUES.filter(function(t){return !g.techniques[t.id]&&t.tier>=3;});
+      if(unlearned.length>0){ var rnd=unlearned[Math.floor(Math.random()*unlearned.length)]; learnTech(rnd.id); log('🌟 擂台奖励：习得「'+rnd.name+'」！','log-special'); }
+    }
+  }else{
+    g.challengeLosses++; g.challengeStreak=0;
+    var loseCult=Math.floor(10+g.realm*5); g.cult=Math.max(0,g.cult-loseCult);
+    log('⚔️ 挑战 '+ct.name+' 失败，修为-'+loseCult,'log-bad');
+    floatText('挑战失败','float-bad');
+    document.querySelector('.actions').style.animation='shake .4s';
+    setTimeout(function(){document.querySelector('.actions').style.animation=''},400);
+  }
+  showChallengeModal(); updateUI();save();
+}
+challengeClose.addEventListener('click',function(){challengeModal.classList.remove('show');});var activeSectTab='sectList';
+sectTabs.addEventListener('click',function(e){
+  var tab=e.target.closest('.tab');
+  if(tab)showSectTab(tab.dataset.tab);
+});
+function showSectTab(tabId){
+  activeSectTab=tabId;
+  var tabs=sectTabs.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle('active',tabs[i].dataset.tab===tabId);}
+  ['sectList','sectInfo','sectMissions','sectShop'].forEach(function(id){ $(''+id).style.display=id===tabId?'block':'none'; });
+  if(tabId==='sectList')renderSectList();
+  else if(tabId==='sectInfo')renderSectInfo();
+  else if(tabId==='sectMissions')renderSectMissions();
+  else if(tabId==='sectShop')renderSectShop();
+}
+function showSectModal(){ activeSectTab='sectList'; showSectTab('sectList'); sectModal.classList.add('show'); }
+sectClose.addEventListener('click',function(){sectModal.classList.remove('show');});
+
+function renderSectList(){
+  sectList.innerHTML='';
+  if(g.sect){
+    var joinedSect=getSectById(g.sect.id);
+    var rank=getSectRank();
+    var card=document.createElement('div'); card.className='sect-card joined';
+    card.innerHTML='<div class="sc-name">'+joinedSect.name+'（已加入）</div><div class="sc-desc">'+joinedSect.desc+'</div><div class="sc-bonus">加成: '+joinedSect.bonus+'</div><div class="sc-req met">贡献: '+g.sect.contribution+' | 职位: '+SECT_RANKS[rank].name+'</div>';
+    card.addEventListener('click',function(){
+      if(confirm('离开宗门将失去所有贡献，是否确认？')){ g.sect=null; log('你离开了宗门','log-info'); renderSectList(); updateUI();save(); }
+    });
+    sectList.appendChild(card);
+    return;
+  }
+  for(var si=0;si<SECTS.length;si++){
+    var s=SECTS[si]; var req=s.joinReq;
+    var canJoin=true; var reqs=[];
+    if(req.realm!==undefined&&g.realm<req.realm){ canJoin=false; reqs.push('境界≥'+REALMS[req.realm].name); }
+    if(req.wit!==undefined&&g.wit<req.wit){ canJoin=false; reqs.push('悟性≥'+req.wit); }
+    if(req.virtue!==undefined&&g.virtue<req.virtue){ canJoin=false; reqs.push('功德≥'+req.virtue); }
+    if(req.evil!==undefined&&g.evil<req.evil){ canJoin=false; reqs.push('煞气≥'+req.evil); }
+    if(req.pills!==undefined&&g.pills<req.pills){ canJoin=false; reqs.push('丹药≥'+req.pills); }
+    var card=document.createElement('div'); card.className='sect-card';
+    card.innerHTML='<div class="sc-name">'+s.name+'</div><div class="sc-desc">'+s.desc+'</div><div class="sc-bonus">加成: '+s.bonus+'</div><div class="sc-req'+(canJoin?' met':'')+'">'+(canJoin?'✔ 可加入':('需要: '+reqs.join(', ')))+'</div>';
+    if(canJoin){
+      card.addEventListener('click',(function(sid){return function(){
+        g.sect={id:sid,contribution:0,missions:[]};
+        generateMissions();
+        log('🎉 加入 '+getSectById(sid).name+'！','log-special');
+        renderSectList(); updateUI();save();
+      };})(s.id));
+    }
+    sectList.appendChild(card);
+  }
+}
+function renderSectInfo(){
+  if(!g.sect){ sectInfo.innerHTML='<div style="color:#666;padding:10px">未加入任何宗门</div>'; return; }
+  var s=getSectById(g.sect.id); var rank=getSectRank();
+  var nextRank=rank<4?SECT_RANKS[rank+1]:null;
+  var nextReq=nextRank?nextRank.req-g.sect.contribution:0;
+  sectInfo.innerHTML='<div style="text-align:left"><div style="font-size:18px;font-weight:700;color:#f0c040;margin-bottom:4px">'+s.name+'</div><div style="font-size:12px;color:#888;margin-bottom:8px">'+s.desc+'</div><div style="font-size:13px;color:#aaa;line-height:1.8">职位: <span style="color:#f0c040;font-weight:600">'+SECT_RANKS[rank].name+'</span><br>贡献: <span style="color:#f0c040;font-weight:600">'+g.sect.contribution+'</span><br>加成: '+s.bonus+'<br>'+(nextRank?'下一职位: '+nextRank.name+' (还需'+nextReq+'贡献)':'已满')+'</div></div>';
+}
+function generateMissions(){
+  if(!g.sect)return;
+  g.sect.missions=[];
+  for(var mi=0;mi<3;mi++){
+    var mt=MISSION_TYPES[Math.floor(Math.random()*MISSION_TYPES.length)];
+    g.sect.missions.push({type:mt.id,name:mt.name,icon:mt.icon,desc:mt.desc,
+      cultReward:10+g.realm*5,contribReward:5+g.realm*2,days:5+g.realm});
+  }
+}
+function renderSectMissions(){
+  if(!g.sect){ sectMissions.innerHTML='<div style="color:#666;padding:10px">未加入任何宗门</div>'; return; }
+  if(!g.sect.missions||g.sect.missions.length===0)generateMissions();
+  sectMissions.innerHTML='<div style="text-align:left">';
+  for(var mi=0;mi<g.sect.missions.length;mi++){
+    var m=g.sect.missions[mi];
+    var card=document.createElement('div'); card.className='mission-card';
+    card.innerHTML='<div class="mc-name">'+m.icon+' '+m.name+'</div><div class="mc-desc">'+m.desc+'</div><div class="mc-reward">修为+'+m.cultReward+' | 贡献+'+m.contribReward+'</div><div class="mc-days">耗时: '+m.days+'天</div>';
+    card.addEventListener('click',(function(idx){return function(){
+      var mm=g.sect.missions[idx];
+      if(!mm)return;
+      g.cult+=mm.cultReward; g.sect.contribution+=mm.contribReward;
+      advanceDays(mm.days);
+      log('完成宗门任务「'+mm.name+'」，修为+'+mm.cultReward+'，贡献+'+mm.contribReward,'log-good');
+      floatText('任务完成！','float-blue');
+      if(Math.random()<0.4){ invAdd('spirit_herb'); log('获得额外奖励灵草×1','log-info'); }
+      g.sect.missions.splice(idx,1);
+      generateMissions();
+      renderSectMissions(); updateUI();save();
+    };})(mi));
+    sectMissions.appendChild(card);
+  }
+  if(g.sect.missions.length===0)sectMissions.innerHTML+='<div style="color:#666;font-size:12px;padding:10px">暂无可用任务</div>';
+}
+function renderSectShop(){
+  if(!g.sect){ sectShop.innerHTML='<div style="color:#666;padding:10px">未加入任何宗门</div>'; return; }
+  var rank=getSectRank();
+  var html='<div class="contribution">贡献: '+g.sect.contribution+'</div><div style="text-align:left">';
+  for(var si=0;si<SECT_SHOP.length;si++){
+    var shop=SECT_SHOP[si];
+    var item=getItemById(shop.id); if(!item&&shop.isTech){ item={name:shop.id,icon:'📜',desc:'学习功法'}; }
+    if(shop.isTech){
+      var tech=getTechById(shop.id);
+      if(tech)item={name:tech.name,icon:tech.icon,desc:'学习'+tech.tier+'阶功法 '+tech.name};
+      else item={name:shop.id,icon:'📜',desc:'未知功法'};
+    }
+    var locked=shop.reqRank>rank;
+    var canBuy=!locked&&g.sect.contribution>=shop.cost&&(!shop.isTech||(shop.isTech&&!g.techniques[shop.id]||!shop.isTech));
+    var div=document.createElement('div'); div.className='shop-item'+(locked?' locked':'');
+    div.innerHTML='<span class="si-icon">'+item.icon+'</span><span class="si-info"><span class="si-name">'+item.name+'</span><br><span class="si-desc">'+(shop.isTech?item.desc:item.desc)+'</span></span><span class="si-cost">'+shop.cost+'贡献</span>';
+    if(!locked){
+      div.addEventListener('click',(function(sid,cost,isTech){return function(){
+        if(g.sect.contribution<cost){ log('贡献不足','log-bad'); return; }
+        if(isTech&&g.techniques[sid]){ log('已习得该功法','log-info'); return; }
+        g.sect.contribution-=cost;
+        if(isTech){ learnTech(sid); log('习得功法！','log-special'); }
+        else{ invAdd(sid); log('购买 '+getItemById(sid).name,'log-good'); }
+        renderSectShop(); updateUI();save();
+      };})(shop.id,shop.cost,shop.isTech));
+    }
+    sectShop.appendChild(div);
+  }
+}
 setInterval(function(){
   if(!g.started||g.gameOver||g.realm>=8)return;
-  var r=REALMS[g.realm];
-  // Passive spirit-like gain (just count as wit/cult growth)
   g.passiveTimer+=1;
   if(g.passiveTimer>=4){
     g.passiveTimer=0;
     var passiveGain=Math.floor(1+g.realm*0.5+Math.max(0,g.wit-5)*0.1);
-    g.cult+=passiveGain;
-    g.progress+=passiveGain;
+    g.cult+=passiveGain; g.progress+=passiveGain;
   }
-  // Random events
   g.eventTimer+=1;
-  if(g.eventTimer>=25){
-    g.eventTimer=0;
-    if(Math.random()<0.35)triggerEvent();
-  }
-  // Check age every 10 seconds
+  if(g.eventTimer>=25){ g.eventTimer=0; if(Math.random()<0.35)triggerEvent(); }
   if(g.totalDays%360<10)checkAge();
   updateUI();save();
 },1000);
 
-// ===== OFFLINE PROGRESS =====
 setInterval(function(){
   if(!g.started||g.gameOver||g.realm>=8)return;
   var now=Date.now();
@@ -971,10 +1204,9 @@ setInterval(function(){
     var offlineMin=Math.floor((now-g._lastSave)/60000);
     if(offlineMin>0&&offlineMin<1440){
       var offlineGain=Math.floor(offlineMin*(1+g.realm*0.5+g.wit*0.1));
-      g.cult+=offlineGain;
-      g.progress+=offlineGain;
-      log('离线 '+offlineMin+' 分钟，自动获得 '+offlineGain+' 修为', 'log-info');
-      floatText('离线+'+offlineGain, 'float-blue');
+      g.cult+=offlineGain; g.progress+=offlineGain;
+      log('离线 '+offlineMin+' 分钟，自动获得 '+offlineGain+' 修为','log-info');
+      floatText('离线+'+offlineGain,'float-blue');
       updateUI();save();
     }
   }
@@ -983,7 +1215,6 @@ setInterval(function(){
 
 window.addEventListener('beforeunload',function(){g._lastSave=Date.now();save()});
 
-// ===== INIT =====
 resetState();
 if(!load()){
   showOriginModal();
@@ -991,7 +1222,7 @@ if(!load()){
   if(g.origin>=0&&g.root>=0){
     g.started=true;
     updateUI();
-    log('欢迎回来，'+ORIGINS[g.origin].name+'·'+ROOTS[g.root].name, 'log-info');
+    log('欢迎回来，'+ORIGINS[g.origin].name+'·'+ROOTS[g.root].name,'log-info');
     updateUI();save();
   }else{
     showOriginModal();
