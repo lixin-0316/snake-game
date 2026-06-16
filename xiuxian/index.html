@@ -192,9 +192,67 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
   .equip-slots{grid-template-columns:1fr 1fr}
   .inv-grid{grid-template-columns:1fr}
 }
+/* Canvas bg particles */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+/* Flash overlay */
+#flashOverlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99;opacity:0;transition:opacity .4s}
+/* Modal animations */
+.modal.show .modal-box{animation:modalIn .25s ease-out}
+@keyframes modalIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+/* Enhanced float text */
+@keyframes float-up{
+  0%{opacity:0;transform:translateY(0) scale(.3)}
+  12%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-50px) scale(1.2)}
+}
+.float-text{animation:float-up 1.5s forwards;text-shadow:0 0 10px currentColor,0 2px 15px rgba(0,0,0,.5)}
+/* Button ripple */
+.btn::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,255,255,.12),transparent 70%);opacity:0;transition:opacity .15s;pointer-events:none}
+.btn:active::after{opacity:1}
+/* Log entry slide-in */
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+.log-entry{animation:slideIn .3s ease-out}
+/* Death screen */
+@keyframes deathRotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.death-screen .death-icon{animation:deathRotate 4s linear infinite}
+.death-stat{opacity:0;animation:fadeInStat .5s forwards}
+#deathAge{animation-delay:.2s}
+#deathRealm{animation-delay:.4s}
+#deathCult{animation-delay:.6s}
+#deathVirtue{animation-delay:.8s}
+@keyframes fadeInStat{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* Breakthrough button breathe */
+@keyframes breathe{
+  0%,100%{box-shadow:0 3px 12px rgba(233,69,96,.1);filter:brightness(1)}
+  50%{box-shadow:0 3px 25px rgba(233,69,96,.4);filter:brightness(1.15)}
+}
+.btn-break-ready{animation:breathe 1.5s ease-in-out infinite}
+/* Toast */
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);z-index:200;background:rgba(20,20,50,.95);border:1px solid rgba(240,192,64,.3);border-radius:12px;padding:14px 28px;font-size:17px;font-weight:700;color:#f0c040;text-align:center;pointer-events:none;opacity:0;transition:all .4s ease;backdrop-filter:blur(8px);box-shadow:0 4px 30px rgba(240,192,64,.15);line-height:1.4;max-width:80vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Progress bar glow */
+.progress-bar.glow{box-shadow:0 0 8px rgba(240,192,64,.5)}
+/* Stat glow */
+.stat-glow{filter:brightness(1.5)}
+/* Energy orbs */
+@keyframes energyRise{
+  0%{opacity:1;transform:translateY(0) scale(.5)}
+  50%{opacity:.8;transform:translateY(-30px) scale(1)}
+  100%{opacity:0;transform:translateY(-60px) scale(.3)}
+}
+.energy-orb{position:fixed;pointer-events:none;border-radius:50%;z-index:20;animation:energyRise .9s ease-out forwards}
+/* Burst particles */
+@keyframes burstFly{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}
+}
+.burst-particle{position:fixed;pointer-events:none;border-radius:50%;z-index:40;animation:burstFly .8s ease-out forwards}
 </style>
 </head>
 <body>
+<canvas id="bgCanvas"></canvas>
+<div id="flashOverlay"></div>
+<div id="toast"></div>
 <div class="bg"></div>
 <div class="title"><h1>问道修仙</h1></div>
 <div class="char-info" id="charInfo">出身: <span>待选择</span> | 灵根: <span>待检测</span></div>
@@ -533,7 +591,9 @@ var SECT_RANKS = [
   sect:null, _lastSave:Date.now()
 };
 var g={};
-function resetState(){ g=JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+var prevStats={};
+var prevProgress=-1;
+function resetState(){ g=JSON.parse(JSON.stringify(DEFAULT_STATE)); prevStats={}; prevProgress=-1; }
 var $=function(id){return document.getElementById(id)};
 var realmName=$('realmName'),realmSub=$('realmSub');
 var ageDisplay=$('ageDisplay'),charInfo=$('charInfo'),extraInfo=$('extraInfo');
@@ -571,9 +631,10 @@ function log(msg,cls){
 }
 function floatText(text,cls){
   var el=document.createElement('div'); el.className='float-text '+cls;
-  el.textContent=text; var x=40+Math.random()*20, y=30+Math.random()*20;
-  el.style.left=x+'%'; el.style.top=y+'%'; el.style.transform='translateX(-50%)';
-  document.body.appendChild(el); setTimeout(function(){el.remove()},1200);
+  el.textContent=text; var x=20+Math.random()*60, y=20+Math.random()*40;
+  var rot=(Math.random()-0.5)*10;
+  el.style.left=x+'%'; el.style.top=y+'%'; el.style.transform='translateX(-50%) rotate('+rot+'deg)';
+  document.body.appendChild(el); setTimeout(function(){el.remove()},1500);
 }
 function advanceDays(days){ g.totalDays+=days; checkAge(); }
 function getAge(){ return 16+Math.floor(g.totalDays/360); }
@@ -655,6 +716,7 @@ function addTechExp(amount){
     t.exp+=gain;
     while(t.level<10&&t.exp>=t.level*10){
       t.exp-=t.level*10; t.level++;
+      showToast('🌟 '+getTechById(tid).name+' Lv.'+t.level,'🌟');
       log('🌟 '+getTechById(tid).name+' 升至 '+t.level+' 级！','log-special');
       floatText(getTechById(tid).name+' Lv'+t.level,'float-gold');
     }
@@ -665,6 +727,7 @@ function updateUI(){
   calcBonuses();
   var r=REALMS[g.realm];
   realmName.textContent=r.name;
+  realmName.style.textShadow='0 0 '+(4+g.realm*4)+'px rgba(240,192,64,'+(0.15+g.realm*0.08)+')';
   var subIdx=getSubLayer();
   if(g.realm>=8)realmSub.textContent=r.name+' · 巔峰';
   else realmSub.textContent=r.name+' · '+SUB_LAYERS[subIdx];
@@ -695,8 +758,11 @@ function updateUI(){
   if(g.realm<8&&!g.gameOver){
     var req=r.require; var pct=Math.min(100,g.progress/req*100);
     progressBar.style.width=pct+'%';
+    if(prevProgress>=0&&prevProgress!==pct){progressBar.classList.add('glow');setTimeout(function(){progressBar.classList.remove('glow')},300);}
+    prevProgress=pct;
     progressText.textContent=Math.floor(g.progress)+' / '+req+' ('+SUB_LAYERS[subIdx]+')';
     btnTrain.disabled=false; btnBreak.disabled=g.progress<req||g.gameOver;
+    if(g.progress>=req&&!g.gameOver)btnBreak.classList.add('btn-break-ready');else btnBreak.classList.remove('btn-break-ready');
     btnPill.disabled=g.gameOver; btnTravel.disabled=g.gameOver;
   }else if(g.gameOver){
     progressBar.style.width='0%'; progressText.textContent='— 道消身陨 —';
@@ -720,12 +786,21 @@ function updateUI(){
     slot.addEventListener('click',function(){ showTechModal(); });
     techRow.appendChild(slot);
   }
+  var statIds=['statWit','statPower','statLuck','statMind','statVirtue','statEvil','cultVal','pillVal'];
+  var statEls=[statWit,statPower,statLuck,statMind,statVirtue,statEvil,cultVal,pillVal];
+  for(var si=0;si<statIds.length;si++){
+    var sel=statEls[si]; var cv=sel.textContent;
+    if(prevStats[statIds[si]]!==undefined&&prevStats[statIds[si]]!==cv){sel.classList.add('stat-glow');setTimeout(function(e){e.classList.remove('stat-glow')},100,sel);}
+    prevStats[statIds[si]]=cv;
+  }
 }btnTrain.addEventListener('click',function(){
   if(g.gameOver||g.realm>=8||!g.started)return;
   var gain=calcTrainGain(); g.cult+=gain; g.progress+=gain;
   advanceDays(g.realm+1); addTechExp(1);
   log('修炼获得 '+gain+' 修为','log-good');
   floatText('+'+gain+' 修为','float-good');
+  burstParticles(window.innerWidth/2,window.innerHeight/2,'#6fcf6f',8);
+  createEnergyOrbs(btnTrain);
   var spGain=g.wit*0.05+gain*0.1; g.wit+=spGain*0.01;
   updateUI();save();
 });
@@ -738,6 +813,9 @@ btnBreak.addEventListener('click',function(){
   advanceDays(30);
   if(roll<rate){
     g.realm++; g.progress=0; g.maxAge+=REALMS[g.realm].lifeBonus;
+    flashScreen('gold');
+    burstParticles(window.innerWidth/2,window.innerHeight/2,'#f0c040',15);
+    showToast('✨ 突破成功！踏入 '+REALMS[g.realm].name,'✨');
     log('🎉 突破成功！踏入 '+REALMS[g.realm].name+'！','log-special');
     floatText('突破成功！','float-gold');
     var pb=progressBar.parentElement;
@@ -746,6 +824,8 @@ btnBreak.addEventListener('click',function(){
     updateUI();save();
     if(g.realm>=8)log('🌟 飞升成仙！与天地同寿！','log-special');
   }else{
+    flashScreen('red');
+    burstParticles(window.innerWidth/2,window.innerHeight/2,'#ff6b6b',10);
     var lose=Math.floor(r.require*0.12);
     g.progress=Math.max(0,g.progress-lose);
     log('💥 突破失败，修为倒退 '+lose,'log-bad');
@@ -1036,6 +1116,8 @@ function doChallenge(ct,winRate,opower,owit,targetRealm){
     else if(ct.id==='demon')cultReward=80+g.realm*20;
     else if(ct.id==='arena')cultReward=30+g.realm*12+g.challengeStreak*5;
     g.cult+=cultReward;
+    flashScreen('green');
+    burstParticles(window.innerWidth/2,window.innerHeight/2,'#f0c040',12);
     log('⚔️ 挑战 '+ct.name+' 胜利！修为+'+cultReward,'log-good');
     floatText('挑战胜利！','float-gold');
     if(g.challengeStreak%5===0){
@@ -1107,6 +1189,7 @@ function renderSectList(){
       card.addEventListener('click',(function(sid){return function(){
         g.sect={id:sid,contribution:0,missions:[]};
         generateMissions();
+        showToast('🎉 加入 '+getSectById(sid).name,'🎉');
         log('🎉 加入 '+getSectById(sid).name+'！','log-special');
         renderSectList(); updateUI();save();
       };})(s.id));
@@ -1214,6 +1297,78 @@ setInterval(function(){
 },30000);
 
 window.addEventListener('beforeunload',function(){g._lastSave=Date.now();save()});
+
+function flashScreen(color){
+  var el=document.getElementById('flashOverlay');
+  el.style.transition='none'; el.style.opacity='0.3'; el.style.backgroundColor=color;
+  void el.offsetHeight;
+  el.style.transition='opacity .4s'; el.style.opacity='0';
+}
+function burstParticles(x,y,color,count){
+  if(!count)count=12;
+  for(var i=0;i<count;i++){
+    var p=document.createElement('div'); p.className='burst-particle';
+    var sz=Math.random()*5+3; var angle=Math.random()*Math.PI*2; var dist=Math.random()*60+30;
+    p.style.width=sz+'px'; p.style.height=sz+'px';
+    p.style.background=color; p.style.left=x+'px'; p.style.top=y+'px';
+    p.style.boxShadow='0 0 '+(sz*2)+'px '+color;
+    p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
+    document.body.appendChild(p);
+    setTimeout(function(){p.remove()},800);
+  }
+}
+function createEnergyOrbs(btn){
+  if(!btn)return;
+  var rect=btn.getBoundingClientRect();
+  var cx=rect.left+rect.width/2; var cy=rect.top;
+  var count=3+Math.floor(Math.random()*3);
+  for(var i=0;i<count;i++){
+    var orb=document.createElement('div'); orb.className='energy-orb';
+    var sz=Math.random()*6+4; var offX=(Math.random()-0.5)*30;
+    orb.style.width=sz+'px'; orb.style.height=sz+'px';
+    orb.style.left=(cx+offX)+'px'; orb.style.top=cy+'px';
+    var clr=Math.random()>0.5?'#6fcf6f':'#f0c040';
+    orb.style.background=clr; orb.style.boxShadow='0 0 '+(sz*2)+'px '+clr;
+    document.body.appendChild(orb);
+    setTimeout(function(){orb.remove()},1000);
+  }
+}
+function showToast(text,icon){
+  var toast=document.getElementById('toast');
+  toast.innerHTML=(icon||'')+' '+text;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer=setTimeout(function(){toast.classList.remove('show')},2500);
+}
+(function(){
+  var canvas=document.getElementById('bgCanvas'); if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var particles=[]; var PC=40;
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+  window.addEventListener('resize',resize); resize();
+  var colors=['rgba(240,192,64,','rgba(255,255,255,','rgba(192,132,252,'];
+  for(var i=0;i<PC;i++){
+    particles.push({
+      x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+      sz:Math.random()*2.5+0.8,sy:Math.random()*0.3+0.1,sx:(Math.random()-0.5)*0.2,
+      op:Math.random()*0.35+0.1,
+      clr:colors[Math.floor(Math.random()*3)]
+    });
+  }
+  function anim(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i]; p.y-=p.sy; p.x+=p.sx;
+      if(p.y<-10){p.y=canvas.height+10;p.x=Math.random()*canvas.width;}
+      if(p.x<-10||p.x>canvas.width+10){p.x=Math.random()*canvas.width;}
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
+      ctx.fillStyle=p.clr+p.op+')'; ctx.fill();
+    }
+    requestAnimationFrame(anim);
+  }
+  anim();
+})();
 
 resetState();
 if(!load()){
