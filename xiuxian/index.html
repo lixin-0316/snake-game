@@ -248,6 +248,53 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
   100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}
 }
 .burst-particle{position:fixed;pointer-events:none;border-radius:50%;z-index:40;animation:burstFly .8s ease-out forwards}
+/* Settings button */
+.title{position:relative}
+.settings-btn{position:absolute;top:6px;right:10px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;transition:color .2s,transform .2s;z-index:5;font-family:inherit;padding:4px;line-height:1}
+.settings-btn:hover{color:#f0c040;transform:rotate(30deg)}
+.settings-btn:active{transform:scale(.9)}
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:8px 0;gap:10px}
+.toggle-wrap span{font-size:13px;color:#aaa}
+.toggle{position:relative;width:44px;height:24px;background:rgba(255,255,255,.1);border-radius:12px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:rgba(111,207,111,.4)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#666;transition:all .2s}
+.toggle.on::after{left:22px;background:#6fcf6f}
+/* Settings modal */
+.settings-row{display:flex;flex-direction:column;gap:6px;margin:10px 0;text-align:left}
+.settings-row .modal-btn{margin-top:0}
+/* Detail modal */
+.detail-section{margin:8px 0;text-align:left;font-size:12px;line-height:1.7;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:8px}
+.detail-section-title{font-size:13px;font-weight:700;color:#f0c040;margin-bottom:4px;letter-spacing:1px}
+.detail-line{padding:1px 0;color:#aaa}
+.detail-line .gold{color:#f0c040;font-weight:700}
+.detail-line .green{color:#6fcf6f}
+.detail-line .red{color:#ff6b6b}
+.detail-line .dim{color:#555}
+.detail-sep{border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0}
+.detail-result{font-size:14px;font-weight:700;color:#f0c040;text-align:center;padding:4px 0}
+/* Detail button */
+.detail-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:15px;cursor:pointer;color:#666;transition:color .2s;z-index:2;font-family:inherit;padding:2px 4px;line-height:1}
+.detail-btn:hover{color:#f0c040}
+.progress-wrap{position:relative}
+/* Reincarnation shop */
+.reinc-stat{font-size:12px;color:#f0c040;margin-bottom:8px;text-align:center;letter-spacing:1px}
+.reinc-shop-item{display:flex;align-items:center;gap:6px;padding:6px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);margin-bottom:4px;text-align:left;cursor:pointer;transition:all .12s}
+.reinc-shop-item:active{background:rgba(255,255,255,.06)}
+.reinc-shop-item .rsi-info{flex:1}
+.reinc-shop-item .rsi-name{font-size:11px;color:#d0d0d0;font-weight:600}
+.reinc-shop-item .rsi-desc{font-size:9px;color:#666}
+.reinc-shop-item .rsi-cost{font-size:10px;color:#f0c040;white-space:nowrap}
+.reinc-shop-item.bought{opacity:.5;pointer-events:none}
+/* Lives display */
+.lives-display{position:fixed;bottom:30px;right:12px;font-size:10px;color:#444;z-index:1;letter-spacing:1px;pointer-events:none}
+/* Death daogu delay */
+#deathDaogu{animation-delay:1s}
+/* No animations override */
+.no-anim .progress-bar::after{animation:none!important}
+.no-anim .log-entry{animation:none!important}
+.no-anim .modal.show .modal-box{animation:none!important}
+.no-anim .btn-break-ready{animation:none!important}
 </style>
 </head>
 <body>
@@ -255,7 +302,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 <div id="flashOverlay"></div>
 <div id="toast"></div>
 <div class="bg"></div>
-<div class="title"><h1>问道修仙</h1></div>
+<div class="title"><h1>问道修仙</h1><button class="settings-btn" id="settingsBtn" title="设置">⚙️</button></div>
 <div class="char-info" id="charInfo">出身: <span>待选择</span> | 灵根: <span>待检测</span></div>
 <div class="realm-name" id="realmName">练气期</div>
 <div class="realm-sub" id="realmSub">练气期 · 初</div>
@@ -277,6 +324,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
 <div class="progress-wrap">
   <div class="progress-bar" id="progressBar"></div>
   <div class="progress-text" id="progressText">0 / 300</div>
+  <button class="detail-btn" id="detailBtn" title="修行详情">📊</button>
 </div>
 <div class="actions" id="actionRow1">
   <button class="btn btn-train" id="btnTrain">🧘 修炼<span class="btn-sub">消耗 1 日</span></button>
@@ -333,6 +381,7 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
       <div class="death-stat" id="deathRealm">修为: --</div>
       <div class="death-stat" id="deathCult">总修为: --</div>
       <div class="death-stat" id="deathVirtue">功德: -- | 煞气: --</div>
+      <div class="death-stat" id="deathDaogu" style="color:#f0c040;font-weight:700"></div>
       <button class="modal-btn gold full" id="deathRestart" style="margin-top:16px">🔄 重新开始</button>
     </div>
   </div>
@@ -385,7 +434,43 @@ body{background:#0a0a1a;color:#d0d0d0;font-family:'Microsoft YaHei','PingFang SC
     <div id="sectShop" style="display:none"></div>
     <button class="modal-btn secondary full" id="sectClose">关闭</button>
   </div>
-</div><script>
+</div>
+<!-- Settings Modal -->
+<div class="modal" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-title">⚙️ 设置</div>
+    <div class="modal-sub">游戏设置与数据管理</div>
+    <div class="toggle-wrap">
+      <span>动画效果</span>
+      <div class="toggle on" id="animToggle"></div>
+    </div>
+    <div class="settings-row">
+      <button class="modal-btn primary" id="settingsExport">💾 导出存档</button>
+      <button class="modal-btn tertiary" id="settingsImport">📂 导入存档</button>
+      <button class="modal-btn danger" id="settingsReset">🗑️ 重置游戏</button>
+    </div>
+    <button class="modal-btn secondary full" id="settingsClose">关闭</button>
+  </div>
+</div>
+<!-- Detail Modal -->
+<div class="modal" id="detailModal">
+  <div class="modal-box big">
+    <div class="modal-title" id="detailTitle">📊 修行详情</div>
+    <div id="detailContent" style="max-height:50vh;overflow-y:auto"></div>
+    <button class="modal-btn secondary full" id="detailClose">关闭</button>
+  </div>
+</div>
+<!-- Reincarnation Shop Modal -->
+<div class="modal" id="reincModal">
+  <div class="modal-box">
+    <div class="modal-title">🏛️ 轮回殿</div>
+    <div class="modal-sub">以道果换取来世天赋</div>
+    <div class="reinc-stat" id="reincDaogu">道果: 0</div>
+    <div id="reincContent" style="max-height:40vh;overflow-y:auto"></div>
+    <button class="modal-btn gold full" id="reincContinue">轮回转世</button>
+  </div>
+</div>
+<script>
 var SUB_LAYERS = ['初','中','后','巔峰'];
 var REALMS = [
   { name:'练气期', require:300, breakRate:1.0, lifeBonus:30, desc:'引气入体' },
@@ -590,7 +675,8 @@ var SECT_RANKS = [
   eventTimer:0, passiveTimer:0, gameOver:false, started:false, originEvil:false,
   inventory:{}, equippedItems:{weapon:null,armor:null,accessory:null,tool:null},
   challengeWins:0, challengeLosses:0, challengeStreak:0, challengeCooldown:0,
-  closeCooldown:0, sect:null, _lastSave:Date.now()
+  closeCooldown:0, sect:null, _lastSave:Date.now(),
+  settings:{noAnimations:false}, reincChallengeBonus:0
 };
 var g={};
 var prevStats={};
@@ -664,6 +750,7 @@ function getEquipSlots(){ return 2+g.realm; }function calcBonuses(){
   g.trainBonus=0; g.powerBonus=0; g.witBonus=0; g.mindBonus=0;
   g.luckBonus=0; g.breakBonus=0; g.challengeBonus=0; g.pillBonus=0;
   g.allBonus=0; g.techExpBonus=0; g.inventorySlots=20;
+  g.challengeBonus+=g.reincChallengeBonus||0;
   for(var ei=0;ei<g.equippedTechs.length;ei++){
     var tid=g.equippedTechs[ei]; if(!tid)continue;
     var tec=getTechById(tid); if(!tec)continue;
@@ -760,11 +847,11 @@ function updateUI(){
   if(g.realm<8&&!g.gameOver){
     var req=r.require; var pct=Math.min(100,g.progress/req*100);
     progressBar.style.width=pct+'%';
-    if(prevProgress>=0&&prevProgress!==pct){progressBar.classList.add('glow');setTimeout(function(){progressBar.classList.remove('glow')},300);}
+    if(prevProgress>=0&&prevProgress!==pct){if(!g.settings||!g.settings.noAnimations)progressBar.classList.add('glow');setTimeout(function(){progressBar.classList.remove('glow')},300);}
     prevProgress=pct;
     progressText.textContent=Math.floor(g.progress)+' / '+req+' ('+SUB_LAYERS[subIdx]+')';
     btnTrain.disabled=false; btnBreak.disabled=g.progress<req||g.gameOver;
-    if(g.progress>=req&&!g.gameOver)btnBreak.classList.add('btn-break-ready');else btnBreak.classList.remove('btn-break-ready');
+    if(g.progress>=req&&!g.gameOver&&(!g.settings||!g.settings.noAnimations))btnBreak.classList.add('btn-break-ready');else btnBreak.classList.remove('btn-break-ready');
     btnPill.disabled=g.gameOver; btnTravel.disabled=g.gameOver;
     // Preview gains on buttons
     var trainPreview=calcTrainGain();
@@ -817,7 +904,7 @@ function updateUI(){
   var statEls=[statWit,statPower,statLuck,statMind,statVirtue,statEvil,cultVal,pillVal];
   for(var si=0;si<statIds.length;si++){
     var sel=statEls[si]; var cv=sel.textContent;
-    if(prevStats[statIds[si]]!==undefined&&prevStats[statIds[si]]!==cv){sel.classList.add('stat-glow');setTimeout(function(e){e.classList.remove('stat-glow')},100,sel);}
+    if(prevStats[statIds[si]]!==undefined&&prevStats[statIds[si]]!==cv){if(!g.settings||!g.settings.noAnimations)sel.classList.add('stat-glow');setTimeout(function(e){e.classList.remove('stat-glow')},100,sel);}
     prevStats[statIds[si]]=cv;
   }
 }btnTrain.addEventListener('click',function(){
@@ -931,16 +1018,36 @@ function countEquipped(){ var c=0; for(var i=0;i<g.equippedTechs.length;i++){if(
 
 function showDeath(){
   var age=getAge();
+  var score=calcReincarnationScore();
+  var rd=getReincData();
+  rd.totalLives=(rd.totalLives||0)+1;
+  rd.highestRealm=Math.max(rd.highestRealm||0,g.realm);
+  rd.totalVirtue=(rd.totalVirtue||0)+Math.floor(g.virtue);
+  rd.totalChallengeWins=(rd.totalChallengeWins||0)+g.challengeWins;
+  rd.daogu=(rd.daogu||0)+score;
+  var techCount=0;
+  for(var k in g.techniques){if(g.techniques[k].level>=5)techCount++;}
+  rd.techniquesMastered=Math.max(rd.techniquesMastered||0,techCount);
+  rd.maxCultivation=Math.max(rd.maxCultivation||0,Math.floor(g.cult));
+  saveReincData(rd);
   deathAge.textContent='享年: '+age+'岁';
   deathRealm.textContent='境界: '+REALMS[Math.min(g.realm,8)].name;
   deathCult.textContent='总修为: '+Math.floor(g.cult);
   deathVirtue.textContent='功德: '+Math.floor(g.virtue)+' | 煞气: '+Math.floor(g.evil);
+  var deathDaoguEl=document.getElementById('deathDaogu');
+  if(deathDaoguEl)deathDaoguEl.textContent='获得 道果 × '+score+'  (累计: '+rd.daogu+' )';
   deathModal.classList.add('show');
   log('🕯️ 寿元已尽，享年'+age+'岁...','log-bad');
 }
 deathRestart.addEventListener('click',function(){
   deathModal.classList.remove('show'); resetState();
-  localStorage.removeItem('xiuxianSave3'); showOriginModal();
+  localStorage.removeItem('xiuxianSave3');
+  var rd=getReincData();
+  if(rd.daogu&&rd.daogu>0){
+    showReincarnationShop(function(){ showOriginModal(); });
+  }else{
+    showOriginModal();
+  }
 });
 
 var selectedOrigin=-1;
@@ -1006,7 +1113,9 @@ originConfirm.addEventListener('click',function(){
     }
   },100);
   rootConfirm.onclick=function(){
-    rootModal.classList.remove('show'); g.started=true;
+    rootModal.classList.remove('show');
+    applyReincarnationBonuses();
+    g.started=true;
     updateUI(); log('灵根检测：「'+ROOTS[g.root].name+'」修炼速度 ×'+ROOTS[g.root].rate,'log-special'); save();
   };
 }
@@ -1344,12 +1453,14 @@ setInterval(function(){
 window.addEventListener('beforeunload',function(){g._lastSave=Date.now();save()});
 
 function flashScreen(color){
+  if(g.settings&&g.settings.noAnimations)return;
   var el=document.getElementById('flashOverlay');
   el.style.transition='none'; el.style.opacity='0.3'; el.style.backgroundColor=color;
   void el.offsetHeight;
   el.style.transition='opacity .4s'; el.style.opacity='0';
 }
 function burstParticles(x,y,color,count){
+  if(g.settings&&g.settings.noAnimations)return;
   if(!count)count=12;
   for(var i=0;i<count;i++){
     var p=document.createElement('div'); p.className='burst-particle';
@@ -1364,6 +1475,7 @@ function burstParticles(x,y,color,count){
   }
 }
 function createEnergyOrbs(btn){
+  if(g.settings&&g.settings.noAnimations)return;
   if(!btn)return;
   var rect=btn.getBoundingClientRect();
   var cx=rect.left+rect.width/2; var cy=rect.top;
@@ -1380,6 +1492,7 @@ function createEnergyOrbs(btn){
   }
 }
 function showToast(text,icon){
+  if(g.settings&&g.settings.noAnimations)return;
   var toast=document.getElementById('toast');
   toast.innerHTML=(icon||'')+' '+text;
   toast.classList.add('show');
@@ -1402,23 +1515,226 @@ function showToast(text,icon){
     });
   }
   function anim(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(var i=0;i<particles.length;i++){
-      var p=particles[i]; p.y-=p.sy; p.x+=p.sx;
-      if(p.y<-10){p.y=canvas.height+10;p.x=Math.random()*canvas.width;}
-      if(p.x<-10||p.x>canvas.width+10){p.x=Math.random()*canvas.width;}
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
-      ctx.fillStyle=p.clr+p.op+')'; ctx.fill();
+    if(!g.settings||!g.settings.noAnimations){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(var i=0;i<particles.length;i++){
+        var p=particles[i]; p.y-=p.sy; p.x+=p.sx;
+        if(p.y<-10){p.y=canvas.height+10;p.x=Math.random()*canvas.width;}
+        if(p.x<-10||p.x>canvas.width+10){p.x=Math.random()*canvas.width;}
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
+        ctx.fillStyle=p.clr+p.op+')'; ctx.fill();
+      }
     }
     requestAnimationFrame(anim);
   }
   anim();
 })();
 
+// ===== SETTINGS SYSTEM =====
+var settingsBtn=$('settingsBtn');
+var animToggle=$('animToggle');
+if(settingsBtn)settingsBtn.addEventListener('click',function(){
+  var modal=$('settingsModal');
+  if(!modal)return;
+  if(animToggle)animToggle.classList.toggle('on',!g.settings.noAnimations);
+  document.body.classList.toggle('no-anim',g.settings.noAnimations);
+  modal.classList.add('show');
+});
+if(animToggle)animToggle.addEventListener('click',function(){
+  g.settings.noAnimations=!g.settings.noAnimations;
+  animToggle.classList.toggle('on',!g.settings.noAnimations);
+  document.body.classList.toggle('no-anim',g.settings.noAnimations);
+  save();
+});
+var settingsClose=$('settingsClose');
+if(settingsClose)settingsClose.addEventListener('click',function(){ $('settingsModal')&&$('settingsModal').classList.remove('show'); });
+var settingsExport=$('settingsExport');
+if(settingsExport)settingsExport.addEventListener('click',function(){
+  var blob=new Blob([JSON.stringify(g)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='xiuxian_save.json';
+  a.click();
+  log('存档已导出','log-info');
+});
+var settingsImport=$('settingsImport');
+if(settingsImport)settingsImport.addEventListener('click',function(){
+  var input=document.createElement('input');
+  input.type='file';input.accept='.json';
+  input.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var imported=JSON.parse(reader.result);
+        if(imported&&typeof imported==='object'&&imported.root>=0){
+          g=imported; updateUI(); save();
+          log('存档导入成功！','log-good');
+          showToast('存档导入成功','💾');
+        }else log('存档导入失败：数据无效','log-bad');
+      }catch(e2){log('存档导入失败：文件格式错误','log-bad');}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+var settingsReset=$('settingsReset');
+if(settingsReset)settingsReset.addEventListener('click',function(){
+  if(confirm('确定要重置游戏吗？所有进度将丢失！')&&confirm('再次确认：重置游戏将清除所有数据！')){
+    localStorage.removeItem('xiuxianSave3');
+    location.reload();
+  }
+});
+
+// ===== DETAIL MODAL =====
+function showDetailModal(){
+  if(!g.started||g.gameOver||g.root<0)return;
+  calcBonuses();
+  var r=REALMS[g.realm]; var root=ROOTS[g.root];
+  var html='';
+  var base=1;
+  var witAdd=g.wit*0.5+g.witBonus;
+  var total=Math.floor((base+g.trainBonus+witAdd)*root.rate);
+  html+='<div class="detail-section"><div class="detail-section-title">修炼收益计算</div>';
+  html+='<div class="detail-line">基础: '+base+'</div>';
+  html+='<div class="detail-line">悟性加成: 悟性'+(g.wit+Math.floor(g.witBonus))+' × 0.5 = +'+(witAdd).toFixed(1)+'</div>';
+  if(g.trainBonus>0)html+='<div class="detail-line green">功法加成: +'+g.trainBonus.toFixed(1)+'</div>';
+  html+='<div class="detail-line">灵根倍率: × '+root.name+'('+root.rate+')</div>';
+  html+='<hr class="detail-sep"><div class="detail-result gold">每次修炼: '+total+' 修为</div></div>';
+  if(g.realm<8&&g.progress>=r.require){
+    var baseRate=r.breakRate;
+    var pwrB=g.power*0.008+g.powerBonus*0.008;
+    var lkB=g.luck*0.005+g.luckBonus*0.005;
+    var vrtB=g.virtue*0.003;
+    var evilP=g.evil*0.004;
+    var pillB=Math.min(g.pills,3)*0.08;
+    var hasBp=hasItem('break_pill');
+    var totalRate=Math.max(0.05,Math.min(0.95,baseRate+pwrB+lkB+vrtB-evilP+g.breakBonus+pillB+(hasBp?0.15:0)));
+    html+='<div class="detail-section"><div class="detail-section-title">突破成功率计算</div>';
+    html+='<div class="detail-line">基础成功率: '+(baseRate*100).toFixed(0)+'% ('+r.name+')</div>';
+    html+='<div class="detail-line green">根骨加成: 根骨'+(g.power+Math.floor(g.powerBonus))+' × 0.8% = +'+(pwrB*100).toFixed(1)+'%</div>';
+    html+='<div class="detail-line green">气运加成: 气运'+(g.luck+Math.floor(g.luckBonus))+' × 0.5% = +'+(lkB*100).toFixed(1)+'%</div>';
+    html+='<div class="detail-line green">功德加成: 功德'+Math.floor(g.virtue)+' × 0.3% = +'+(vrtB*100).toFixed(1)+'%</div>';
+    if(evilP>0)html+='<div class="detail-line red">煞气惩罚: 煞气'+Math.floor(g.evil)+' × 0.4% = -'+(evilP*100).toFixed(1)+'%</div>';
+    if(g.breakBonus>0)html+='<div class="detail-line green">功法加成: +'+(g.breakBonus*100).toFixed(1)+'%</div>';
+    if(pillB>0)html+='<div class="detail-line green">丹药加成: 使用'+Math.min(g.pills,3)+'颗 +'+(pillB*100).toFixed(0)+'%</div>';
+    if(hasBp)html+='<div class="detail-line green">破境丹加成: +15%</div>';
+    html+='<hr class="detail-sep"><div class="detail-result gold">最终成功率: '+(totalRate*100).toFixed(0)+'%'+(totalRate>=0.95?' (上限)':'')+'</div></div>';
+  }
+  var eqHtml='';
+  for(var si=0;si<EQUIP_SLOTS.length;si++){
+    var s=EQUIP_SLOTS[si];var iid=g.equippedItems[s];if(!iid)continue;
+    var item=getItemById(iid);if(!item)continue;
+    eqHtml+='<div class="detail-line">'+item.icon+' '+item.name+': <span class="green">'+item.desc+'</span></div>';
+  }
+  if(eqHtml)html+='<div class="detail-section"><div class="detail-section-title">装备加成</div>'+eqHtml+'</div>';
+  if(g.sect){
+    var sect=getSectById(g.sect.id);
+    if(sect)html+='<div class="detail-section"><div class="detail-section-title">宗门加成</div><div class="detail-line">'+sect.name+': <span class="green">'+sect.bonus+'</span></div></div>';
+  }
+  var dt=$('detailTitle');if(dt)dt.textContent='📊 修行详情';
+  var dc=$('detailContent');if(dc)dc.innerHTML=html;
+  var dm=$('detailModal');if(dm)dm.classList.add('show');
+}
+var detailBtn=$('detailBtn');
+if(detailBtn)detailBtn.addEventListener('click',showDetailModal);
+var detailClose=$('detailClose');
+if(detailClose)detailClose.addEventListener('click',function(){ $('detailModal')&&$('detailModal').classList.remove('show'); });
+
+// ===== REINCARNATION SYSTEM =====
+function getReincData(){
+  try{return JSON.parse(localStorage.getItem('xiuxianReincarnation'))||{};}catch(e){return {};}
+}
+function saveReincData(d){
+  localStorage.setItem('xiuxianReincarnation',JSON.stringify(d));
+}
+function calcReincarnationScore(){
+  var score=g.realm*10;
+  score+=Math.floor(g.virtue)*3;
+  score+=g.challengeWins*2;
+  var tc=0;for(var k in g.techniques){if(g.techniques[k].level>=5)tc++;}
+  score+=tc;
+  score+=Math.floor(g.cult/1000);
+  return Math.max(1,score);
+}
+function applyReincarnationBonuses(){
+  var rd=getReincData();
+  if(rd.purchasedUpgrades){
+    g.wit+=(rd.purchasedUpgrades.wit||0);
+    g.power+=(rd.purchasedUpgrades.power||0);
+    g.luck+=(rd.purchasedUpgrades.luck||0);
+    g.maxAge+=(rd.purchasedUpgrades.lifespan||0)*20;
+    g.pills+=(rd.purchasedUpgrades.pills||0)*10;
+    if(rd.purchasedUpgrades.challenge)g.reincChallengeBonus+=0.1;
+  }
+}
+var REINC_SHOP_ITEMS=[
+  {key:'wit',name:'天赐悟性',desc:'悟性+1 (永久)',cost:10,max:5,icon:'🧠'},
+  {key:'power',name:'天赐根骨',desc:'根骨+1 (永久)',cost:10,max:5,icon:'💪'},
+  {key:'luck',name:'天赐气运',desc:'气运+1 (永久)',cost:10,max:5,icon:'🍀'},
+  {key:'lifespan',name:'延年益寿',desc:'寿元+20 (永久)',cost:15,max:3,icon:'🕯️'},
+  {key:'rootRoll',name:'灵根洗练',desc:'灵根roll+1档 (永久)',cost:30,max:1,icon:'✨'},
+  {key:'pills',name:'丹道传承',desc:'开局丹药+10 (永久)',cost:8,max:3,icon:'💊'},
+  {key:'challenge',name:'武道意志',desc:'开局挑战+10% (永久)',cost:20,max:1,icon:'⚔️'},
+  {key:'retain',name:'轮回印记',desc:'保留1件装备 (永久)',cost:50,max:1,icon:'💍'}
+];
+function showReincarnationShop(callback){
+  var rd=getReincData();
+  if(!rd.purchasedUpgrades)rd.purchasedUpgrades={};
+  var daogu=rd.daogu||0;
+  var reincDaogu=$('reincDaogu');
+  if(reincDaogu)reincDaogu.textContent='道果: '+daogu;
+  var content=$('reincContent');
+  if(!content)return;
+  var html='';
+  for(var i=0;i<REINC_SHOP_ITEMS.length;i++){
+    var item=REINC_SHOP_ITEMS[i];
+    var owned=rd.purchasedUpgrades[item.key]||0;
+    var bought=owned>=item.max;
+    var canBuy=!bought&&daogu>=item.cost;
+    var cls='reinc-shop-item'+(bought?' bought':'');
+    html+='<div class="'+cls+'" data-idx="'+i+'"><span>'+item.icon+'</span><div class="rsi-info"><span class="rsi-name">'+item.name+'</span><br><span class="rsi-desc">'+item.desc+'</span></div><span class="rsi-cost">'+(bought?'已满('+owned+'/'+item.max+')':item.cost+'道果')+'</span></div>';
+  }
+  content.innerHTML=html;
+  var items=content.querySelectorAll('.reinc-shop-item:not(.bought)');
+  for(var j=0;j<items.length;j++){
+    (function(idx){
+      items[j].addEventListener('click',function(){
+        var rd2=getReincData();
+        if(!rd2.purchasedUpgrades)rd2.purchasedUpgrades={};
+        var item=REINC_SHOP_ITEMS[idx];
+        var owned=rd2.purchasedUpgrades[item.key]||0;
+        if(owned>=item.max)return;
+        if((rd2.daogu||0)<item.cost)return;
+        rd2.daogu-=item.cost;
+        rd2.purchasedUpgrades[item.key]=(rd2.purchasedUpgrades[item.key]||0)+1;
+        saveReincData(rd2);
+        showReincarnationShop(callback);
+      });
+    })(j);
+  }
+  var reincContinue=$('reincContinue');
+  if(reincContinue){
+    reincContinue.onclick=function(){
+      $('reincModal')&&$('reincModal').classList.remove('show');
+      if(callback)callback();
+    };
+  }
+  $('reincModal')&&$('reincModal').classList.add('show');
+}
+
+// Lives display
+var livesDisplay=document.createElement('div');
+livesDisplay.className='lives-display';
+var rd0=getReincData();
+livesDisplay.textContent=(rd0.totalLives||0)>0?'第'+(rd0.totalLives+1)+'世':'';
+document.body.appendChild(livesDisplay);
+
 resetState();
 if(!load()){
   showOriginModal();
 }else{
+  if(g.settings&&g.settings.noAnimations)document.body.classList.add('no-anim');
   if(g.origin>=0&&g.root>=0){
     g.started=true;
     updateUI();
