@@ -265,6 +265,55 @@ function findValidPlays(hand, lastPlay){
     }
   }
 
+  // consecutive pairs (连对) — ≥3 consecutive pairs, ranks < 13
+  for(let plen=3;plen<=Math.min(10,Math.floor(n/2));plen++){
+    for(let start=0;start<=12-plen;start++){
+      let ok=true;const indices=[];
+      for(let i=0;i<plen;i++){
+        const r=start+i;
+        if(r>=13){ok=false;break;}
+        let cnt=0;
+        for(let j=0;j<n&&cnt<2;j++)if(hand[j].rank===r&&!indices.includes(j)){indices.push(j);cnt++;}
+        if(cnt<2){ok=false;break;}
+      }
+      if(ok)addPlay(indices);
+    }
+  }
+
+  // airplane (飞机) — ≥2 consecutive triples, optional single/pair wings
+  const triRanks=Object.keys(rankGroups).map(Number).filter(r=>rankGroups[r]>=3&&r<13).sort((a,b)=>a-b);
+  for(let seg=2;seg<=triRanks.length;seg++){
+    for(let si=0;si<=triRanks.length-seg;si++){
+      let cons=true;
+      for(let j=1;j<seg;j++)if(triRanks[si+j]!==triRanks[si+j-1]+1){cons=false;break;}
+      if(!cons)continue;
+      const tSet=new Set(triRanks.slice(si,si+seg));
+      const tIndices=[];
+      for(const r of tSet){
+        let cnt=0;
+        for(let i=0;i<n&&cnt<3;i++)if(hand[i].rank===r){tIndices.push(i);cnt++;}
+      }
+      tIndices.sort((a,b)=>a-b);
+      addPlay(tIndices);
+      const rest=hand.map((c,i)=>({c,i})).filter(x=>!tIndices.includes(x.i));
+      if(rest.length>=seg){
+        addPlay([...tIndices,...rest.slice(0,seg).map(x=>x.i)].sort((a,b)=>a-b));
+      }
+      let wingPairs=[];
+      for(const r in rankGroups){
+        if(rankGroups[r]>=2&&!tSet.has(Number(r))){
+          let cnt=0;const pi=[];
+          for(let i=0;i<n&&cnt<2;i++)if(hand[i].rank===Number(r)){pi.push(i);cnt++;}
+          wingPairs.push(pi);
+          if(wingPairs.length>=seg)break;
+        }
+      }
+      if(wingPairs.length>=seg){
+        addPlay([...tIndices,...wingPairs.slice(0,seg).flat()].sort((a,b)=>a-b));
+      }
+    }
+  }
+
   // sort results by size then rank
   results.sort((a,b)=>a.length-b.length||hand[a[0]].rank-hand[b[0]].rank);
   return results;

@@ -52,7 +52,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
 <div class="game-wrapper">
   <a href="../" class="back-link">← 返回平台</a>
   <div class="header">
-    <span class="score">💩 <span id="score">0</span></span>
+    <span class="score">🍎 <span id="score">0</span></span>
     <button class="music-btn" id="musicBtn">🔊 音乐</button>
     <span class="high-score">最高 <span id="highScore">0</span></span>
   </div>
@@ -64,7 +64,7 @@ canvas{display:block;margin:0 auto;border-radius:12px;touch-action:none;width:10
       <p>按空格键重新开始</p>
     </div>
     <div class="start-screen" id="startScreen">
-      <h2>🐑 懒洋洋</h2>
+      <h2>🐍 贪吃蛇</h2>
       <button class="play-btn" id="startBtn">开始游戏</button>
       <p>或按 空格键 / Enter 开始</p>
     </div>
@@ -94,8 +94,13 @@ const startScreen=document.getElementById('startScreen'),startBtn=document.getEl
 const W=500,H=500,CELL=25,COLS=W/CELL,ROWS=H/CELL;
 const SEGMENT_SPACING=CELL*0.85;
 
-let SPEED=1.5,SEG_STEP;
+let SPEED=1.5,SEG_STEP,origSpeed;
 let headX,headY,dirX,dirY,targetDirX,targetDirY,trail,segCount,score,highScore,foodX,foodY,gameOver,started,animId;
+// Power-ups
+let pUp=null,activePU=null,puTimer=0,shieldOn=false,magnetOn=false;
+const PU_DATA={speed:{e:'⚡',c:'#f0c040',dur:300},shield:{e:'🛡️',c:'#5dade2',dur:-1},magnet:{e:'🧲',c:'#e74c3c',dur:240}};
+let achPopup=null,achTimer=0;
+const ACHS=[{id:'rook',name:'初出茅庐',desc:'单局达到10分',f:s=>s>=10},{id:'racer',name:'闪电成长',desc:'单局达到25分',f:s=>s>=25},{id:'king',name:'蛇王降临',desc:'单局达到40分',f:s=>s>=40}];
 
 // Music
 let audioCtx,musicGain,musicPlaying=false,musicNodes=[];
@@ -226,6 +231,25 @@ function spawnFood(){
   }
 }
 
+function spawnPU(){
+  if(pUp)return;
+  const types=['speed','shield','magnet'];
+  const t=types[Math.floor(Math.random()*3)];
+  let v=false;let x,y;
+  while(!v){
+    x=Math.floor(Math.random()*COLS)*CELL+CELL/2;
+    y=Math.floor(Math.random()*ROWS)*CELL+CELL/2;
+    v=true;
+    const dfx=foodX-x,dfy=foodY-y;
+    if(dfx*dfx+dfy*dfy<CELL*CELL)v=false;
+    for(let i=0;i<trail.length;i+=Math.max(1,SEG_STEP)){
+      const dx=trail[i].x-x,dy=trail[i].y-y;
+      if(dx*dx+dy*dy<CELL*CELL*1.5){v=false;break;}
+    }
+  }
+  pUp={type:t,x,y};
+}
+
 function setDir(x,y){
   if(gameOver)return;
   if(x===-dirX&&y===-dirY)return;
@@ -250,12 +274,18 @@ function update(){
   trail.push({x:headX,y:headY});
   if(trail.length>segCount*SEG_STEP+10)trail.shift();
 
-  if(headX<0||headX>W||headY<0||headY>H){endGame();return;}
+  if(headX<0||headX>W||headY<0||headY>H){
+    if(shieldOn){shieldOn=false;if(activePU==='shield')activePU=null;}
+    else{endGame();return;}
+  }
 
   const segs=getBodySegments();
   for(let s=3;s<segs.length;s++){
     const dx=headX-segs[s].x,dy=headY-segs[s].y;
-    if(dx*dx+dy*dy<CELL*CELL*0.3){endGame();return;}
+    if(dx*dx+dy*dy<CELL*CELL*0.3){
+      if(shieldOn){shieldOn=false;if(activePU==='shield')activePU=null;break;}
+      else{endGame();return;}
+    }
   }
 
   const dxFood=headX-foodX,dyFood=headY-foodY;
@@ -263,6 +293,30 @@ function update(){
     playEatSound();
     score++;scoreEl.textContent=score;
     segCount++;spawnFood();
+    if(score%7===0)spawnPU();
+  }
+  // power-up collision
+  if(pUp){
+    const dpx=headX-pUp.x,dpy=headY-pUp.y;
+    if(dpx*dpx+dpy*dpy<CELL*CELL*0.3){
+      const t=pUp.type;pUp=null;activePU=t;puTimer=0;
+      if(t==='speed'){origSpeed=SPEED;SPEED*=1.6;recalcStep();}
+      else if(t==='shield')shieldOn=true;
+      else if(t==='magnet')magnetOn=true;
+    }
+  }
+  // power-up timer
+  if(activePU&&PU_DATA[activePU].dur>0){
+    puTimer++;
+    if(puTimer>=PU_DATA[activePU].dur){
+      if(activePU==='speed'){SPEED=origSpeed;recalcStep();}
+      if(activePU==='magnet')magnetOn=false;
+      activePU=null;
+    }
+  }
+  // magnet attraction
+  if(magnetOn&&foodX){
+    foodX+=(headX-foodX)*0.03;foodY+=(headY-foodY)*0.03;
   }
 }
 
@@ -283,10 +337,16 @@ function draw(){
   ctx.font='22px serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.15)';
-  ctx.fillText('💩',foodX,foodY-2);
+  ctx.fillText('🍎',foodX,foodY-2);
   ctx.fillStyle='rgba(255,255,255,0.9)';
   ctx.font='24px serif';
-  ctx.fillText('💩',foodX,foodY);
+  ctx.fillText('🍎',foodX,foodY);
+
+  // power-up on map
+  if(pUp){
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.arc(pUp.x,pUp.y,CELL*0.55,0,Math.PI*2);ctx.fill();
+    ctx.font='20px serif';ctx.fillText(PU_DATA[pUp.type].e,pUp.x,pUp.y);
+  }
 
   const segs=getBodySegments();
   ctx.shadowBlur=0;
@@ -365,11 +425,41 @@ function draw(){
   ctx.beginPath();
   ctx.arc(headX+dirX*hr*0.5+dirY*hr*0.15,headY+dirY*hr*0.5-dirX*hr*0.15,hr*0.12,0,Math.PI,false);
   ctx.fill();
+  // shield ring
+  if(shieldOn){ctx.strokeStyle='#5dade2';ctx.lineWidth=2;ctx.globalAlpha=0.6+Math.sin(Date.now()*0.01)*0.4;ctx.beginPath();ctx.arc(headX,headY,hr+6,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;}
+  // active power-up indicator
+  if(activePU&&PU_DATA[activePU].dur>0){
+    const remain=Math.max(0,PU_DATA[activePU].dur-puTimer),pct=remain/PU_DATA[activePU].dur;
+    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(10,W-20,80,8);
+    ctx.fillStyle=PU_DATA[activePU].c;ctx.fillRect(10,W-20,80*pct,8);
+    ctx.fillStyle='#fff';ctx.font='10px sans-serif';    ctx.fillText(PU_DATA[activePU].e+' '+(remain/60).toFixed(1)+'s',10,W-26);
+  }
+  // achievement popup
+  if(achPopup&&!gameOver){
+    achTimer++;
+    if(achTimer<100){
+      ctx.fillStyle='rgba(0,0,0,.85)';ctx.fillRect(140,160,220,60);
+      ctx.strokeStyle='rgba(240,192,64,.7)';ctx.lineWidth=2;ctx.strokeRect(140,160,220,60);
+      ctx.fillStyle='#f0c040';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+      ctx.fillText('🏆 '+achPopup.name+'!',250,188);
+      ctx.fillStyle='#fff';ctx.font='12px sans-serif';
+      ctx.fillText(achPopup.desc,250,208);
+    }else{achPopup=null;achTimer=0;}
+  }
 }
 
 function endGame(){
   gameOver=true;
   if(score>highScore){highScore=score;localStorage.setItem('snakeHighScore',highScore);highScoreEl.textContent=highScore;}
+  // achievements
+  const saved=JSON.parse(localStorage.getItem('snakeAch')||'[]');
+  for(const a of ACHS){
+    if(a.f(score)&&!saved.includes(a.id)){
+      saved.push(a.id);localStorage.setItem('snakeAch',JSON.stringify(saved));
+      achPopup=a;achTimer=0;
+    }
+  }
+  pUp=null;activePU=null;shieldOn=false;magnetOn=false;
   finalScoreEl.textContent='得分: '+score;
   gameOverEl.style.display='block';
   if(animId)cancelAnimationFrame(animId);
