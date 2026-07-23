@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>仙门 · 宗门经营放置 v2</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0d1117; --bg2:#111a24; --card:#16202c; --card2:#1b2836;
+    --line:#243446; --gold:#ffcf5c; --gold2:#ffb347; --jade:#5ad6b0;
+    --txt:#e8eef5; --sub:#8aa0b4; --red:#ff6b6b; --blue:#5aa9ff;
+  }
+  html,body{background:var(--bg);color:var(--txt);
+    font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+    -webkit-user-select:none;user-select:none;min-height:100vh;
+    overflow-x:hidden}
+  /* 顶栏 */
+  .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0d1b2a,#0d1117);
+    border-bottom:1px solid var(--line);padding:12px 14px 8px}
+  .top h1{font-size:17px;color:var(--gold);letter-spacing:2px;text-align:center;margin-bottom:8px}
+  .top h1 small{color:var(--sub);font-size:11px;font-weight:normal;letter-spacing:0}
+  .res{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .res .chip{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:7px 12px;min-width:90px;text-align:center}
+  .res .chip .k{font-size:11px;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:4px}
+  .res .chip .v{font-size:17px;font-weight:bold;margin-top:2px;transition:color .3s}
+  .res .chip .rate{font-size:10px;color:var(--jade);margin-top:1px}
+  .v.stone{color:var(--gold)} .v.qi{color:var(--blue)} .v.sect{color:var(--gold2)}
+  .v.flash{animation:vFlash .3s ease-out}
+  @keyframes vFlash{0%{transform:scale(1.3);opacity:.6}100%{transform:scale(1);opacity:1}}
+  .prog{margin:8px 4px 2px}
+  .prog .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:3px}
+  .prog .bar{height:7px;background:var(--card);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .prog .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));width:0%;transition:width .5s}
+  /* 点击区 */
+  .clickZone{display:flex;justify-content:center;padding:12px 14px 6px}
+  .clickBtn{width:110px;height:110px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#2a4060,#0d1522);
+    border:2px solid var(--gold);box-shadow:0 0 20px rgba(255,180,70,.2);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    cursor:pointer;transition:.12s;position:relative;overflow:hidden}
+  .clickBtn:active{transform:scale(.92);box-shadow:0 0 35px rgba(255,180,70,.5)}
+  .clickBtn .clabel{font-size:11px;color:var(--sub)}
+  .clickBtn .cval{font-size:13px;color:var(--gold);font-weight:bold;margin-top:2px}
+  @keyframes clickRipple{0%{transform:scale(0);opacity:.8}100%{transform:scale(4);opacity:0}}
+  .ripple{position:absolute;width:20px;height:20px;border-radius:50%;
+    background:rgba(255,200,70,.4);pointer-events:none;animation:clickRipple .6s ease-out}
+  /* 区块 */
+  .sec{padding:12px 14px}
+  .sec h2{font-size:14px;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .sec h2 .hint{font-size:11px;color:var(--sub);font-weight:normal}
+  /* 批量切换 */
+  .bulkRow{display:flex;gap:6px;margin-bottom:8px}
+  .bulkRow button{background:var(--card);border:1px solid var(--line);color:var(--sub);
+    border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;transition:.15s}
+  .bulkRow button.active{background:var(--gold);color:#1a1300;border-color:var(--gold);font-weight:bold}
+  /* 设施卡 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bcard{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:14px;padding:11px;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+  .bcard.glow{border-color:var(--gold);box-shadow:0 0 12px rgba(255,180,70,.25)}
+  .bcard.locked{opacity:.45}
+  .bcard .ic{font-size:26px}
+  .bcard .nm{font-size:14px;font-weight:bold;margin:4px 0 2px}
+  .bcard .ds{font-size:11px;color:var(--sub);min-height:18px}
+  .bcard .lv{position:absolute;top:10px;right:12px;font-size:11px;color:var(--gold);font-weight:bold}
+  .bcard .out{font-size:11px;color:var(--jade);margin:5px 0}
+  .bcard button{width:100%;border:none;border-radius:10px;padding:7px;font-size:12px;
+    font-weight:bold;cursor:pointer;background:var(--gold);color:#1a1300;transition:.15s}
+  .bcard button:active{transform:scale(.97)}
+  .bcard button:disabled{background:#2a3947;color:#5b6f82;cursor:not-allowed}
+  .bcard button .c{font-size:10px;font-weight:normal}
+  /* 弟子 */
+  .disc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .disc-head .slots{font-size:12px;color:var(--sub)}
+  .recruit{background:var(--jade);color:#04221a;border:none;border-radius:10px;
+    padding:7px 14px;font-weight:bold;font-size:13px;cursor:pointer}
+  .recruit:disabled{background:#2a3947;color:#5b6f82;cursor:not-allowed}
+  .dlist{display:flex;flex-direction:column;gap:7px}
+  .ditem{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:9px}
+  .ditem .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--jade));
+    display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .ditem .info{flex:1;min-width:0}
+  .ditem .info .n{font-size:13px;font-weight:bold}
+  .ditem .info .r{font-size:11px;color:var(--sub)}
+  .ditem .pr{font-size:12px;color:var(--jade);font-weight:bold;white-space:nowrap}
+  .ditem .ep{font-size:10px;color:var(--gold);margin-left:3px}
+  .empty{color:var(--sub);font-size:12px;text-align:center;padding:14px}
+  /* 底部 */
+  .foot{padding:8px 14px 30px;display:flex;gap:8px;justify-content:center}
+  .foot button{background:transparent;border:1px solid var(--line);color:var(--sub);
+    border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer}
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;
+    justify-content:center;z-index:50;padding:20px}
+  .mask.hide{display:none}
+  .panel{background:linear-gradient(160deg,#16202c,#0d1117);border:1px solid var(--gold);
+    border-radius:18px;padding:20px;max-width:340px;width:100%;text-align:center;
+    box-shadow:0 10px 40px rgba(255,180,70,.15)}
+  .panel h3{color:var(--gold);font-size:18px;margin-bottom:12px}
+  .panel .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;
+    border-bottom:1px solid var(--line)}
+  .panel .row .v{font-weight:bold}
+  .panel button{margin-top:14px;width:100%;background:var(--gold);color:#1a1300;border:none;
+    border-radius:10px;padding:9px;font-weight:bold;font-size:14px;cursor:pointer}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:60;
+    display:flex;flex-direction:column-reverse;gap:6px;align-items:center;pointer-events:none}
+  .toast{background:rgba(20,30,42,.95);border:1px solid var(--line);border-radius:20px;
+    padding:6px 16px;font-size:12px;color:var(--gold);opacity:0;transition:.3s;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);white-space:nowrap}
+  .toast.show{opacity:1}
+  .toast.ep{color:var(--gold2);border-color:var(--gold2)}
+  .toast.evt{color:var(--blue);border-color:var(--blue);font-weight:bold}
+  .toast.ach{color:var(--jade);border-color:var(--jade);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>仙门 · 宗门经营 <small>挂机修炼 v2.1</small></h1>
+  <div class="res">
+    <div class="chip"><div class="k">💎 灵石</div><div class="v stone" id="rStone">0</div><div class="rate" id="rStoneRate">+0/秒</div></div>
+    <div class="chip"><div class="k">🌀 灵气</div><div class="v qi" id="rQi">0</div><div class="rate" id="rQiRate">+0/秒</div></div>
+    <div class="chip"><div class="k">⚜️ 宗门</div><div class="v sect" id="rSect">散修</div><div class="rate" id="rMult">×1.00</div></div>
+  </div>
+  <div class="prog">
+    <div class="lab"><span id="progName">飞升进度</span><span id="progTxt">0 / 2000</span></div>
+    <div class="bar"><i id="progBar"></i></div>
+  </div>
+</div>
+
+<div class="clickZone">
+  <div class="clickBtn" id="clickBtn">
+    <div class="clabel">🌀 点击修炼</div>
+    <div class="cval" id="clickVal">+2 灵石</div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>🏗️ 设施建设 <span class="hint">自动产出 · 点击按钮升级</span></h2>
+  <div class="bulkRow">
+    <button class="active" data-n="1">×1</button>
+    <button data-n="10">×10</button>
+    <button data-n="100">×100</button>
+  </div>
+  <div class="grid" id="bGrid"></div>
+</div>
+
+<div class="sec">
+  <h2>🧑‍🏫 弟子 <span class="hint">弟子自动修炼产出灵气</span></h2>
+  <div class="disc-head">
+    <span class="slots" id="slotTxt">弟子 0 / 1</span>
+    <button class="recruit" id="recruitBtn">招募弟子</button>
+  </div>
+  <div class="dlist" id="dList"></div>
+</div>
+
+<div class="foot">
+  <button id="ascBtn">🌟 飞升转生（满级开放）</button>
+  <button id="resetBtn">🗑️ 重置存档</button>
+</div>
+
+<div id="toast"></div>
+<div class="mask hide" id="offlineMask">
+  <div class="panel">
+    <h3>⏳ 离线修炼结算</h3>
+    <div class="row"><span>离线时长</span><span class="v" id="offTime">—</span></div>
+    <div class="row"><span>💎 灵石收益</span><span class="v stone" id="offStone">0</span></div>
+    <div class="row"><span>🌀 灵气收益</span><span class="v qi" id="offQi">0</span></div>
+    <button id="offOk">收取</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   仙门 · 宗门经营放置 v2 — 优化版
+   加点：点击收集、随机事件、成就、批量购买、视觉动效
+======================================================== */
+
+const BUILDINGS = [
+  {id:'array',  ic:'🔮', nm:'聚灵阵', ds:'汇聚天地灵气，每秒产出灵气', base:1.0,  cost:15,  growth:1.15, res:'qi',    req:null},
+  {id:'farm',   ic:'🌾', nm:'灵田',   ds:'种植灵谷，每秒产出灵石',     base:0.8,  cost:20,  growth:1.18, res:'stone', req:null},
+  {id:'alchemy',ic:'⚗️', nm:'炼丹房', ds:'炼丹售药，每秒产出灵石',     base:1.6,  cost:140, growth:1.25, res:'stone', req:'array'},
+  {id:'house',  ic:'🏯', nm:'弟子居', ds:'每级+1 弟子名额',           base:1,    cost:90,  growth:1.55, res:'slot',  req:null},
+  {id:'library',ic:'📚', nm:'藏经阁', ds:'每级全局产出 +6%',          base:0.06, cost:280, growth:1.7,  res:'mult',  req:null},
+];
+
+const REALMS = [
+  {nm:'散修',   t:0},     {nm:'筑基期', t:2000},  {nm:'金丹期', t:15000},
+  {nm:'元婴期', t:90000}, {nm:'化神期', t:5e5},   {nm:'合体期', t:3e6},
+  {nm:'大乘期', t:1.8e7}, {nm:'渡劫期', t:1e8},   {nm:'飞升仙', t:6e8},
+];
+
+const NAME_POOL = ['李青云','王道玄','赵灵儿','周无极','陈玄风','林惊鸿','苏沐橙',
+  '叶知秋','楚留香','沈浪','陆雪琪','张小凡','白浅','墨青','姬如雪','尹天雪'];
+const AV_POOL = ['🧙','🧝','👨‍🎓','👴','🧑‍🦱','👲','🧑‍🎤','👳'];
+
+// 成就系统
+const ACHIEVEMENTS = [
+  {id:'a1', check:s=>s.b.array>=5,  msg:'🔮 灵阵初成：聚灵阵达到5级'},
+  {id:'a2', check:s=>s.b.farm>=5,   msg:'🌾 良田百亩：灵田达到5级'},
+  {id:'a3', check:s=>s.disciples.length>=5, msg:'👥 人才济济：已有5名弟子'},
+  {id:'a4', check:s=>s.sectLevel>=2,msg:'⚜️ 金丹大道：宗门晋升金丹期'},
+  {id:'a5', check:s=>s.sectLevel>=4,msg:'⚜️ 化神之境：宗门晋升化神期'},
+  {id:'a6', check:s=>s.stone>=10000,msg:'💰 财源广进：灵石过万'},
+  {id:'a7', check:s=>s.totalQi>=100000,msg:'🌀 灵气如海：累计灵气突破10万'},
+  {id:'a8', check:s=>s.b.array>=10&&s.b.farm>=10&&s.b.alchemy>=5&&s.b.house>=5, msg:'🏛️ 宗门鼎盛：全设施达高等级'},
+];
+
+// 随机事件
+const EVENTS = [
+  {nm:'灵脉暴涌', wt:3, act:s=>{ s.qi+=qiRate()*20; s.totalQi+=qiRate()*20; toastEvt('🌀 灵脉暴涌！灵气涌入'); }},
+  {nm:'天降灵石', wt:3, act:s=>{ s.stone+=stoneRate()*25; toastEvt('💎 灵石雨！大量灵石掉落'); }},
+  {nm:'弟子顿悟', wt:2, act:s=>{ if(s.disciples.length>0){ const d=s.disciples[Math.floor(Math.random()*s.disciples.length)]; d.epUntil=Date.now()+12000; toastEvt('🧘 '+d.name+' 顿悟！×3 持续12秒'); } }},
+  {nm:'宗门大比', wt:1, act:s=>{ if(s.disciples.length>0){ s.disciples.forEach(d=>d.epUntil=Date.now()+6000); toastEvt('🏆 宗门大比！全员斗志昂扬'); } }},
+  {nm:'妖兽侵扰', wt:2, act:s=>{ const loss=Math.floor(s.qi*0.08); s.qi=Math.max(0,s.qi-loss); toast('🐉 妖兽侵扰！损失少量灵气',true); }},
+];
+
+/* ---------------- 游戏状态 ---------------- */
+const SAVE_KEY = 'xianmen_sect_save_v2';
+let S = null;
+let bulk = 1;                  // 批量购买倍数
+let achieved = {};             // 已解锁成就
+let eventTimer = null;
+let stonePrev=0, qiPrev=0;    // 上一帧数值，用于 flash 动画
+
+function defaultState(){
+  return {
+    stone:60, qi:0, totalQi:0,
+    b:{array:0, farm:0, alchemy:0, house:0, library:0},
+    disciples:[], sectLevel:0, ascension:0,
+    achieved:{}, last:Date.now()
+  };
+}
+
+/* ---------------- 数值计算（同原版） ---------------- */
+function globalMult(){
+  const lib = S.b.library||0;
+  return (1+lib*0.06)*(1+S.sectLevel*0.25)*(1+S.ascension*0.5);
+}
+function buildingUnlocked(def){ if(!def.req)return true; return (S.b[def.req]||0)>=1; }
+function buildingLevel(id){ return S.b[id]||0; }
+function buildingCost(def,lv){ if(lv==null)lv=buildingLevel(def.id); return Math.ceil(def.cost*Math.pow(def.growth,lv)); }
+function buildingProd(def){
+  const lv=buildingLevel(def.id);
+  if(def.res==='slot'||def.res==='mult')return 0;
+  if(!buildingUnlocked(def))return 0;
+  return def.base*lv*globalMult();
+}
+function stoneRate(){ let r=0; for(const d of BUILDINGS)if(d.res==='stone')r+=buildingProd(d); return r; }
+function qiFromBuildings(){ let r=0; for(const d of BUILDINGS)if(d.res==='qi')r+=buildingProd(d); return r; }
+function discipleQiRate(){
+  let r=0; const now=Date.now();
+  for(const dc of S.disciples){ r+=dc.qiRate*globalMult()*(now<dc.epUntil?3:1); }
+  return r;
+}
+function qiRate(){ return qiFromBuildings()+discipleQiRate(); }
+function maxSlots(){ return 1+(S.b.house||0); }
+function recruitCost(){ return Math.ceil(40*Math.pow(1.4,S.disciples.length)); }
+function clickPower(){
+  let base=1+(S.b.farm||0)*0.3+(S.b.array||0)*0.2;
+  return Math.ceil(base*globalMult());
+}
+
+/* ---------------- 主循环 ---------------- */
+let lastFrame=performance.now();
+let eventCountdown=25+Math.random()*20;
+
+function tick(now){
+  const dt=Math.min((now-lastFrame)/1000,0.25);
+  lastFrame=now;
+
+  S.stone+=stoneRate()*dt;
+  const dq=qiRate()*dt;
+  S.qi+=dq; S.totalQi+=dq;
+
+  // 弟子顿悟（原版逻辑）
+  const pEp=0.03*dt; const tnow=Date.now();
+  for(const dc of S.disciples){
+    if(tnow>=dc.epUntil&&Math.random()<pEp){ dc.epUntil=tnow+8000; toast(dc.name+' 顿悟！灵气暴涨 ×3',true); }
+  }
+
+  // 随机事件
+  eventCountdown-=dt;
+  if(eventCountdown<=0){
+    eventCountdown=20+Math.random()*30;
+    const totalWt=EVENTS.reduce((s,e)=>s+e.wt,0);
+    let r=Math.random()*totalWt, acc=0;
+    for(const evt of EVENTS){ acc+=evt.wt; if(r<=acc){ evt.act(S); break; } }
+  }
+
+  checkRealm();
+  checkAchievements();
+  render();
+  requestAnimationFrame(tick);
+}
+
+function checkRealm(){
+  let lv=0;
+  for(let i=0;i<REALMS.length;i++)if(S.totalQi>=REALMS[i].t)lv=i;
+  if(lv>S.sectLevel){ const up=lv-S.sectLevel; S.sectLevel=lv; toast('⚜️ 宗门晋升：'+REALMS[lv].nm+'（全局产出提升）',false); }
+}
+
+function checkAchievements(){
+  for(const a of ACHIEVEMENTS){
+    if(!achieved[a.id]&&a.check(S)){
+      achieved[a.id]=true; S.achieved[a.id]=true;
+      toastAch('🏆 '+a.msg);
+    }
+  }
+}
+
+/* ---------------- 操作 ---------------- */
+function buyById(id){
+  const def=BUILDINGS.find(b=>b.id===id);
+  if(!def)return;
+  buyBuilding(def,bulk);
+}
+function buyBuilding(def,n){
+  if(!buildingUnlocked(def))return;
+  let totalCost=0;
+  const startLv=buildingLevel(def.id);
+  for(let i=0;i<n;i++){
+    totalCost+=buildingCost(def,startLv+i);
+  }
+  if(S.stone<totalCost){ toast('灵石不足（需要 '+fmt(totalCost)+'）'); return; }
+  S.stone-=totalCost;
+  S.b[def.id]=startLv+n;
+  render();
+}
+function recruit(){
+  if(S.disciples.length>=maxSlots()){ toast('弟子居名额已满，先升级弟子居'); return; }
+  const c=recruitCost();
+  if(S.stone<c){ toast('灵石不足'); return; }
+  S.stone-=c;
+  const name=NAME_POOL[Math.floor(Math.random()*NAME_POOL.length)];
+  const av=AV_POOL[Math.floor(Math.random()*AV_POOL.length)];
+  const qiRate=0.5+Math.random()*0.7;
+  S.disciples.push({name,av,qiRate,epUntil:0});
+  toast('收徒 '+name+' 入门！');
+  render();
+}
+function ascend(){
+  if(S.sectLevel<REALMS.length-1){ toast('需达到「飞升仙」方可转生'); return; }
+  if(!confirm('飞升转生将清空设施与弟子，但每层转生永久+50%全局产出。确定？'))return;
+  const asc=S.ascension+1;
+  S=defaultState();
+  S.ascension=asc;
+  save();
+  toast('🌟 第'+asc+'世飞升！全局产出+'+Math.round(asc*50)+'%');
+  render();
+}
+function resetAll(){
+  if(!confirm('确定清空所有进度？'))return;
+  localStorage.removeItem(SAVE_KEY);
+  S=defaultState(); achieved={};
+  render();
+}
+
+/* ---------------- 点击修炼 ---------------- */
+function handleClick(e){
+  const pw=clickPower();
+  S.stone+=pw; S.qi+=Math.ceil(pw*0.6); S.totalQi+=Math.ceil(pw*0.6);
+  // 涟漪动画
+  const rect=e.currentTarget.getBoundingClientRect();
+  const ripple=document.createElement('div');
+  ripple.className='ripple';
+  ripple.style.left=(e.clientX-rect.left-10)+'px';
+  ripple.style.top=(e.clientY-rect.top-10)+'px';
+  e.currentTarget.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),600);
+  render();
+}
+
+/* ---------------- 渲染 ---------------- */
+function fmt(n){
+  if(n<1000)return(Math.floor(n*10)/10).toString();
+  const u=['','k','M','B','T'];let i=0;
+  while(n>=1000&&i<u.length-1){n/=1000;i++}
+  return(Math.floor(n*100)/100)+u[i];
+}
+let lastStone=0,lastQi=0;
+function render(){
+  // 数值变动 flash
+  const sEl=document.getElementById('rStone');
+  const qEl=document.getElementById('rQi');
+  if(Math.abs(S.stone-lastStone)>0.5) sEl.classList.add('flash');
+  if(Math.abs(S.qi-lastQi)>0.5) qEl.classList.add('flash');
+  setTimeout(()=>{sEl.classList.remove('flash');qEl.classList.remove('flash');},300);
+  lastStone=S.stone; lastQi=S.qi;
+
+  sEl.textContent=fmt(S.stone);
+  qEl.textContent=fmt(S.qi);
+  document.getElementById('rStoneRate').textContent='+'+fmt(stoneRate())+'/秒';
+  document.getElementById('rQiRate').textContent='+'+fmt(qiRate())+'/秒';
+  document.getElementById('rSect').textContent=REALMS[S.sectLevel].nm+(S.ascension?(' ×'+S.ascension):'');
+  document.getElementById('rMult').textContent='×'+globalMult().toFixed(2);
+  document.getElementById('clickVal').textContent='+'+clickPower()+' 灵石';
+
+  const curR=REALMS[S.sectLevel],nxt=REALMS[S.sectLevel+1];
+  if(nxt){
+    const span=nxt.t-curR.t,got=S.totalQi-curR.t;
+    document.getElementById('progName').textContent='飞升进度：'+curR.nm+' → '+nxt.nm;
+    document.getElementById('progTxt').textContent=fmt(got)+' / '+fmt(span);
+    document.getElementById('progBar').style.width=Math.min(100,got/span*100)+'%';
+  }else{
+    document.getElementById('progName').textContent='🌟 已飞升成仙';
+    document.getElementById('progTxt').textContent='可转生 '+S.ascension+' 世';
+    document.getElementById('progBar').style.width='100%';
+  }
+
+  // 设施
+  const grid=document.getElementById('bGrid');
+  grid.innerHTML=BUILDINGS.map(def=>{
+    const lv=buildingLevel(def.id);
+    const unlocked=buildingUnlocked(def);
+    const c=buildingCost(def,lv);
+    const affordable=S.stone>=c;
+    const prod=def.res==='stone'?fmt(buildingProd(def))+'/秒 灵石'
+             :def.res==='qi'?fmt(buildingProd(def))+'/秒 灵气'
+             :def.res==='slot'?'+1 名额'
+             :'全局 +6%';
+    const reqTxt=def.req?'需先建'+BUILDINGS.find(b=>b.id===def.req).nm:'';
+    const bulkCost=bulk>1?(function(){let tc=0;for(let i=0;i<bulk;i++)tc+=buildingCost(def,lv+i);return tc;})():c;
+    const can=(unlocked&&S.stone>=bulkCost);
+    return `<div class="bcard ${unlocked?'':'locked'} ${affordable&&unlocked?'glow':''}">
+      <div class="lv">Lv.${lv}${bulk>1?' → '+(lv+bulk):''}</div>
+      <div class="ic">${def.ic}</div>
+      <div class="nm">${def.nm}</div>
+      <div class="ds">${def.ds}</div>
+      <div class="out">${unlocked?'产出：'+prod:'🔒 '+reqTxt}</div>
+      <button data-bid="${def.id}" ${can?'':'disabled'}>
+        ${unlocked?'升级':'解锁'}${bulk>1?' ×'+bulk:''} <span class="c">💎${fmt(bulkCost)}</span></button>
+    </div>`;
+  }).join('');
+
+  // 弟子
+  document.getElementById('slotTxt').textContent='弟子 '+S.disciples.length+' / '+maxSlots();
+  const rb=document.getElementById('recruitBtn');
+  rb.disabled=S.disciples.length>=maxSlots()||S.stone<recruitCost();
+  rb.textContent=S.disciples.length>=maxSlots()?'名额已满':'招募 💎'+fmt(recruitCost());
+  const dl=document.getElementById('dList');
+  if(S.disciples.length===0){
+    dl.innerHTML='<div class="empty">尚无弟子，点击「招募弟子」开始收徒</div>';
+  }else{
+    const now=Date.now();
+    dl.innerHTML=S.disciples.map(dc=>{
+      const rate=dc.qiRate*globalMult()*(now<dc.epUntil?3:1);
+      const ep=now<dc.epUntil?'<span class="ep">顿悟×3</span>':'';
+      return `<div class="ditem"><div class="av">${dc.av}</div>
+        <div class="info"><div class="n">${dc.name}</div>
+        <div class="r">${REALMS[S.sectLevel].nm}</div></div>
+        <div class="pr">+${fmt(rate)}/秒 ${ep}</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('ascBtn').disabled=S.sectLevel<REALMS.length-1;
+}
+
+/* ---------------- toast ---------------- */
+function toast(msg,ep){
+  const box=document.getElementById('toast');
+  const el=document.createElement('div');
+  el.className='toast'+(ep?' ep':'');
+  el.textContent=msg;box.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},2200);
+}
+function toastEvt(msg){
+  const box=document.getElementById('toast');
+  const el=document.createElement('div');
+  el.className='toast evt';el.textContent=msg;box.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},2500);
+}
+function toastAch(msg){
+  const box=document.getElementById('toast');
+  const el=document.createElement('div');
+  el.className='toast ach';el.textContent=msg;box.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
+}
+
+/* ---------------- 存档 / 离线 ---------------- */
+function save(){
+  S.last=Date.now();
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    S=Object.assign(defaultState(),d);
+    S.b=Object.assign({array:0,farm:0,alchemy:0,house:0,library:0},d.b||{});
+    S.disciples=d.disciples||[];
+    achieved=d.achieved||{};
+    return true;
+  }catch(e){return false;}
+}
+function applyOffline(){
+  const now=Date.now();
+  const off=Math.max(0,(now-(S.last||now))/1000);
+  if(off<30)return;
+  const eff=0.5;
+  S.stone+=stoneRate()*off*eff;
+  const gq=qiRate()*off*eff;
+  S.qi+=gq;S.totalQi+=gq;
+  document.getElementById('offTime').textContent=fmtTime(off);
+  document.getElementById('offStone').textContent='+'+fmt(stoneRate()*off*eff);
+  document.getElementById('offQi').textContent='+'+fmt(gq);
+  document.getElementById('offlineMask').classList.remove('hide');
+}
+function fmtTime(s){
+  s=Math.floor(s);
+  if(s<60)return s+'秒';
+  if(s<3600)return Math.floor(s/60)+'分'+(s%60)+'秒';
+  const h=Math.floor(s/3600);s%=3600;
+  return h+'时'+Math.floor(s/60)+'分';
+}
+
+/* ---------------- 绑定 ---------------- */
+document.getElementById('clickBtn').addEventListener('click',handleClick);
+document.getElementById('recruitBtn').addEventListener('click',recruit);
+// 设施按钮——事件委托
+document.getElementById('bGrid').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-bid]');
+  if(btn&&!btn.disabled){ buyById(btn.dataset.bid); }
+});
+document.getElementById('ascBtn').addEventListener('click',ascend);
+document.getElementById('resetBtn').addEventListener('click',resetAll);
+document.getElementById('offOk').addEventListener('click',()=>{
+  document.getElementById('offlineMask').classList.add('hide');
+  render();
+});
+document.querySelectorAll('.bulkRow button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    bulk=parseInt(btn.dataset.n);
+    document.querySelectorAll('.bulkRow button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+setInterval(save,5000);
+window.addEventListener('beforeunload',save);
+
+/* ---------------- 启动 ---------------- */
+if(!load()){
+  S=defaultState();
+  toast('🌀 开宗立派！点击中央法球开始修炼');
+}else{
+  applyOffline();
+}
+render();
+requestAnimationFrame(tick);
+console.log('⚜️ 仙门·宗门经营 v2 已启动');
+</script>
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>燕云 · 面板毕业度计算器</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0c1116; --bg2:#101a24; --card:#16212e; --card2:#1c2a3a;
+    --line:#2a3a4d; --gold:#f4c95d; --jade:#5ad6b0; --red:#e85d5d;
+    --blue:#5aa9ff; --purple:#b58cff; --txt:#e8eef5; --sub:#8aa0b4;
+  }
+  html,body{background:var(--bg);color:var(--txt);
+    font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+    -webkit-user-select:none;user-select:none;min-height:100vh}
+  .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0e1a26,#0c1116);
+    border-bottom:1px solid var(--line);padding:12px 14px}
+  .top h1{font-size:17px;color:var(--gold);letter-spacing:1px;text-align:center}
+  .top h1 small{color:var(--sub);font-size:11px;font-weight:normal;letter-spacing:0}
+  .selrow{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:center}
+  .selrow label{font-size:12px;color:var(--sub)}
+  select{background:var(--card);color:var(--txt);border:1px solid var(--line);
+    border-radius:9px;padding:7px 10px;font-size:14px;font-weight:bold;outline:none}
+  .sec{padding:14px}
+  .sec h2{font-size:14px;color:var(--gold);margin-bottom:10px}
+  .igrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .field{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 10px}
+  .field .lab{font-size:11px;color:var(--sub);margin-bottom:4px}
+  .field .inp{display:flex;align-items:center;gap:4px}
+  .field input{flex:1;width:100%;background:var(--bg2);border:1px solid var(--line);
+    border-radius:8px;color:var(--txt);font-size:15px;font-weight:bold;padding:7px 8px;outline:none}
+  .field input:focus{border-color:var(--gold)}
+  .field .unit{font-size:12px;color:var(--sub)}
+  .grade{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--gold);
+    border-radius:16px;padding:16px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+  .grade .pct{font-size:42px;font-weight:bold;color:var(--gold);line-height:1}
+  .grade .pl{font-size:12px;color:var(--sub);margin-top:4px}
+  .grade .badge{display:inline-block;margin-top:8px;font-size:22px;font-weight:bold;
+    padding:3px 18px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+  .grade .note{font-size:11px;color:var(--sub);margin-top:8px}
+  .bar{height:9px;background:var(--card);border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-top:10px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));width:0%}
+  .chk{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 11px;margin-bottom:8px}
+  .chk.ok{border-color:var(--jade)}
+  .chk .h{display:flex;justify-content:space-between;align-items:center}
+  .chk .nm{font-size:13px;font-weight:bold}
+  .chk .st{font-size:12px;font-weight:bold}
+  .chk .st.ok{color:var(--jade)} .chk .st.no{color:var(--red)}
+  .chk .mid{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin:5px 0 3px}
+  .chk .mbar{height:6px;background:var(--bg2);border-radius:4px;overflow:hidden}
+  .chk .mbar>i{display:block;height:100%;background:var(--jade);width:0%}
+  .chk .mbar>i.no{background:var(--red)}
+  .chk .gap{font-size:11px;color:var(--red);margin-top:3px}
+  .chk .tagrow{display:flex;gap:4px;align-items:center}
+  .tg{font-size:10px;padding:1px 7px;border-radius:8px;font-weight:bold;white-space:nowrap}
+  .tg.T0{background:rgba(244,201,93,.18);color:var(--gold)}
+  .tg.T1{background:rgba(90,169,255,.18);color:var(--blue)}
+  .tg.T2{background:rgba(138,160,180,.18);color:var(--sub)}
+  .footer{display:flex;gap:8px;justify-content:center;padding:6px 14px;flex-wrap:wrap}
+  .footer button{background:transparent;border:1px solid var(--line);color:var(--sub);
+    border-radius:10px;padding:8px 16px;font-size:12px;cursor:pointer}
+  .ver{font-size:10px;color:var(--sub);text-align:center;padding:4px 14px 24px;line-height:1.6}
+  .ver err{color:var(--red);display:block;margin-top:4px}
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:60;
+    pointer-events:none;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .toast{background:rgba(20,30,42,.95);border:1px solid var(--line);border-radius:20px;
+    padding:7px 16px;font-size:12px;color:var(--gold);opacity:0;transition:.3s;
+    box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>燕云 · 面板毕业度 <small>录入面板 · 对照毕业红线</small></h1>
+  <div class="selrow">
+    <label>流派</label>
+    <select id="schoolSel"></select>
+    <label style="margin-left:16px">赛季</label>
+    <select id="seasonSel"></select>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>📋 录入面板数值（来自游戏内角色面板）</h2>
+  <div class="igrid" id="igrid"></div>
+</div>
+
+<div class="sec">
+  <h2>🎯 毕业度评估 <small style="font-size:10px;color:var(--sub);font-weight:normal">—— 未达标项自动排前</small></h2>
+  <div class="grade">
+    <div class="pct" id="gPct">0%</div>
+    <div class="pl">综合毕业度（T0 核心词条权更重）</div>
+    <div class="badge" id="gBadge">D</div>
+    <div class="bar"><i id="gBar"></i></div>
+    <div class="note" id="gNote">填入面板数值后实时计算</div>
+  </div>
+  <div id="chkList"></div>
+</div>
+
+<div class="footer">
+  <button id="resetBtn">🗑️ 清空本流派</button>
+</div>
+<div class="ver" id="verTxt"></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   燕云十六声 · 面板毕业度计算器（v1.1 优化版）
+   数据：16yanyun.com / dvg.cn 各流派 100 级毕业面板红线
+   —— 数值随版本变动，修改 SCHOOLS 即可同步
+   ========================================================= */
+
+const DATA_VERSION = '数据版本 2026-07-22 · 基于 16yanyun / dvg 100 级毕业红线 · 随赛季变动';
+
+// 流派数据
+// check.type: min(≥) | max(≤) | range(区间 [lo,hi]) | sumMin(子项求和≥target, 需配 parts)
+// check.parts: sumMin 时的子项 key 列表，用于展开显示
+const SCHOOLS = {
+  v1_100: {
+  pozhu_yuan: {
+    name:'破竹鸢 (100级)',
+    src:'dvg.cn / 16yanyun 毕业面板',
+    inputs:[
+      {k:'min',   label:'敏捷 (敏)'},
+      {k:'maxWg', label:'最大外功'},
+      {k:'minWg', label:'最小外功'},
+      {k:'maxXg', label:'最大属性攻击'},
+      {k:'minXg', label:'最小属性攻击'},
+      {k:'jzH',   label:'精准率 (黄字)', u:'%'},
+      {k:'jzW',   label:'精准率 (白字)', u:'%'},
+      {k:'hxH',   label:'会心率 (黄字)', u:'%'},
+      {k:'hxW',   label:'会心率 (白字)', u:'%'},
+      {k:'hyH',   label:'会意率 (黄字)', u:'%'},
+      {k:'hyW',   label:'会意率 (白字)', u:'%'},
+      {k:'zhx',   label:'直接会心率', u:'%'},
+      {k:'tp',    label:'外功穿透'},
+      {k:'sling', label:'首领增伤', u:'%'},
+      {k:'sjzx',  label:'手甲武学增伤', u:'%'},
+      {k:'qwxx',  label:'全武学增效', u:'%'},
+      {k:'clzx',  label:'蓄力技增伤', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min',    target:3300, tier:'T0', get:v=>v.maxWg},
+      {label:'最小+最大外功',    type:'sumMin', target:5100, tier:'T0', get:v=>v.minWg+v.maxWg, parts:['minWg','maxWg']},
+      {label:'最小+最大属性攻击', type:'sumMin', target:1100, tier:'T1', get:v=>v.minXg+v.maxXg, parts:['minXg','maxXg']},
+      {label:'敏捷',            type:'range',  target:[300,340], tier:'T1', get:v=>v.min},
+      {label:'精准率 (黄字)',    type:'min',    target:98,   tier:'T0', get:v=>v.jzH},
+      {label:'精准率 (白字)',    type:'range',  target:[128,132], tier:'T1', get:v=>v.jzW},
+      {label:'会心率 (黄字)',    type:'min',    target:75,   tier:'T0', get:v=>v.hxH},
+      {label:'会心率 (白字)',    type:'range',  target:[143,150], tier:'T1', get:v=>v.hxW},
+      {label:'会意率 (黄字)',    type:'max',    target:12,   tier:'T2', get:v=>v.hyH, hint:'越低越好'},
+      {label:'会意率 (白字)',    type:'max',    target:22,   tier:'T2', get:v=>v.hyW, hint:'越低越好'},
+      {label:'会心+会意+直会',   type:'sumMin', target:95,   tier:'T0', get:v=>v.hxH+v.hyH+v.zhx, parts:['hxH','hyH','zhx']},
+      {label:'最大破竹攻击',     type:'min',    target:850,  tier:'T0', get:850},
+      {label:'外功穿透',        type:'min',    target:44,   tier:'T1', get:v=>v.tp},
+      {label:'首领增伤',        type:'min',    target:7.2,  tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'手甲武学增伤',     type:'min',    target:7,    tier:'T0', get:v=>v.sjzx, hint:'神力词条'},
+      {label:'全武学增效',      type:'min',    target:6.8,  tier:'T1', get:v=>v.qwxx},
+      {label:'蓄力技增伤',      type:'min',    target:25,   tier:'T0', get:v=>v.clzx},
+    ]
+  },
+  pozhu_chen: {
+    name:'破竹尘 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3300,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1700,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:70,  tier:'T0', get:v=>v.hx},
+      {label:'会意率',          type:'max', target:12,  tier:'T2', get:v=>v.hy, hint:'越低越好'},
+      {label:'最大破竹攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  pozhu_feng: {
+    name:'破竹风 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3400,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1700,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:65,  tier:'T0', get:v=>v.hx},
+      {label:'会意率',          type:'max', target:13,  tier:'T2', get:v=>v.hy, hint:'越低越好'},
+      {label:'最大破竹攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  lieshi_wei: {
+    name:'裂石威 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3300,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1600,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:56,  tier:'T1', get:v=>v.hx},
+      {label:'会意率',          type:'min', target:15.5,tier:'T2', get:v=>v.hy, hint:'该流派越高越好'},
+      {label:'最大裂石攻击',     type:'min', target:900, tier:'T0', get:900},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  lieshi_jun: {
+    name:'裂石钧·唐刀 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3300,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1700,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:70,  tier:'T0', get:v=>v.hx},
+      {label:'会意率',          type:'max', target:12,  tier:'T2', get:v=>v.hy, hint:'越低越好'},
+      {label:'最大裂石攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  lieshi_jun_sc: {
+    name:'裂石钧·双切 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3400,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1600,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:65,  tier:'T0', get:v=>v.hx},
+      {label:'会意率',          type:'max', target:12,  tier:'T2', get:v=>v.hy, hint:'越低越好'},
+      {label:'最大裂石攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  mingjin_hong: {
+    name:'鸣金虹 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3800,tier:'T0', get:v=>v.maxWg},
+      {label:'精准率',          type:'min', target:95,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:38,  tier:'T1', get:v=>v.hx},
+      {label:'会意率',          type:'min', target:39,  tier:'T1', get:v=>v.hy, hint:'该流派越高越好'},
+      {label:'最大鸣金攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  mingjin_ying: {
+    name:'鸣金影 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3800,tier:'T0', get:v=>v.maxWg},
+      {label:'精准率',          type:'min', target:97,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:45,  tier:'T1', get:v=>v.hx},
+      {label:'会意率',          type:'min', target:37,  tier:'T1', get:v=>v.hy, hint:'该流派越高越好'},
+      {label:'最大鸣金攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  qiansi_lin: {
+    name:'牵丝霖 (100级)', src:'dvg.cn 各流派毕业面板（无精准率数据）',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'hx',    label:'会心率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3400,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1700,tier:'T1', get:v=>v.minWg},
+      {label:'会心率',          type:'min', target:75,  tier:'T0', get:v=>v.hx},
+      {label:'最大牵丝攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  qiansi_yu: {
+    name:'牵丝玉 (100级)', src:'dvg.cn 各流派毕业面板',
+    inputs:[
+      {k:'maxWg', label:'最大外功'},{k:'minWg', label:'最小外功'},
+      {k:'jing',  label:'精准率 (黄字)', u:'%'},{k:'hx', label:'会心率 (黄字)', u:'%'},
+      {k:'hy',    label:'会意率 (黄字)', u:'%'},
+      {k:'sling', label:'首领增伤', u:'%'},{k:'qwxx', label:'全武学增效', u:'%'},
+    ],
+    checks:[
+      {label:'最大外功',        type:'min', target:3300,tier:'T0', get:v=>v.maxWg},
+      {label:'最小外功',        type:'min', target:1700,tier:'T1', get:v=>v.minWg},
+      {label:'精准率',          type:'min', target:98,  tier:'T0', get:v=>v.jing},
+      {label:'会心率',          type:'min', target:70,  tier:'T0', get:v=>v.hx},
+      {label:'会意率',          type:'min', target:12.93,tier:'T2', get:v=>v.hy, hint:'该流派越高越好'},
+      {label:'最大牵丝攻击',     type:'min', target:850, tier:'T0', get:850},
+      {label:'首领增伤',        type:'min', target:7.2, tier:'T0', get:v=>v.sling, hint:'神力词条'},
+      {label:'全武学增效',      type:'min', target:6.8, tier:'T1', get:v=>v.qwxx},
+    ]
+  },
+  }
+  ,
+  v2_yanzi: {
+  pozhu_yuan:{name:'破竹鸢',src:'16yanyun/17173 2026-03 燕子深度教学',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'maxPz',label:'最大破竹'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'my',label:'敏捷'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3300,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1700,tier:'T1',get:v=>v.minWg},{label:'最大破竹',type:'min',target:900,tier:'T0',get:v=>v.maxPz},{label:'精准率',type:'min',target:95,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:70,tier:'T0',get:v=>v.hx},{label:'会意率',type:'max',target:20,tier:'T2',get:v=>v.hy,hint:'越低越好'},{label:'敏捷',type:'min',target:280,tier:'T1',get:v=>v.my},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  pozhu_chen:{name:'破竹尘',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'my',label:'敏捷'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3100,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1400,tier:'T1',get:v=>v.minWg},{label:'精准率',type:'min',target:100,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:70,tier:'T0',get:v=>v.hx},{label:'会意率',type:'max',target:10,tier:'T2',get:v=>v.hy,hint:'越低越好'},{label:'敏捷',type:'min',target:280,tier:'T1',get:v=>v.my},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  pozhu_feng:{name:'破竹风',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'my',label:'敏捷'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3000,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1400,tier:'T1',get:v=>v.minWg},{label:'精准率',type:'min',target:98,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:68,tier:'T0',get:v=>v.hx},{label:'会意率',type:'max',target:13,tier:'T2',get:v=>v.hy,hint:'越低越好'},{label:'敏捷',type:'min',target:280,tier:'T1',get:v=>v.my},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  lieshi_wei:{name:'裂石威',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3100,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1400,tier:'T1',get:v=>v.minWg},{label:'精准率',type:'min',target:100,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:56,tier:'T1',get:v=>v.hx},{label:'会意率',type:'min',target:12,tier:'T2',get:v=>v.hy,hint:'越高越好'},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  lieshi_jun:{name:'裂石钧',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3100,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1400,tier:'T1',get:v=>v.minWg},{label:'精准率',type:'min',target:100,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:70,tier:'T0',get:v=>v.hx},{label:'会意率',type:'max',target:13,tier:'T2',get:v=>v.hy,hint:'越低越好'},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  mingjin_hong:{name:'鸣金虹',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3300,tier:'T0',get:v=>v.maxWg},{label:'精准率',type:'min',target:95,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:35,tier:'T1',get:v=>v.hx},{label:'会意率',type:'min',target:38,tier:'T1',get:v=>v.hy,hint:'越高越好'},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  mingjin_ying:{name:'鸣金影',src:'17173 燕子赛季',inputs:[{k:'maxWg',label:'最大外功'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3300,tier:'T0',get:v=>v.maxWg},{label:'精准率',type:'min',target:98,tier:'T0',get:v=>v.jing},{label:'会心率',type:'min',target:45,tier:'T0',get:v=>v.hx},{label:'会意率',type:'min',target:35,tier:'T1',get:v=>v.hy,hint:'越高越好'},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  qiansi_lin:{name:'牵丝霖',src:'17173 燕子赛季(缺精准/会意/牵丝攻击)',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'hx',label:'会心率',u:'%'},{k:'my',label:'敏捷'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:3100,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:1500,tier:'T1',get:v=>v.minWg},{label:'会心率',type:'min',target:70,tier:'T0',get:v=>v.hx},{label:'敏捷',type:'min',target:280,tier:'T1',get:v=>v.my},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx}]},
+  },
+  v3_qianqiu: { /* 千秋同襟抱 110装备 2026-06 — 鸢鸢基于用户面板，其他待补 */
+    pozhu_yuan:{name:'破竹鸢',src:'千秋同襟抱·用户面板参照(待补全)',inputs:[{k:'maxWg',label:'最大外功'},{k:'minWg',label:'最小外功'},{k:'maxPz',label:'最大破竹'},{k:'jing',label:'精准率',u:'%'},{k:'hx',label:'会心率',u:'%'},{k:'hy',label:'会意率',u:'%'},{k:'my',label:'敏捷'},{k:'sling',label:'首领增伤',u:'%'},{k:'qwxx',label:'全武学增效',u:'%'}],checks:[{label:'最大外功',type:'min',target:5100,tier:'T0',get:v=>v.maxWg},{label:'最小外功',type:'min',target:2350,tier:'T1',get:v=>v.minWg},{label:'最大破竹',type:'min',target:0,tier:'T0',get:v=>v.maxPz,hint:'待补'},{label:'精准率',type:'min',target:95,tier:'T0',get:v=>v.jing,hint:'待确认'},{label:'会心率',type:'min',target:70,tier:'T0',get:v=>v.hx,hint:'待确认'},{label:'会意率',type:'max',target:20,tier:'T2',get:v=>v.hy,hint:'越低越好/待确认'},{label:'敏捷',type:'min',target:280,tier:'T1',get:v=>v.my,hint:'待确认'},{label:'首领增伤',type:'min',target:7.2,tier:'T0',get:v=>v.sling,hint:'神力/待确认'},{label:'全武学增效',type:'min',target:6.8,tier:'T1',get:v=>v.qwxx,hint:'待确认'}]},
+  }
+};
+
+const TIER_W = {T0:2, T1:1.4, T2:1};
+const SAVE_KEY = 'yanyun_calc_v3';
+let curSeason = 'v3_qianqiu';
+let cur = 'pozhu_yuan';
+let vals = {};                   // 当前流派录入 {inputKey: number|null}
+let storageOk = true;            // localStorage 是否正常
+let saveTimer = null;            // debounce timer
+
+/* -------- 工具函数 -------- */
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+function num(x){ const n = parseFloat(x); return isNaN(n)?null:n; }
+function fmt(n){
+  if(n==null) return '—';
+  if(Math.abs(n - Math.round(n)) < 0.0001) return Math.round(n).toString();   // 整数不显小数
+  return (Math.round(n*10)/10).toString();
+}
+
+/* -------- 存档（带异常处理 + 节流） -------- */
+function loadAll(){
+  try{ return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveAll(all){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(all));
+    if(!storageOk){ storageOk=true; }
+  }catch(e){
+    if(storageOk){ storageOk=false; toastErr('⚠ 存储空间不足，面板数值不会保存'); }
+  }
+}
+function loadSchool(){
+  const all = loadAll();
+  vals = all[curSeason+'_'+cur] || {};
+}
+function saveSchoolNow(){
+  const all = loadAll();
+  all[curSeason+'_'+cur] = vals;
+  saveAll(all);
+}
+function debounceSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveSchoolNow, 600);
+}
+
+/* -------- 评分 -------- */
+function scoreOne(c){
+  const val = num(c.get(vals));
+  if(val==null) return 0;
+  if(c.type==='min' || c.type==='sumMin') return clamp(val/c.target, 0, 1);
+  if(c.type==='max') return val<=c.target ? 1 : clamp(c.target/val, 0, 1);
+  if(c.type==='range'){
+    const [lo,hi]=c.target;
+    if(val>=lo && val<=hi) return 1;
+    if(val<lo) return clamp(val/lo, 0, 1);
+    return 1; // 超出上限视为达标
+  }
+  return 0;
+}
+function targetText(c){
+  if(c.type==='min' || c.type==='sumMin') return '≥ '+fmt(c.target);
+  if(c.type==='max') return '≤ '+fmt(c.target);
+  if(c.type==='range') return fmt(c.target[0])+'~'+fmt(c.target[1]);
+  return '';
+}
+function curValueText(c){
+  const val = num(c.get(vals));
+  // sumMin 展开子项
+  if(c.type==='sumMin' && c.parts){
+    const parts = c.parts.map(p=>fmt(num(vals[p])) || '—').join('+');
+    return parts+' = '+fmt(val);
+  }
+  return fmt(val);
+}
+
+/* -------- placeholder 智能建议 -------- */
+function getPlaceholder(inpKey){
+  const sc = SCHOOLS[curSeason][cur];
+  if(!sc) return '0';
+  // 找第一个引用该 key 的 min/range check（优先 min 类型）
+  for(const c of sc.checks){
+    if(c.type==='min' && c.get.toString().includes(inpKey)) return fmt(c.target);
+  }
+  for(const c of sc.checks){
+    if(c.type==='range' && c.get.toString().includes(inpKey)) return fmt(c.target[0])+'~'+fmt(c.target[1]);
+  }
+  return '0';
+}
+
+/* -------- toast -------- */
+function toastErr(msg){
+  const box = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  box.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+/* -------- 渲染录入区 -------- */
+function renderInputs(){
+  const sc = SCHOOLS[curSeason][cur];
+  document.getElementById('igrid').innerHTML = sc.inputs.map(inp=>{
+    const v = vals[inp.k]!=null ? vals[inp.k] : '';
+    const ph = getPlaceholder(inp.k);
+    return `<div class="field">
+      <div class="lab">${inp.label}</div>
+      <div class="inp">
+        <input type="number" inputmode="decimal" id="in_${inp.k}" value="${v}"
+          placeholder="建议 ${ph}" oninput="onInput('${inp.k}',this.value)">
+        <span class="unit">${inp.u||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('verTxt').innerHTML = DATA_VERSION
+    + (storageOk?'':'<err>⚠ 存储异常，当前数据关闭后不会保存</err>');
+}
+
+/* -------- 实时计算（未达标项排前） -------- */
+function onInput(k, value){
+  vals[k] = value==='' ? null : num(value);
+  update();
+  debounceSave();
+}
+function update(){
+  const sc = SCHOOLS[curSeason][cur];
+  let sw=0, s=0;
+  const rows = sc.checks.map(c=>{
+    const sc_score = scoreOne(c);
+    const w = TIER_W[c.tier]||1;
+    sw += w; s += sc_score*w;
+    const val = num(c.get(vals));
+    const ok = sc_score>=0.999;
+    let gap = '';
+    if(!ok && val!=null){
+      if(c.type==='min'||c.type==='sumMin') gap = '还差 '+fmt(c.target-val);
+      else if(c.type==='max') gap = '超出 '+fmt(val-c.target);
+      else if(c.type==='range'){
+        const [lo]=c.target;
+        gap = val<lo ? '建议 '+lo+'~'+c.target[1] : '建议 '+c.target[0]+'~'+c.target[1];
+      }
+    }
+    return {c, sc_score, ok, val, gap};
+  });
+  // 排序：未达标 → 达标；未达标中差距大的排前面
+  rows.sort((a,b)=>{
+    if(a.ok===b.ok) return a.sc_score - b.sc_score;
+    return a.ok ? 1 : -1;
+  });
+  const total = sw>0 ? s/sw : 0;
+  // 大卡
+  document.getElementById('gPct').textContent = Math.round(total*100)+'%';
+  document.getElementById('gBar').style.width = (total*100)+'%';
+  const badge = document.getElementById('gBadge');
+  let g='D', gc='var(--sub)';
+  if(total>=0.95){g='S';gc='var(--gold)';}
+  else if(total>=0.85){g='A';gc='var(--purple)';}
+  else if(total>=0.70){g='B';gc='var(--blue)';}
+  else if(total>=0.50){g='C';gc='var(--jade)';}
+  badge.textContent = g; badge.style.color = gc; badge.style.borderColor = gc;
+  const filled = sc.inputs.filter(i=>vals[i.k]!=null && vals[i.k]!=='').length;
+  document.getElementById('gNote').textContent = filled===0
+    ? '填入面板数值后实时计算'
+    : `已录入 ${filled}/${sc.inputs.length} 项 · 评级随版本红线浮动`;
+  // 明细
+  document.getElementById('chkList').innerHTML = rows.map(r=>{
+    const pct = Math.round(r.sc_score*100);
+    const tags = [];
+    tags.push(`<span class="tg ${r.c.tier}">${r.c.tier}</span>`);
+    if(r.c.hint) tags.push(`<span class="tg T2">${r.c.hint}</span>`);
+    return `<div class="chk ${r.ok?'ok':''}">
+      <div class="h">
+        <span class="nm">${r.c.label}</span>
+        <span class="st ${r.ok?'ok':'no'}">${r.ok?'✓ 达标':'未达标'}</span>
+      </div>
+      <div class="mid"><span>${curValueText(r.c)} / ${targetText(r.c)}</span>
+        <span class="tagrow">${tags.join('')}</span></div>
+      <div class="mbar"><i class="${r.ok?'':'no'}" style="width:${pct}%"></i></div>
+      ${r.gap?`<div class="gap">⚠ ${r.gap}</div>`:''}
+    </div>`;
+  }).join('');
+}
+// update() end —— verTxt 在 renderInputs 里一次更新即可
+
+/* -------- 事件 -------- */
+function buildSelect(){
+  // 赛季下拉
+  const ses = document.getElementById('seasonSel');
+  ses.innerHTML = Object.keys(SCHOOLS).map(k=>{
+    const n={v1_100:'100级·旧赛季',v2_yanzi:'燕子赛季',v3_qianqiu:'千秋同襟抱'};
+    return `<option value="${k}">${n[k]||k}</option>`;
+  }).join('');
+  ses.value = curSeason;
+  ses.addEventListener('change', e=>{
+    curSeason = e.target.value;
+    loadSchool();
+    renderInputs();
+    update();
+  });
+  // 流派下拉
+  const sel = document.getElementById('schoolSel');
+  const seasonsc = SCHOOLS[curSeason];
+  sel.innerHTML = Object.keys(seasonsc)
+    .map(k=>`<option value="${k}">${seasonsc[k].name}</option>`).join('');
+  sel.value = cur;
+  sel.addEventListener('change', e=>{
+    saveSchoolNow();   // 切流派前先保存
+    cur = e.target.value;
+    loadSchool();
+    renderInputs();
+    update();
+  });
+}
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('清空当前流派所有录入？')) return;
+  vals = {};
+  saveSchoolNow();
+  renderInputs();
+  update();
+});
+
+/* -------- 启动 -------- */
+buildSelect();
+loadSchool();
+renderInputs();
+update();
+console.log('⚔️ 燕云面板毕业度计算器 v1.1 已启动');
+</script>
+</body>
+</html>
