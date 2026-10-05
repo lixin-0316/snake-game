@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="荒潮">
+<meta name="format-detection" content="telephone=no,email=no,address=no">
 <title>荒潮 · 幸存者</title>
 <style>
   :root{
@@ -12,16 +18,27 @@
     --line:rgba(236,231,219,.16); --wash:rgba(236,231,219,.06);
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%;overscroll-behavior:none}
   body{
     background:
       radial-gradient(1100px 660px at 50% -10%, #24272e 0%, #121317 52%, #060709 100%),
       radial-gradient(760px 460px at 8% 112%, rgba(140,160,180,.10), transparent 72%),
       radial-gradient(600px 380px at 96% 96%, rgba(180,90,70,.07), transparent 72%);
     display:flex;align-items:center;justify-content:center;
-    font-family:"Kaiti SC","STKaiti","KaiTi","PingFang SC",serif;overflow:hidden;color:var(--ink)}
-  #stage{position:relative;width:min(96vw, calc(96vh * 1.5));aspect-ratio:3/2}
-  canvas{width:100%;height:100%;display:block;border-radius:3px;background:#0a0b0d;
+    font-family:"Kaiti SC","STKaiti","KaiTi","PingFang SC",serif;overflow:hidden;color:var(--ink);
+    height:100vh; height:100dvh;                                   /* iOS 地址栏收起不跳动 */
+    -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent;
+    -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
+    touch-action:manipulation}
+  /* 舞台 = 在「安全区」（扣掉刘海/灵动岛/Home 指示条）内能放下的最大 3:2 画面 */
+  #stage{position:relative;aspect-ratio:3/2;
+    --sw:calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+    --sh:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    width:min(calc(var(--sw) * .96), calc(var(--sh) * .96 * 1.5))}
+  @supports (height:100dvh){
+    #stage{--sh:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  }
+  canvas{width:100%;height:100%;display:block;border-radius:3px;background:#0a0b0d;touch-action:none;
     box-shadow:0 32px 84px rgba(0,0,0,.9), 0 0 0 1px rgba(236,231,219,.22), 0 0 0 11px #08090b, 0 0 0 12px rgba(236,231,219,.10)}
   .overlay{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;border-radius:3px;
     background:radial-gradient(920px 620px at 50% -6%, rgba(32,35,42,.97), rgba(6,7,9,.985));
@@ -93,6 +110,18 @@
   #tbtnDash{right:112px;bottom:22px}
   #tbtnAct{right:118px;bottom:110px}
   #tbtnUlt{right:24px;bottom:100px}
+  /* 竖屏提示：横版作战在手机上横屏体验最佳 */
+  #rotateTip{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;justify-content:center;
+    gap:15px;text-align:center;color:var(--ink);
+    padding:24px;padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    background:radial-gradient(720px 540px at 50% 32%, #1c1f25, #060709 78%)}
+  #rotateTip.show{display:flex}
+  #rotateTip .rt-ico{font-size:62px;line-height:1;color:var(--gold);animation:rtspin 2.6s ease-in-out infinite}
+  @keyframes rtspin{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+  #rotateTip .rt-t{font-family:"STKaiti","KaiTi",serif;font-size:30px;letter-spacing:.26em;color:var(--gold)}
+  #rotateTip .rt-s{color:var(--ink2);font-size:14px;line-height:1.9;max-width:302px}
+  #rotateTip .rt-b{margin-top:4px;font-size:14px;padding:9px 22px;background:transparent;border-color:var(--line);color:var(--ink2)}
+  #rotateTip .rt-b:hover{background:transparent;border-color:var(--ink2);color:var(--ink);box-shadow:none}
 </style>
 </head>
 <body>
@@ -111,6 +140,12 @@
     <div class="tbtn" id="tbtnAct">交互</div>
     <div class="tbtn" id="tbtnUlt">绝招</div>
   </div>
+</div>
+<div id="rotateTip">
+  <div class="rt-ico">↻</div>
+  <div class="rt-t">请横屏游玩</div>
+  <div class="rt-s">荒潮是横版作战，旋转手机横屏后，虚拟摇杆与技能键更趁手</div>
+  <button class="btn rt-b" id="rtSkip">仍要竖屏</button>
 </div>
 
 <script>
@@ -143,8 +178,8 @@ function fitCanvas(){
     if(c.width!==w || c.height!==h){ c.width=w; c.height=h; }
   }catch(e){}
 }
-window.addEventListener('resize', function(){ fitCanvas(); });
-window.addEventListener('orientationchange', function(){ setTimeout(fitCanvas,180); });
+window.addEventListener('resize', function(){ fitCanvas(); updateRotateTip(); });
+window.addEventListener('orientationchange', function(){ setTimeout(function(){ fitCanvas(); updateRotateTip(); },180); });
 
 /* ============ 法宝 ============ */
 /* 法宝：5 级满级，每一级解锁一个新机制，第 5 级质变（化龙/化阵…） */
@@ -1230,7 +1265,20 @@ function toggleTouch(force){
 function applyTouchUI(){
   TOUCHUI=(P&&P.touch===true)||((!(P&&P.touch===false))&&isTouchDevice());
   const t=document.getElementById('touchUI'); if(t) t.style.display=TOUCHUI?'block':'none';
+  updateRotateTip();
 }
+/* 竖屏提示：手机竖持时横版体验差 → 提示旋转（可跳过，仅本次会话；进关时自动暂停防误伤） */
+let rotateSkip=false;
+function updateRotateTip(){
+  const el=document.getElementById('rotateTip'); if(!el) return;
+  const show=TOUCHUI && (window.innerHeight>window.innerWidth) && !rotateSkip;
+  el.classList.toggle('show', show);
+  if(show){ try{ if(G && G.scene==='level' && !G.paused && !G.over) togglePause(); }catch(e){} }
+}
+(function(){
+  const b=document.getElementById('rtSkip');
+  if(b) b.addEventListener('click',function(){ rotateSkip=true; updateRotateTip(); });
+})();
 
 /* ============ 手柄（Gamepad） ============ */
 let padPrev={}, padOn=false;
@@ -1491,18 +1539,18 @@ function sfxChirp(o){
 const SFXLIB={
   /* ===== 青锋剑 · 剑气出窍：金铁出鞘 + 剑气破空 ===== */
   sword:function(){
-    sfxNoise({f0:2600, f1:1100, q:2.4, dur:0.07, vol:0.05});                               // 出鞘摩擦（金属刮擦）
-    sfxMetal({f0:3300, dur:0.42, vol:0.05, hp:1500, lp:12000, drift:0.82, spread:0.06});   // 金铁清鸣
-    sfxNoise({f0:1400, f1:6000, q:1.3, dur:0.16, vol:0.04});                               // 剑气破空
-    sfxTone({f0:2600, f1:5400, w:'sine', dur:0.1, vol:0.014});                             // 锋锐
-    sfxSub({f0:130, f1:48, dur:0.14, vol:0.03});
+    sfxNoise({f0:2400, f1:900, q:2.6, dur:0.08, vol:0.045});                               // 出鞘摩擦（金属刮擦）
+    sfxMetal({f0:1900, dur:0.62, vol:0.05, hp:1200, lp:9000, drift:0.95, spread:0.09, n:6}); // 剑鸣「shwing」：基频落在 1570~2350Hz 甜区，长余韵
+    sfxMetal({f0:780, dur:0.5, vol:0.028, hp:420, lp:4000, drift:0.92, spread:0.16, n:5, at:0.004}); // 剑体层（低八度，厚实）
+    sfxNoise({f0:900, f1:4400, q:1.2, dur:0.22, vol:0.042});                               // 挥剑破空（气声主体）
+    sfxSub({f0:120, f1:50, dur:0.14, vol:0.026});
   },
   swordBig:function(){
-    sfxNoise({f0:2200, f1:900, q:2.2, dur:0.1, vol:0.055});                                // 巨剑出鞘摩擦
-    sfxMetal({f0:2500, dur:0.55, vol:0.058, hp:900, lp:13000, drift:0.76, spread:0.1, n:7});
-    for(let i=0;i<3;i++) sfxNoise({f0:900+i*900, f1:6500, q:1.4, dur:0.18, vol:0.038, at:i*0.04});
-    sfxTone({f0:1500, f1:3000, w:'triangle', dur:0.2, vol:0.018});
-    sfxSub({f0:140, f1:38, dur:0.46, vol:0.085});
+    sfxNoise({f0:2000, f1:800, q:2.4, dur:0.11, vol:0.05});                                // 巨剑出鞘摩擦
+    sfxMetal({f0:1500, dur:0.8, vol:0.058, hp:900, lp:10000, drift:0.93, spread:0.1, n:7});// 巨剑长鸣（甜区偏下 = 更沉更长）
+    sfxMetal({f0:620, dur:0.66, vol:0.032, hp:320, lp:3600, drift:0.9, spread:0.18, n:5, at:0.005}); // 剑体层
+    for(let i=0;i<3;i++) sfxNoise({f0:800+i*900, f1:5200, q:1.3, dur:0.2, vol:0.032, at:i*0.045}); // 三连剑气
+    sfxSub({f0:130, f1:36, dur:0.5, vol:0.08});
   },
   /* ===== 环身剑阵：飞剑绕身的旋转剑鸣 ===== */
   orbit:function(){
@@ -1512,7 +1560,7 @@ const SFXLIB={
   },
   volley:function(){
     for(let i=0;i<5;i++){
-      sfxMetal({f0:2900, dur:0.24, vol:0.03, hp:1500, drift:0.86, at:i*0.045, n:4});
+      sfxMetal({f0:2050, dur:0.26, vol:0.03, hp:1200, drift:0.9, at:i*0.045, n:4});
       sfxNoise({f0:1300+i*500, f1:6200, q:1.8, dur:0.12, vol:0.024, at:i*0.045});          // 逐柄出鞘
     }
   },
@@ -1600,7 +1648,7 @@ const SFXLIB={
   },
   rxSwordrain:function(){
     for(let i=0;i<8;i++){
-      sfxMetal({f0:3100, dur:0.24, vol:0.028, hp:1600, drift:0.85, at:i*0.032, n:4, spread:0.07});
+      sfxMetal({f0:2050, dur:0.26, vol:0.028, hp:1300, drift:0.9, at:i*0.032, n:4, spread:0.07});
       sfxNoise({f0:1400+rnd(0,600), f1:6400, q:1.8, dur:0.12, vol:0.024, at:i*0.032});
     }
     sfxSub({f0:130, f1:44, dur:0.4, vol:0.06});

@@ -305,18 +305,18 @@ function sfxChirp(o){
 const SFXLIB={
   /* ===== 青锋剑 · 剑气出窍：金铁出鞘 + 剑气破空 ===== */
   sword:function(){
-    sfxNoise({f0:2600, f1:1100, q:2.4, dur:0.07, vol:0.05});                               // 出鞘摩擦（金属刮擦）
-    sfxMetal({f0:3300, dur:0.42, vol:0.05, hp:1500, lp:12000, drift:0.82, spread:0.06});   // 金铁清鸣
-    sfxNoise({f0:1400, f1:6000, q:1.3, dur:0.16, vol:0.04});                               // 剑气破空
-    sfxTone({f0:2600, f1:5400, w:'sine', dur:0.1, vol:0.014});                             // 锋锐
-    sfxSub({f0:130, f1:48, dur:0.14, vol:0.03});
+    sfxNoise({f0:2400, f1:900, q:2.6, dur:0.08, vol:0.045});                               // 出鞘摩擦（金属刮擦）
+    sfxMetal({f0:1900, dur:0.62, vol:0.05, hp:1200, lp:9000, drift:0.95, spread:0.09, n:6}); // 剑鸣「shwing」：基频落在 1570~2350Hz 甜区，长余韵
+    sfxMetal({f0:780, dur:0.5, vol:0.028, hp:420, lp:4000, drift:0.92, spread:0.16, n:5, at:0.004}); // 剑体层（低八度，厚实）
+    sfxNoise({f0:900, f1:4400, q:1.2, dur:0.22, vol:0.042});                               // 挥剑破空（气声主体）
+    sfxSub({f0:120, f1:50, dur:0.14, vol:0.026});
   },
   swordBig:function(){
-    sfxNoise({f0:2200, f1:900, q:2.2, dur:0.1, vol:0.055});                                // 巨剑出鞘摩擦
-    sfxMetal({f0:2500, dur:0.55, vol:0.058, hp:900, lp:13000, drift:0.76, spread:0.1, n:7});
-    for(let i=0;i<3;i++) sfxNoise({f0:900+i*900, f1:6500, q:1.4, dur:0.18, vol:0.038, at:i*0.04});
-    sfxTone({f0:1500, f1:3000, w:'triangle', dur:0.2, vol:0.018});
-    sfxSub({f0:140, f1:38, dur:0.46, vol:0.085});
+    sfxNoise({f0:2000, f1:800, q:2.4, dur:0.11, vol:0.05});                                // 巨剑出鞘摩擦
+    sfxMetal({f0:1500, dur:0.8, vol:0.058, hp:900, lp:10000, drift:0.93, spread:0.1, n:7});// 巨剑长鸣（甜区偏下 = 更沉更长）
+    sfxMetal({f0:620, dur:0.66, vol:0.032, hp:320, lp:3600, drift:0.9, spread:0.18, n:5, at:0.005}); // 剑体层
+    for(let i=0;i<3;i++) sfxNoise({f0:800+i*900, f1:5200, q:1.3, dur:0.2, vol:0.032, at:i*0.045}); // 三连剑气
+    sfxSub({f0:130, f1:36, dur:0.5, vol:0.08});
   },
   /* ===== 环身剑阵：飞剑绕身的旋转剑鸣 ===== */
   orbit:function(){
@@ -326,7 +326,7 @@ const SFXLIB={
   },
   volley:function(){
     for(let i=0;i<5;i++){
-      sfxMetal({f0:2900, dur:0.24, vol:0.03, hp:1500, drift:0.86, at:i*0.045, n:4});
+      sfxMetal({f0:2050, dur:0.26, vol:0.03, hp:1200, drift:0.9, at:i*0.045, n:4});
       sfxNoise({f0:1300+i*500, f1:6200, q:1.8, dur:0.12, vol:0.024, at:i*0.045});          // 逐柄出鞘
     }
   },
@@ -414,7 +414,7 @@ const SFXLIB={
   },
   rxSwordrain:function(){
     for(let i=0;i<8;i++){
-      sfxMetal({f0:3100, dur:0.24, vol:0.028, hp:1600, drift:0.85, at:i*0.032, n:4, spread:0.07});
+      sfxMetal({f0:2050, dur:0.26, vol:0.028, hp:1300, drift:0.9, at:i*0.032, n:4, spread:0.07});
       sfxNoise({f0:1400+rnd(0,600), f1:6400, q:1.8, dur:0.12, vol:0.024, at:i*0.032});
     }
     sfxSub({f0:130, f1:44, dur:0.4, vol:0.06});
