@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>荒潮 · 音效试听</title>
+<style>
+:root{--bg:#0b0d11;--ink:#ece7db;--ink2:#a9a396;--ink3:#6f6a60;--gold:#c9a24a;--zhu:#b8402f;--line:#23262d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:26px 20px 60px}
+h1{font-size:20px;letter-spacing:.22em;margin:6px 0 4px;color:var(--gold)}
+.sub{color:var(--ink3);font-size:12.5px;margin-bottom:18px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;
+     border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#111419}
+.bar label{color:var(--ink2);font-size:12.5px}
+input[type=range]{width:170px;accent-color:var(--gold)}
+.grp{color:var(--gold);font-size:12.5px;letter-spacing:.16em;margin:20px 0 8px;
+     padding-bottom:6px;border-bottom:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:7px;transition:background .12s}
+.row:hover{background:#13171d}
+.row.miss{opacity:.4}
+.play{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:1px solid var(--gold);
+      background:transparent;color:var(--gold);font-size:12px;cursor:pointer;transition:.12s}
+.play:hover{background:var(--gold);color:#12141a}
+.play:active{transform:scale(.92)}
+.txt b{display:block;font-weight:600;font-size:13.5px}
+.txt span{color:var(--ink3);font-size:12px}
+.tip{color:var(--ink3);font-size:12px;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+</style></head><body><div class="wrap">
+<h1>荒 潮 · 音 效 试 听</h1>
+<div class="sub">全部为程序化合成（零素材体积）· 多层叠加：金属泛音簇 / 噪声层（白·棕）/ 次低音 / 爆裂颗粒 → 母带压缩 + 短延时与远端长混响双送出 · 与游戏内同一套代码 · 点 ▶ 试听</div>
+<div class="bar">
+  <label>音量</label><input id="vol" type="range" min="0" max="100" value="80">
+  <span id="volv" style="color:var(--ink2);font-size:12.5px">80%</span>
+  <button class="play" style="flex:none;width:auto;border-radius:6px;padding:0 12px;height:30px;font-size:12.5px" onclick="all()">▶ 依次播放全部</button>
+</div>
+<div class="grp">法宝出招（基础）</div>
+<div class="row" data-k="sword"><button class="play" onclick="hit(this,'sword')">▶</button><div class="txt"><b>青锋剑 · 剑气出窍</b><span>出鞘摩擦 + 金铁清鸣(7 泛音簇) + 剑气破空 + 低频剑体</span></div></div>
+<div class="row" data-k="orbit"><button class="play" onclick="hit(this,'orbit')">▶</button><div class="txt"><b>环身剑阵 · 飞剑绕身</b><span>双段旋转剑鸣 + 缠身风</span></div></div>
+<div class="row" data-k="wave"><button class="play" onclick="hit(this,'wave')">▶</button><div class="txt"><b>浩然气浪</b><span>棕噪声气爆（截止频率随机游走）+ 次低音 + 气鸣</span></div></div>
+<div class="row" data-k="fire"><button class="play" onclick="hit(this,'fire')">▶</button><div class="txt"><b>炎符 · 掷符</b><span>掷符 + 火焰轰鸣(棕噪声) + 嘶层 + 7 粒随机爆响</span></div></div>
+<div class="row" data-k="frost"><button class="play" onclick="hit(this,'frost')">▶</button><div class="txt"><b>玄冰诀 · 冰锥</b><span>降调弯曲波哨音 + 冰晶共鸣 + 表面龟裂</span></div></div>
+<div class="row" data-k="thunder"><button class="play" onclick="hit(this,'thunder')">▶</button><div class="txt"><b>雷印 · 落雷</b><span>近雷炸裂 + 六段错峰滚雷（棕噪声）+ 胸腔次低音</span></div></div>
+<div class="grp">命中反馈</div>
+<div class="row" data-k="fireHit"><button class="play" onclick="hit(this,'fireHit')">▶</button><div class="txt"><b>炎符 · 命中</b><span>爆燃轰鸣 + 次低音 + 9 粒随机爆响</span></div></div>
+<div class="row" data-k="frostHit"><button class="play" onclick="hit(this,'frostHit')">▶</button><div class="txt"><b>玄冰诀 · 命中</b><span>冰晶炸裂(7 泛音) + 降调弯曲波 + 表面龟裂(8 粒)</span></div></div>
+<div class="row" data-k="thunderHit"><button class="play" onclick="hit(this,'thunderHit')">▶</button><div class="txt"><b>雷印 · 落点</b><span>短促落点雷：炸裂 + 双段滚雷</span></div></div>
+<div class="row" data-k="ebow"><button class="play" onclick="hit(this,'ebow')">▶</button><div class="txt"><b>妖弓手 · 放箭</b><span>弓弦弹响 + 箭矢破风</span></div></div>
+<div class="row" data-k="storm"><button class="play" onclick="hit(this,'storm')">▶</button><div class="txt"><b>九霄神雷 · 雷池</b><span>雷池低频电鸣 + 电火花（5 级）</span></div></div>
+<div class="grp">五级进化</div>
+<div class="row" data-k="swordBig"><button class="play" onclick="hit(this,'swordBig')">▶</button><div class="txt"><b>诛仙剑阵 · 巨剑齐射</b><span>巨剑出鞘 + 七泛音剑鸣 + 三连剑气 + 低频（5 级）</span></div></div>
+<div class="row" data-k="volley"><button class="play" onclick="hit(this,'volley')">▶</button><div class="txt"><b>万剑归宗 · 离体齐射</b><span>五柄飞剑逐一出鞘，每柄 4 泛音 + 剑气（5 级）</span></div></div>
+<div class="row" data-k="aura"><button class="play" onclick="hit(this,'aura')">▶</button><div class="txt"><b>太虚罡气 · 随行罡气</b><span>罡气持续低鸣（棕噪声游走）+ 金属泛音尾（5 级）</span></div></div>
+<div class="row" data-k="dragon"><button class="play" onclick="hit(this,'dragon')">▶</button><div class="txt"><b>焚天火龙 · 龙吟</b><span>龙吟双声部 + 火焰轰鸣(棕噪声+嘶层) + 噼啪（5 级）</span></div></div>
+<div class="row" data-k="dragonIce"><button class="play" onclick="hit(this,'dragonIce')">▶</button><div class="txt"><b>万载冰龙 · 龙吟</b><span>压缩波低音(冰层共鸣) + 降调弯曲波 + 寒气 + 冰晶（5 级）</span></div></div>
+<div class="grp">绝招共鸣</div>
+<div class="row" data-k="ult"><button class="play" onclick="hit(this,'ult')">▶</button><div class="txt"><b>绝招 · 蓄力</b><span>上扬扫频蓄力 + 噪声 + 金属泛音起势</span></div></div>
+<div class="row" data-k="rxSteam"><button class="play" onclick="hit(this,'rxSteam')">▶</button><div class="txt"><b>共鸣 · 冰火两重天</b><span>火轰(棕噪声) + 次低音 + 降调冰啸 + 冰晶炸裂</span></div></div>
+<div class="row" data-k="rxThunderfire"><button class="play" onclick="hit(this,'rxThunderfire')">▶</button><div class="txt"><b>共鸣 · 焚雷天降</b><span>天雷滚鸣 + 六连火雷</span></div></div>
+<div class="row" data-k="rxFrostthunder"><button class="play" onclick="hit(this,'rxFrostthunder')">▶</button><div class="txt"><b>共鸣 · 霜雷锁狱</b><span>霜冰裂 + 四段滚雷</span></div></div>
+<div class="row" data-k="rxSwordrain"><button class="play" onclick="hit(this,'rxSwordrain')">▶</button><div class="txt"><b>共鸣 · 万剑归一</b><span>八连剑雨，每柄出鞘 + 剑气 + 低频</span></div></div>
+<div class="row" data-k="rxBladeflow"><button class="play" onclick="hit(this,'rxBladeflow')">▶</button><div class="txt"><b>共鸣 · 剑气长河</b><span>长剑鸣 + 剑气长扫 + 长河低鸣 + 次低音</span></div></div>
+<div class="row" data-k="rxVortex"><button class="play" onclick="hit(this,'rxVortex')">▶</button><div class="txt"><b>共鸣 · 太虚漩涡</b><span>内外双层湍流(棕噪声) + 扫频旋音 + 气流</span></div></div>
+<div class="row" data-k="rxTri"><button class="play" onclick="hit(this,'rxTri')">▶</button><div class="txt"><b>共鸣 · 三灾</b><span>三灾齐鸣：七段滚雷 + 雷火 + 冰晶 + 七连爆</span></div></div>
+<div class="grp">其它</div>
+<div class="row" data-k="pick"><button class="play" onclick="hit(this,'pick')">▶</button><div class="txt"><b>拾取</b><span>金属提示 + 上行二音</span></div></div>
+<div class="tip">※ 首次点击才会激活浏览器音频（浏览器要求用户手势）。<br>
+※ 此页由 gen_sfx_demo.py 从游戏文件抽取生成，改游戏音效后重新生成即可同步。</div>
+</div>
+<script>
+let AC=null, muted=false;
+function audioReady(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended')AC.resume(); }catch(e){} return AC; }
+function volMul(){ const v=document.getElementById('vol'); return v? (v.value/100):0.8; }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+/* ===== 程序化音效库：按「攻击类型」合成不同质感（噪声层 + 扫频振荡层），零素材体积 ===== */
+let _nzBuf=null;
+function sfxNoiseBuf(a){
+  if(_nzBuf) return _nzBuf;
+  const n=Math.max(1,Math.floor(a.sampleRate*1.2)), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  return _nzBuf=buf;
+}
+/* 棕噪声（1/f², -12dB/oct）：低频厚、像瀑布与滚雷 —— 雷声/气浪的正确基底 */
+let _brBuf=null;
+function sfxBrownBuf(a){
+  if(_brBuf) return _brBuf;
+  const n=Math.max(1,Math.floor(a.sampleRate*3)), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  let last=0;
+  for(let i=0;i<n;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; }
+  return _brBuf=buf;
+}
+/* 噪声层：破空 / 火焰 / 雷鸣 / 碎冰，靠滤波与扫频区分音色 */
+function sfxNoise(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.94+Math.random()*0.12;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.14)*j, vol=Math.max(0.0002,(o.vol||0.05)*volMul());
+    const src=a.createBufferSource(); src.buffer=(o.brown?sfxBrownBuf(a):sfxNoiseBuf(a)); src.loop=!!o.loop;
+    if(o.rate) src.playbackRate.value=o.rate;
+    const f=a.createBiquadFilter(); f.type=o.ft||'bandpass';
+    f.frequency.setValueAtTime(Math.max(40,(o.f0||900)*j),t);
+    if(o.f1) f.frequency.exponentialRampToValueAtTime(Math.max(40,o.f1*j), t+dur);
+    f.Q.value=o.q||1.1;
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+(o.atk||0.01));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(f); f.connect(g); g.connect(sfxOut(a)); g.connect(sfxBus(a));
+    src.start(t); src.stop(t+dur+0.03);
+  }catch(e){}
+}
+/* 振荡层：可扫频的音调（音高变化 = 招式走向） */
+function sfxTone(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.95+Math.random()*0.1;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.12)*j, vol=Math.max(0.0002,(o.vol||0.04)*volMul());
+    const nd=a.createOscillator(); nd.type=o.w||'sine';
+    nd.frequency.setValueAtTime(Math.max(20,(o.f0||440)*j),t);
+    if(o.f1) nd.frequency.exponentialRampToValueAtTime(Math.max(20,o.f1*j), t+dur);
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+(o.atk||0.008));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    nd.connect(g); g.connect(sfxOut(a)); g.connect(sfxBus(a));
+    nd.start(t); nd.stop(t+dur+0.04);
+  }catch(e){}
+}
+/* 输出链：先过母带压缩（多音叠加不糊不爆），再分一路短延时混响送出（不干涩） */
+let _sfxOut=null, _sfxBus=null;
+function sfxOut(a){
+  if(_sfxOut) return _sfxOut;
+  const comp=a.createDynamicsCompressor();
+  comp.threshold.value=-15; comp.knee.value=24; comp.ratio.value=8;
+  comp.attack.value=0.004; comp.release.value=0.17;
+  comp.connect(a.destination);
+  return _sfxOut=comp;
+}
+function sfxBus(a){
+  if(_sfxBus) return _sfxBus;
+  const inp=a.createGain();
+  const d=a.createDelay(0.6); d.delayTime.value=0.062;
+  const fb=a.createGain(); fb.gain.value=0.3;
+  const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2300;
+  const wet=a.createGain(); wet.gain.value=0.12;
+  inp.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(wet); wet.connect(sfxOut(a));
+  return _sfxBus=inp;
+}
+/* 远端混响送出：长延时 + 低沉尾音，仅雷声使用 —— 滚雷越过天际的余响 */
+let _sfxFar=null;
+function sfxFar(a){
+  if(_sfxFar) return _sfxFar;
+  const inp=a.createGain();
+  const d=a.createDelay(1.2); d.delayTime.value=0.29;
+  const fb=a.createGain(); fb.gain.value=0.46;
+  const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1100;
+  const hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=45;
+  const wet=a.createGain(); wet.gain.value=0.22;
+  inp.connect(d); d.connect(lp); lp.connect(hp); hp.connect(fb); fb.connect(d); hp.connect(wet); wet.connect(sfxOut(a));
+  return _sfxFar=inp;
+}
+/* 金属泛音簇：非谐比例的正弦叠加 = 金铁/钟磬/冰晶的出鞘声 */
+const METAL_R=[1,1.4142,1.9953,2.5198,3.3000,4.0772,5.0400];
+function sfxMetal(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.93+Math.random()*0.14;
+    const t=a.currentTime+(o.at||0), f0=(o.f0||2400)*j, dur=(o.dur||0.34)*j, base=o.vol||0.035;
+    const hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=(o.hp||700); hp.Q.value=0.7;
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=(o.lp||10000);
+    const out=a.createGain(); out.gain.value=1;
+    hp.connect(lp); lp.connect(out); out.connect(sfxOut(a)); out.connect(sfxBus(a));
+    const n=o.n||6;
+    for(let i=0;i<n;i++){
+      const sp=o.spread? (1+(i/n-0.5)*o.spread) : 1;
+      const f=Math.max(40, f0*METAL_R[i%METAL_R.length]*sp);
+      const nd=a.createOscillator(); nd.type='sine';
+      nd.frequency.setValueAtTime(f,t);
+      if(o.drift) nd.frequency.exponentialRampToValueAtTime(Math.max(40,f*o.drift), t+dur);
+      const g=a.createGain(), d=dur*(1+i*0.16), amp=Math.max(0.0002, base*volMul()/(1+i*0.85));
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(amp, t+(o.atk||0.004));
+      g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+      nd.connect(g); g.connect(hp);
+      nd.start(t); nd.stop(t+d+0.04);
+    }
+  }catch(e){}
+}
+/* 低频冲击：下坠正弦 = 重量与压迫感 */
+function sfxSub(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.96+Math.random()*0.08;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.4)*j, vol=Math.max(0.0002,(o.vol||0.08)*volMul());
+    const nd=a.createOscillator(); nd.type=o.w||'sine';
+    nd.frequency.setValueAtTime(Math.max(20,(o.f0||110)*j),t);
+    nd.frequency.exponentialRampToValueAtTime(Math.max(16,(o.f1||40)*j), t+dur);
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+(o.atk||0.006));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    nd.connect(g); g.connect(sfxOut(a)); g.connect(sfxBus(a));
+    nd.start(t); nd.stop(t+dur+0.05);
+  }catch(e){}
+}
+/* 爆裂颗粒：一串极短的高频噪声 = 噼啪 / 火星 / 冰渣 */
+function sfxCrackle(o){
+  const n=o.n||6, sp=o.spread||0.34;
+  for(let i=0;i<n;i++){
+    sfxNoise({f0:(o.f0||2400)+rnd(0,2600), f1:o.f1||5600, q:o.q||7,
+      dur:o.dur||0.03, vol:(o.vol||0.02)*rnd(0.55,1.15), at:(o.at||0)+Math.random()*sp});
+  }
+}
+/* 单段滚雷：棕噪声 → 低通由亮转闷（模拟激波在空气中被高频吸收）+ 高通去泥 → 起伏包络 */
+function sfxBoom(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.9+Math.random()*0.2;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.7)*j, vol=Math.max(0.0002,(o.vol||0.09)*volMul());
+    const src=a.createBufferSource(); src.buffer=sfxBrownBuf(a); src.loop=true;
+    src.playbackRate.value=(o.rate||1)*j;
+    const hp=a.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=(o.hp||27); hp.Q.value=0.6;
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=o.q||0.9;
+    lp.frequency.setValueAtTime(Math.max(40,(o.f0||420)*j), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(24,(o.f1||72)*j), t+dur);
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t+0.018);                     // 激波快起
+    const bumps=o.bumps||3;
+    for(let i=1;i<=bumps;i++){                                             // 起伏 = "滚"
+      const u=i/(bumps+1), amp=vol*(0.5+Math.random()*0.5);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0004,amp), t+dur*u);
+    }
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);                    // 拖尾
+    src.connect(hp); hp.connect(lp); lp.connect(g);
+    g.connect(sfxOut(a)); g.connect(sfxBus(a)); g.connect(sfxFar(a));
+    src.start(t); src.stop(t+dur+0.05);
+  }catch(e){}
+}
+/* 合成雷声：近雷「炸裂瞬态」+ 多段错峰到达的滚雷（近亮远闷）+ 胸腔次低音 */
+function sfxThunder(o){
+  if(muted) return;
+  const o0=o||{}, v=o0.vol||1, base=o0.at||0;
+  if(o0.crack){                                                            // 近雷：高频炸裂
+    sfxNoise({f0:2600, f1:900, ft:'bandpass', q:1.1, dur:0.055, vol:0.06*v});
+    sfxNoise({f0:5600, f1:2400, ft:'highpass', dur:0.04, vol:0.045*v});
+  }
+  const n=o0.layers||5; let acc=0;
+  for(let i=0;i<n;i++){                                                    // 沿通道各段错峰到达
+    const u=n>1? i/(n-1):0;
+    const at=base+acc; acc+=0.045+Math.random()*0.135;
+    sfxBoom({ at:at,
+      dur:(0.5+Math.random()*0.55)*(1+u*0.55),
+      vol:(0.105-u*0.05)*v,
+      f0:560-u*300, f1:96-u*34,                                          // 越远越闷
+      hp:26, rate:0.82+Math.random()*0.34,
+      bumps:3+(Math.random()*2|0) });
+  }
+  sfxSub({f0:58, f1:31, dur:0.5+Math.random()*0.45, vol:0.085*v, at:base+0.012}); // 胸腔震动
+}
+/* 持续轰鸣：棕噪声 → 低通（截止频率缓慢随机游走）= 火焰奔腾 / 风 / 气浪的"活体"基底
+   （火焰声学三要素之一：50~500Hz 的连续轰鸣层） */
+function sfxRoar(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.6), vol=Math.max(0.0002,(o.vol||0.06)*volMul());
+    const src=a.createBufferSource(); src.buffer=sfxBrownBuf(a); src.loop=true;
+    if(o.rate) src.playbackRate.value=o.rate;
+    const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=o.q||0.7;
+    const base=o.cut||600;
+    lp.frequency.setValueAtTime(Math.max(60,base*(0.8+Math.random()*0.5)), t);
+    const steps=Math.max(2,Math.floor(dur/0.13));
+    for(let i=1;i<=steps;i++){                                    // 平滑随机游走 = 火舌/气流的起伏
+      lp.frequency.linearRampToValueAtTime(Math.max(60, base*(0.55+Math.random()*1.0)), t+dur*i/steps);
+    }
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+(o.atk||0.05));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(lp); lp.connect(g); g.connect(sfxOut(a)); g.connect(sfxBus(a));
+    src.start(t); src.stop(t+dur+0.05);
+    if(o.hiss) sfxNoise({ft:'highpass', f0:o.hiss, q:0.7, dur:dur*0.9, vol:vol*0.4, at:(o.at||0)+0.01}); // 嘶层
+  }catch(e){}
+}
+/* 扫频哨音：快速上/下滑的纯音（可叠谐波）—— 冰的"弯曲波"签名：高频先到、低频扫来 */
+function sfxChirp(o){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const j=0.9+Math.random()*0.2;
+    const t=a.currentTime+(o.at||0), dur=(o.dur||0.3)*j, vol=Math.max(0.0002,(o.vol||0.03)*volMul());
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol, t+(o.atk||0.006));
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    g.connect(sfxOut(a)); g.connect(sfxBus(a));
+    const n=o.n||1;
+    for(let i=0;i<n;i++){
+      const nd=a.createOscillator(); nd.type=o.w||'sine';
+      const f0=(o.f0||6000)*j*(1+i*0.5), f1=(o.f1||1500)*j*(1+i*0.5);
+      nd.frequency.setValueAtTime(Math.max(30,f0), t);
+      nd.frequency.exponentialRampToValueAtTime(Math.max(30,f1), t+dur);
+      nd.connect(g); nd.start(t); nd.stop(t+dur+0.04);
+    }
+  }catch(e){}
+}
+const SFXLIB={
+  /* ===== 青锋剑 · 剑气出窍：金铁出鞘 + 剑气破空 ===== */
+  sword:function(){
+    sfxNoise({f0:2600, f1:1100, q:2.4, dur:0.07, vol:0.05});                               // 出鞘摩擦（金属刮擦）
+    sfxMetal({f0:3300, dur:0.42, vol:0.05, hp:1500, lp:12000, drift:0.82, spread:0.06});   // 金铁清鸣
+    sfxNoise({f0:1400, f1:6000, q:1.3, dur:0.16, vol:0.04});                               // 剑气破空
+    sfxTone({f0:2600, f1:5400, w:'sine', dur:0.1, vol:0.014});                             // 锋锐
+    sfxSub({f0:130, f1:48, dur:0.14, vol:0.03});
+  },
+  swordBig:function(){
+    sfxNoise({f0:2200, f1:900, q:2.2, dur:0.1, vol:0.055});                                // 巨剑出鞘摩擦
+    sfxMetal({f0:2500, dur:0.55, vol:0.058, hp:900, lp:13000, drift:0.76, spread:0.1, n:7});
+    for(let i=0;i<3;i++) sfxNoise({f0:900+i*900, f1:6500, q:1.4, dur:0.18, vol:0.038, at:i*0.04});
+    sfxTone({f0:1500, f1:3000, w:'triangle', dur:0.2, vol:0.018});
+    sfxSub({f0:140, f1:38, dur:0.46, vol:0.085});
+  },
+  /* ===== 环身剑阵：飞剑绕身的旋转剑鸣 ===== */
+  orbit:function(){
+    sfxMetal({f0:2100, dur:0.5, vol:0.03, hp:800, lp:9000, drift:0.95, spread:0.14, n:5}); // 旋转剑鸣
+    sfxMetal({f0:2140, dur:0.42, vol:0.022, hp:800, lp:9000, at:0.04});
+    sfxNoise({f0:1500, f1:3600, q:3, dur:0.32, vol:0.026});                                // 缠身风
+  },
+  volley:function(){
+    for(let i=0;i<5;i++){
+      sfxMetal({f0:2900, dur:0.24, vol:0.03, hp:1500, drift:0.86, at:i*0.045, n:4});
+      sfxNoise({f0:1300+i*500, f1:6200, q:1.8, dur:0.12, vol:0.024, at:i*0.045});          // 逐柄出鞘
+    }
+  },
+  /* ===== 浩然气浪：低频气爆 ===== */
+  wave:function(){
+    sfxRoar({dur:0.5, vol:0.1, cut:950, hiss:1500, atk:0.02});                              // 气爆（棕噪声谐振）
+    sfxSub({f0:100, f1:34, dur:0.5, vol:0.09});
+    sfxTone({f0:170, f1:60, w:'sine', dur:0.42, vol:0.045});
+  },
+  aura:function(){
+    sfxRoar({dur:0.95, vol:0.075, cut:520, atk:0.12});                                      // 罡气持续低鸣
+    sfxTone({f0:118, f1:74, w:'sine', dur:0.95, vol:0.045});
+    sfxMetal({f0:1000, dur:0.85, vol:0.014, hp:300, lp:5000, spread:0.2, n:4});
+  },
+  /* ===== 炎符：符纸破空 + 火焰爆燃 ===== */
+  fire:function(){
+    sfxNoise({f0:2400, f1:6200, q:2.2, dur:0.08, vol:0.028});                               // 掷符破空
+    sfxRoar({dur:0.48, vol:0.085, cut:640, hiss:2600, atk:0.03});                            // 火焰轰鸣（50~500Hz）
+    sfxTone({f0:190, f1:68, w:'sawtooth', dur:0.3, vol:0.04});                              // 火核
+    sfxCrackle({f0:2400, n:7, spread:0.42, vol:0.02});                                      // 随机颗粒爆响
+  },
+  fireHit:function(){
+    sfxRoar({dur:0.46, vol:0.12, cut:900, hiss:2200, atk:0.005});                           // 爆燃
+    sfxSub({f0:115, f1:34, dur:0.34, vol:0.07});
+    sfxCrackle({f0:2300, n:9, spread:0.45, vol:0.022});
+  },
+  /* ===== 焚天火龙 · 龙吟 ===== */
+  dragon:function(){
+    sfxTone({f0:146, f1:56, w:'sawtooth', dur:0.95, vol:0.07});                             // 龙吟基音
+    sfxTone({f0:219, f1:92, w:'sawtooth', dur:0.86, vol:0.04, at:0.03});                    // 泛音
+    sfxRoar({dur:0.95, vol:0.09, cut:520, hiss:1800, atk:0.08});                            // 火焰轰鸣
+    sfxCrackle({f0:2200, n:5, spread:0.7, vol:0.018});
+  },
+  /* ===== 玄冰诀：冰晶凝结 + 寒气 ===== */
+  frost:function(){
+    sfxChirp({f0:7600, f1:1900, dur:0.26, vol:0.03, n:2});                                  // 弯曲波降调哨音
+    sfxMetal({f0:4300, dur:0.34, vol:0.032, hp:1900, lp:15000, drift:0.9, spread:0.05, n:5}); // 冰晶共鸣
+    sfxCrackle({f0:5200, f1:8200, q:9, n:3, spread:0.16, vol:0.012});                       // 表面龟裂
+  },
+  frostHit:function(){
+    sfxMetal({f0:5000, dur:0.42, vol:0.032, hp:2200, lp:16000, spread:0.12, n:7});          // 冰晶炸裂
+    sfxChirp({f0:9200, f1:2100, dur:0.34, vol:0.026, n:3});                                 // 弯曲波
+    sfxCrackle({f0:3600, f1:9000, q:9, n:8, spread:0.26, vol:0.022});                       // 表面龟裂
+  },
+  dragonIce:function(){
+    sfxSub({f0:66, f1:44, dur:0.95, vol:0.075});                                            // 压缩波低音（冰层结构共鸣）
+    sfxTone({f0:322, f1:112, w:'sine', dur:0.95, vol:0.045});
+    sfxChirp({f0:6400, f1:1200, dur:0.85, vol:0.028, n:2});                                 // 弯曲波长降调
+    sfxNoise({ft:'highpass', f0:3000, f1:6400, dur:0.7, vol:0.04, at:0.05});                // 寒气
+    sfxMetal({f0:3600, dur:0.7, vol:0.018, hp:2200, lp:14000, spread:0.16, n:5, at:0.06});  // 冰晶
+  },
+  /* ===== 雷印：霹雳 —— 近雷炸裂 + 六段错峰滚雷 + 胸腔次低音 ===== */
+  thunder:function(){
+    sfxThunder({crack:true, layers:6, vol:1.0});
+    sfxCrackle({f0:3000, n:5, spread:0.3, vol:0.02});
+  },
+  thunderHit:function(){
+    sfxThunder({crack:true, layers:2, vol:0.5});
+    sfxCrackle({f0:3800, f1:7000, q:6, n:3, spread:0.14, vol:0.018});
+  },
+  storm:function(){
+    sfxBoom({dur:0.55, vol:0.055, f0:400, f1:92, hp:30, bumps:2});      // 雷池：低沉电鸣
+    sfxCrackle({f0:2800, f1:6800, q:5, n:2, spread:0.11, vol:0.016});
+  },
+  /* ===== 共鸣组合技 ===== */
+  rxSteam:function(){
+    sfxRoar({dur:0.55, vol:0.11, cut:950, hiss:2400, atk:0.01});                            // 火轰
+    sfxSub({f0:105, f1:32, dur:0.5, vol:0.08});
+    sfxChirp({f0:8200, f1:2400, dur:0.4, vol:0.026, n:2, at:0.03});                         // 冰啸（降调）
+    sfxMetal({f0:4200, dur:0.42, vol:0.026, hp:2000, lp:15000, at:0.03, drift:0.88, n:5});
+    sfxCrackle({f0:2400, n:8, spread:0.55, vol:0.02});
+  },
+  rxThunderfire:function(){
+    sfxThunder({crack:true, layers:5, vol:1.05});                         // 天雷
+    for(let i=0;i<6;i++){                                                 // 六连火雷
+      sfxNoise({ft:'lowpass', f0:1400, f1:200, dur:0.24, vol:0.03, at:i*0.09, brown:true});
+      sfxNoise({f0:900+i*420, f1:3400, q:1.4, dur:0.12, vol:0.022, at:i*0.09});
+    }
+    sfxCrackle({f0:2600, n:7, spread:0.6, vol:0.02});
+  },
+  rxFrostthunder:function(){
+    sfxMetal({f0:4600, dur:0.46, vol:0.034, hp:2000, lp:16000, spread:0.12, n:7});          // 冰裂
+    sfxCrackle({f0:3400, f1:9000, q:9, n:6, spread:0.3, vol:0.024});
+    sfxThunder({crack:true, layers:4, vol:0.95, at:0.04});                                  // 雷体
+  },
+  rxSwordrain:function(){
+    for(let i=0;i<8;i++){
+      sfxMetal({f0:3100, dur:0.24, vol:0.028, hp:1600, drift:0.85, at:i*0.032, n:4, spread:0.07});
+      sfxNoise({f0:1400+rnd(0,600), f1:6400, q:1.8, dur:0.12, vol:0.024, at:i*0.032});
+    }
+    sfxSub({f0:130, f1:44, dur:0.4, vol:0.06});
+  },
+  rxBladeflow:function(){
+    sfxMetal({f0:2200, dur:0.62, vol:0.04, hp:900, lp:12000, drift:0.72, spread:0.1, n:6});// 长剑鸣
+    sfxNoise({f0:1000, f1:5200, q:1.0, dur:0.46, vol:0.05});                                // 剑气长扫
+    sfxRoar({dur:0.55, vol:0.06, cut:700, atk:0.05});                                       // 长河低鸣
+    sfxSub({f0:120, f1:38, dur:0.42, vol:0.06});
+  },
+  rxVortex:function(){
+    sfxSub({f0:86, f1:52, dur:1.0, vol:0.07});
+    sfxRoar({dur:0.95, vol:0.075, cut:700, atk:0.14});                                      // 外圈气流
+    sfxRoar({dur:0.85, vol:0.05, cut:1400, atk:0.1, at:0.06});                              // 内圈湍流（多尺度）
+    sfxTone({f0:180, f1:440, w:'triangle', dur:0.9, vol:0.03, at:0.05});
+    sfxNoise({ft:'bandpass', f0:400, f1:900, q:1.2, dur:0.85, vol:0.028, at:0.1});
+  },
+  rxTri:function(){
+    sfxThunder({crack:true, layers:7, vol:1.1});                          // 三灾齐鸣之天雷
+    sfxMetal({f0:3400, dur:0.8, vol:0.03, hp:1800, lp:15000, at:0.05, spread:0.14, n:6});
+    for(let i=0;i<7;i++) sfxNoise({f0:1200+rnd(0,2400), q:3, dur:0.09, vol:0.024, at:i*0.1});
+    sfxCrackle({f0:2800, n:8, spread:0.8, vol:0.022});
+  },
+  /* ===== 其它 ===== */
+  ult:function(){
+    sfxChirp({f0:520, f1:1900, dur:0.5, vol:0.035, w:'triangle', n:2});                     // 上扬蓄力
+    sfxNoise({f0:600, f1:2800, q:0.9, dur:0.46, vol:0.03});
+    sfxMetal({f0:1800, dur:0.5, vol:0.016, hp:900, lp:8000, drift:1.1, spread:0.2, n:4});   // 金属泛音起势
+  },
+  ebow:function(){
+    sfxTone({f0:520, f1:330, w:'triangle', dur:0.07, vol:0.028});                           // 弓弦弹响
+    sfxNoise({f0:1100, f1:2800, q:2.6, dur:0.12, vol:0.022});                               // 箭矢破风
+  },
+  pick:function(){
+    sfxMetal({f0:2600, dur:0.28, vol:0.032, hp:1400, lp:12000, drift:0.95, n:5});           // 金属提示
+    sfxTone({f0:1050, f1:1560, w:'sine', dur:0.12, vol:0.024});
+    sfxTone({f0:1568, w:'sine', dur:0.16, vol:0.016, at:0.07});                             // 上行二音
+  },
+};
+
+const SFX_CD={}, SFX_GAP={sword:0.04,swordBig:0.05,orbit:0.06,volley:0.07,wave:0.06,aura:0.1,
+  fire:0.05,frost:0.05,thunder:0.15,fireHit:0.055,frostHit:0.055,thunderHit:0.05,storm:0.12,ebow:0.09,pick:0.06};
+function playSfx(name){
+  if(muted) return; const f=SFXLIB[name]; if(!f) return;
+  const now=(typeof performance!=='undefined'&&performance.now)?performance.now()/1000:Date.now()/1000;
+  if(now-(SFX_CD[name]||-9) < (SFX_GAP[name]||0.035)) return;
+  SFX_CD[name]=now;
+  try{ f(); }catch(e){}
+}
+function hit(btn,k){ playSfx(k); flash(btn); }
+function flash(b){ b.style.background='var(--gold)'; b.style.color='#12141a'; setTimeout(function(){ b.style.background='transparent'; b.style.color='var(--gold)'; },140); }
+function all(){
+  const ks=[]; document.querySelectorAll('.row[data-k]').forEach(function(r){ ks.push(r.querySelector('.play')); });
+  let i=0;
+  (function nxt(){ if(i>=ks.length) return; const b=ks[i++]; b.click(); setTimeout(nxt,430); })();
+}
+document.getElementById('vol').addEventListener('input',function(e){
+  document.getElementById('volv').textContent=e.target.value+'%';
+});
+</script></body></html>
