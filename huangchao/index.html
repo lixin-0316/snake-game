@@ -880,22 +880,22 @@ const SEASONS=[
   {id:'spring',n:'春',sub:'花信风',
     base:'#0b0f0d', wash1:'rgba(126,178,146,.18)', wash2:'rgba(196,146,158,.07)',
     grass:'rgba(168,212,180,.44)', pine:'#0d1a13', pineRim:'rgba(196,232,204,.30)',
-    pond:'rgba(168,206,188,.08)', fog:'rgba(198,226,206,', fogA:[0.032,0.064], vig:0.50,
+    pond:'rgba(168,206,188,.08)', fog:'rgba(198,226,206,', fogRgb:'198,226,206', fogA:[0.032,0.064], vig:0.50,
     drop:'petal', dcolor:'#d09a94', dn:46, dvy:[10,26], dsway:12, dw:3.2, dh:1.7, dalpha:.45},
   {id:'summer',n:'夏',sub:'骤雨初歇',
     base:'#080c10', wash1:'rgba(74,140,124,.22)', wash2:'rgba(110,168,190,.07)',
     grass:'rgba(140,204,166,.46)', pine:'#0b1c15', pineRim:'rgba(178,230,196,.28)',
-    pond:'rgba(150,200,190,.10)', fog:'rgba(178,220,206,', fogA:[0.040,0.082], vig:0.58,
+    pond:'rgba(150,200,190,.10)', fog:'rgba(178,220,206,', fogRgb:'178,220,206', fogA:[0.040,0.082], vig:0.58,
     drop:'firefly', dcolor:'#dbe57f', dn:34, dvy:[-10,-24], dsway:26, dw:2.4, dh:2.4, dalpha:.85},
   {id:'autumn',n:'秋',sub:'木叶尽脱',
     base:'#0d0c0a', wash1:'rgba(166,124,74,.18)', wash2:'rgba(120,92,58,.08)',
     grass:'rgba(198,168,110,.42)', pine:'#1a130c', pineRim:'rgba(232,200,150,.26)',
-    pond:'rgba(196,178,140,.08)', fog:'rgba(222,206,178,', fogA:[0.030,0.062], vig:0.54,
+    pond:'rgba(196,178,140,.08)', fog:'rgba(222,206,178,', fogRgb:'222,206,178', fogA:[0.030,0.062], vig:0.54,
     drop:'leaf', dcolor:'#c9884a', dn:40, dvy:[22,46], dsway:40, dw:4.0, dh:2.2, dalpha:.55},
   {id:'winter',n:'冬',sub:'寒江独钓',
     base:'#0a0d12', wash1:'rgba(140,172,206,.18)', wash2:'rgba(200,222,244,.09)',
     grass:'rgba(196,214,232,.38)', pine:'#0e1620', pineRim:'rgba(214,232,248,.30)',
-    pond:'rgba(180,210,236,.10)', fog:'rgba(206,224,244,', fogA:[0.042,0.086], vig:0.60,
+    pond:'rgba(180,210,236,.10)', fog:'rgba(206,224,244,', fogRgb:'206,224,244', fogA:[0.042,0.086], vig:0.60,
     drop:'snow', dcolor:'#e6eef8', dn:58, dvy:[26,56], dsway:18, dw:2.2, dh:2.2, dalpha:.55},
 ];
 function resolveSeasonFor(lv){
@@ -1906,26 +1906,32 @@ function liftOf(pl,x,y){
 function liftAt(x,y){ let best=0; for(const pl of G.plateaus){ const l=liftOf(pl,x,y); if(l>best) best=l; } return best; }
 function drawPlateau(pl){
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath(); ctx.ellipse(pl.x, pl.y+24, pl.r, pl.r*0.88, 0,0,7); ctx.fill();
+  softShadow(pl.x+pl.r*0.20, pl.y+pl.r*0.30, pl.r*1.10, pl.r*0.90, 0.55);
   for(let lv=0; lv<pl.levels; lv++){
-    const rr=pl.r - lv*pl.step, ink=14+lv*11;
-    const pg=ctx.createRadialGradient(pl.x-rr*0.28, pl.y-lv*7-rr*0.3, rr*0.08, pl.x, pl.y-lv*7, rr*1.08);
-    pg.addColorStop(0,   'rgb('+(ink+10)+','+(ink+12)+','+(ink+17)+')');
-    pg.addColorStop(0.72,'rgb('+ink+','+(ink+2)+','+(ink+7)+')');
-    pg.addColorStop(1,   'rgba(5,7,9,.97)');
+    const rr=pl.r - lv*pl.step, ink=14+lv*11, cy=pl.y-lv*7;
+    const pg=ctx.createRadialGradient(pl.x-rr*0.30, cy-rr*0.34, rr*0.06, pl.x, cy, rr*1.10);
+    pg.addColorStop(0,   'rgb('+(ink+17)+','+(ink+20)+','+(ink+26)+')');
+    pg.addColorStop(0.66,'rgb('+(ink+3)+','+(ink+5)+','+(ink+10)+')');
+    pg.addColorStop(1,   'rgba(4,6,8,.98)');
     ctx.fillStyle=pg;
-    ctx.beginPath(); ctx.ellipse(pl.x, pl.y-lv*7, rr, rr*0.88, 0,0,7); ctx.fill();
-    ctx.strokeStyle='rgba(226,232,240,'+(0.09+lv*0.05).toFixed(2)+')'; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.ellipse(pl.x, pl.y-lv*7-3, rr, rr*0.88, 0,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(pl.x, cy, rr, rr*0.88, 0,0,7); ctx.fill();
+    // 受光缘（左上）
+    ctx.strokeStyle='rgba(228,238,250,'+(0.14+lv*0.05).toFixed(2)+')'; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.ellipse(pl.x, cy-2, rr, rr*0.88, 0, Math.PI*1.00, Math.PI*1.58); ctx.stroke();
+    // 背光缘（右下）
+    ctx.strokeStyle='rgba(0,0,0,.42)'; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.ellipse(pl.x, cy+3, rr, rr*0.88, 0, Math.PI*0.06, Math.PI*0.60); ctx.stroke();
   }
   ctx.restore();
 }
-function genMountains(){ const a=[]; for(let i=0;i<26;i++) a.push({x:rnd(0,WW),y:rnd(0,WH),rx:rnd(200,420),ry:rnd(100,200),a:rnd(0.05,0.11)}); return a; }
+function genMountains(){ const a=[];
+  for(let i=0;i<20;i++) a.push({x:rnd(0,WW),y:rnd(0,WH),r:rnd(150,340),a:rnd(0.045,0.10),
+    p:(i%3===0?0.16:(i%3===1?0.30:0.44)), n:3+(i%3), sd:i*1.7});
+  return a; }
 /* 飘动雾带（武侠氛围） */
 function genFogs(){ const a=[], se=G.season||SEASONS[0];
-  for(let i=0;i<15;i++) a.push({x:rnd(0,WW),y:rnd(0,WH),rx:rnd(300,620),ry:rnd(70,150),
-    a:rnd(se.fogA[0],se.fogA[1]), v:rnd(5,14)}); return a; }
+  for(let i=0;i<14;i++) a.push({x:rnd(0,WW),y:rnd(0,WH),rx:rnd(320,660),ry:rnd(80,160),
+    a:rnd(se.fogA[0],se.fogA[1]), v:rnd(5,14), p:rnd(0.62,0.82), n:3+(i%3)}); return a; }
 function pushOut(o,r){
   for(const s of G.solids){
     const dx=o.x-s.x, dy=o.y-s.y; const d=Math.hypot(dx,dy), min=r+s.cr;
@@ -1989,7 +1995,7 @@ function drawTerrainEl(e){
       ctx.quadraticCurveTo(x+ox*1.2+sw*0.5, y-hh*0.55, x+ox*1.5+sw, y-hh); ctx.stroke();
     }
   } else if(e.t==='rock'){
-    ctx.fillStyle='rgba(0,0,0,.42)'; ctx.beginPath(); ctx.ellipse(x,y+5*s,14*s,5*s,0,0,7); ctx.fill();
+    softShadow(x+11*s, y+6*s, 19*s, 7*s, 0.5);
     ctx.fillStyle='#161b21'; ctx.beginPath();
     ctx.moveTo(x-13*s,y+4*s); ctx.lineTo(x-8*s,y-10*s); ctx.lineTo(x+4*s,y-13*s); ctx.lineTo(x+13*s,y-2*s); ctx.lineTo(x+9*s,y+5*s); ctx.closePath(); ctx.fill();
     ctx.fillStyle='#242b33'; ctx.beginPath(); ctx.moveTo(x-8*s,y-10*s); ctx.lineTo(x+4*s,y-13*s); ctx.lineTo(x+2*s,y-4*s); ctx.closePath(); ctx.fill();
@@ -1998,8 +2004,7 @@ function drawTerrainEl(e){
   } else if(e.t==='tree'){
     const kind=e.kind||'pine';
     const tsz=(TREE_BASE[kind]||112)*s;
-    ctx.fillStyle='rgba(0,0,0,.5)';
-    ctx.beginPath(); ctx.ellipse(x,y+6*s,tsz*0.15,5.5*s,0,0,7); ctx.fill();
+    softShadow(x+tsz*0.17, y+7*s, tsz*0.30, tsz*0.115, 0.5);
     if(drawTreeSprite(kind,x,y,tsz,e.flip,0,Math.sin(G.t*e.ws+e.wp)*e.wa)) return;
     /* 兜底：无贴图时退回程序化松树 */
     ctx.fillStyle='#2a231c'; ctx.fillRect(x-2.2*s,y-2*s,4.4*s,10*s);
@@ -2028,7 +2033,7 @@ function drawTerrainEl(e){
     }
   } else if(e.t==='pillar'){
     const ph=e.sd||e.x*0.013;
-    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.beginPath(); ctx.ellipse(x,y+15*s,30*s,10*s,0,0,7); ctx.fill();
+    softShadow(x+15*s, y+16*s, 42*s, 14*s, 0.55);
     ctx.fillStyle='#2b333c'; ctx.beginPath();
     ctx.moveTo(x-22*s,y+14*s); ctx.lineTo(x-18*s,y-2*s); ctx.lineTo(x+18*s,y-2*s); ctx.lineTo(x+22*s,y+14*s); ctx.closePath(); ctx.fill();
     ctx.strokeStyle='rgba(214,226,240,.24)'; ctx.lineWidth=1.4; ctx.stroke();
@@ -2069,16 +2074,23 @@ function drawTerrainEl(e){
     ctx.globalAlpha=0.12+0.06*Math.sin(G.t*1.5+ph); ctx.fillStyle='#e2b670';
     ctx.beginPath(); ctx.ellipse(x,y+15*s,30*s,10*s,0,0,7); ctx.fill(); ctx.globalAlpha=1;
   } else if(e.t==='ruin'){
-    ctx.strokeStyle='rgba(206,216,230,.16)'; ctx.lineWidth=1.2;
-    ctx.strokeRect(x-16*s,y-16*s,32*s,32*s);
-    ctx.beginPath();
-    ctx.moveTo(x-16*s,y); ctx.lineTo(x+16*s,y);
-    ctx.moveTo(x,y-16*s); ctx.lineTo(x,y+16*s);
-    ctx.stroke();
+    softShadow(x+11*s, y+8*s, 27*s, 9.5*s, 0.46);
+    const bk=[[-13,-7,16,10],[3,-12,13,9],[5,3,16,10],[-8,7,12,8]];
+    for(let i=0;i<bk.length;i++){
+      const b=bk[i], bx=x+b[0]*s, by=y+b[1]*s, w=b[2]*s, h=b[3]*s;
+      ctx.fillStyle='#222a33';
+      ctx.beginPath(); ctx.moveTo(bx-w/2,by+h/2); ctx.lineTo(bx-w/2,by-h/2);
+      ctx.lineTo(bx+w/2,by-h/2); ctx.lineTo(bx+w/2,by+h/2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='rgba(216,228,242,.13)';           // 顶面受光
+      ctx.beginPath(); ctx.moveTo(bx-w/2,by-h/2); ctx.lineTo(bx+w/2,by-h/2);
+      ctx.lineTo(bx+w/2-2.2*s,by-h/2-3.2*s); ctx.lineTo(bx-w/2-2.2*s,by-h/2-3.2*s); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=1.1; ctx.strokeRect(bx-w/2,by-h/2,w,h);
+    }
+    inkBlob(x, y, 22*s, 13*s, 0.20, '96,124,104');      // 石缝青苔
   } else if(e.t==='bush'){
     const P=vegPal(), sw=Math.sin(G.t*e.ws+e.wp)*e.wa*9*s;
     if(drawTreeSprite('bush',x,y,TREE_BASE.bush*s,e.flip,0,sw*0.02)) return;
-    ctx.fillStyle='rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(x,y+5*s,15*s,5*s,0,0,7); ctx.fill();
+    softShadow(x+9*s, y+6*s, 21*s, 7.5*s, 0.48);
     const blob=(bx,by,br)=>{ ctx.beginPath(); ctx.ellipse(bx+sw*0.4,by,br,br*0.82,0,0,7);
       ctx.fillStyle=P.leaf; ctx.fill(); ctx.strokeStyle=P.leafRim; ctx.lineWidth=1.1; ctx.stroke(); };
     blob(x-7*s,y-4*s,9*s); blob(x+7*s,y-5*s,8.5*s); blob(x,y-10*s,10*s);
@@ -2100,10 +2112,9 @@ function drawTerrainEl(e){
     }
   } else if(e.t==='bamboo'){
     const P=vegPal(), sw=Math.sin(G.t*e.ws+e.wp)*e.wa;
-    ctx.fillStyle='rgba(0,0,0,.42)';
-    ctx.beginPath(); ctx.ellipse(x,y+4*s,13*s,5*s,0,0,7); ctx.fill();
+    softShadow(x+9*s, y+5*s, 18*s, 6.5*s, 0.44);
     if(drawTreeSprite('bamboo',x,y,TREE_BASE.bamboo*s,e.flip,0,sw*0.34)) return;
-    ctx.fillStyle='rgba(0,0,0,.42)'; ctx.beginPath(); ctx.ellipse(x,y+4*s,14*s,5*s,0,0,7); ctx.fill();
+    softShadow(x+9*s, y+5*s, 18*s, 6.5*s, 0.44);
     const stalks=[[-9,0.84],[0,1.0],[8,0.90]];
     for(const st of stalks){
       const bx=x+st[0]*s, hgt=46*s*st[1], bend=sw*hgt;
@@ -2130,14 +2141,8 @@ function drawTerrainEl(e){
       ctx.quadraticCurveTo(x+ox*1.2+sw*0.5, y-hh*0.6, x+ox*1.6+sw, y-hh); ctx.stroke();
     }
   } else if(e.t==='wash'){
-    const col = e.dark ? '0,0,0' : '132,160,148';
-    const dk  = e.dark ? 1 : 0.42;
-    ctx.fillStyle='rgba('+col+','+(e.a*0.40*dk).toFixed(3)+')';
-    ctx.beginPath(); ctx.ellipse(x,y,50*s,33*s,e.sd,0,7); ctx.fill();
-    ctx.fillStyle='rgba('+col+','+(e.a*0.50*dk).toFixed(3)+')';
-    ctx.beginPath(); ctx.ellipse(x,y,32*s,21*s,e.sd,0,7); ctx.fill();
-    ctx.fillStyle='rgba('+col+','+(e.a*0.56*dk).toFixed(3)+')';
-    ctx.beginPath(); ctx.ellipse(x,y,16*s,11*s,e.sd,0,7); ctx.fill();
+    const rgb = e.dark ? '4,6,8' : '140,170,156';
+    inkCloud(x, y, 52*s, e.a*(e.dark?0.95:0.55), rgb, 3, e.sd);
   } else if(e.t==='pebble'){
     ctx.fillStyle='rgba(150,166,182,.16)';
     for(let i=0;i<3;i++){
@@ -3580,6 +3585,87 @@ function pickChoice(i){
   } else if(!_r) G.resId=null;
 }
 
+
+/* ============ 画面质感：柔边墨块 / 地表织理 / 软投影 / 视差背景 ============ */
+const _BLOBS = {};
+/* 预渲染一张柔边墨块贴图（128²），用 globalAlpha 控制强度 —— 比每帧 createRadialGradient 快得多 */
+function blobSprite(rgb){
+  if(_BLOBS[rgb]) return _BLOBS[rgb];
+  const S=128, cv=document.createElement('canvas'); cv.width=cv.height=S;
+  const cx=cv.getContext('2d');
+  const g=cx.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+  g.addColorStop(0,   'rgba('+rgb+',1)');
+  g.addColorStop(0.42,'rgba('+rgb+',0.60)');
+  g.addColorStop(0.74,'rgba('+rgb+',0.20)');
+  g.addColorStop(1,   'rgba('+rgb+',0)');
+  cx.fillStyle=g; cx.fillRect(0,0,S,S);
+  _BLOBS[rgb]=cv; return cv;
+}
+/* 柔边墨块（椭圆铺开一张缓存贴图） */
+function inkBlob(cx0,cy0,rx,ry,a,rgb){
+  if(a<=0.003||rx<=0.4||ry<=0.4) return;
+  const im=blobSprite(rgb);
+  ctx.save(); ctx.globalAlpha=Math.min(1,a); ctx.translate(cx0,cy0); ctx.scale(rx/64, ry/64);
+  ctx.drawImage(im,-64,-64,128,128); ctx.restore();
+}
+/* 3~4 个错位墨块拼成不规则墨云（远山 / 雾 / 地面污渍通用） */
+function inkCloud(cx0,cy0,r,a,rgb,n,seed){
+  n=n||3; seed=seed||0;
+  for(let i=0;i<n;i++){
+    const ang=i*2.399+seed, d=r*(0.16+0.20*((i*37%10)/10));
+    inkBlob(cx0+Math.cos(ang)*d, cy0+Math.sin(ang)*d*0.60,
+            r*(0.70+0.22*((i*53%7)/7)), r*(0.48+0.18*((i*29%5)/5)),
+            a*(0.88-0.15*i), rgb);
+  }
+}
+/* 方向性柔投影（统一光源：左上） */
+function softShadow(cx0,cy0,rx,ry,a){
+  const im=blobSprite('0,0,0');
+  ctx.save(); ctx.globalAlpha=Math.min(1,a); ctx.translate(cx0,cy0); ctx.scale(rx/64, ry/64);
+  ctx.drawImage(im,-64,-64,128,128); ctx.restore();
+}
+/* 地表织理：一次性生成可平铺的"颗粒纸纹"，渲染时低透明平铺叠加（取代方格纸网格） */
+const _GTEX = {};
+function groundTile(){
+  if(_GTEX.t) return _GTEX.t;
+  const S=256, cv=document.createElement('canvas'); cv.width=cv.height=S; const cx=cv.getContext('2d');
+  const stamp=function(x,y,r,a,rgb){ const im=blobSprite(rgb);
+    cx.save(); cx.globalAlpha=a; cx.translate(x,y); cx.scale(r/64,r/64); cx.drawImage(im,-64,-64,128,128); cx.restore(); };
+  for(let i=0;i<76;i++){
+    const x=Math.random()*S, y=Math.random()*S, r=5+Math.random()*30, a=0.035+Math.random()*0.075;
+    const rgb = Math.random()<0.52 ? '0,0,0' : '232,238,248';
+    for(let ox=-1;ox<=1;ox++) for(let oy=-1;oy<=1;oy++) stamp(x+ox*S,y+oy*S,r,a,rgb);  // 九宫重绘保证无缝
+  }
+  _GTEX.t=cv; return cv;
+}
+function drawGroundTexture(){
+  const im=groundTile(), tile=300;
+  const x0=Math.floor(G.cam.x/tile)*tile, y0=Math.floor(G.cam.y/tile)*tile;
+  ctx.save(); ctx.globalAlpha=0.34;
+  for(let x=x0;x<G.cam.x+VW+tile;x+=tile)
+    for(let y=y0;y<G.cam.y+VH+tile;y+=tile)
+      ctx.drawImage(im,x,y,tile,tile);
+  ctx.restore();
+}
+/* 视差背景：远山墨云 + 雾带（越远越慢跟随，制造纵深） */
+function drawBackdrop(SS){
+  if(G.lowq) return;
+  const rgb=SS.fogRgb||'198,226,206';
+  for(const m of G.mountains){
+    const p=m.p||0.24, ox=G.cam.x*p, oy=G.cam.y*p;
+    if(m.x+m.r<ox-160||m.x-m.r>ox+VW+160||m.y+m.r<oy-160||m.y-m.r>oy+VH+160) continue;
+    ctx.save(); ctx.translate(G.cam.x*(1-p), G.cam.y*(1-p));
+    inkCloud(m.x, m.y, m.r, m.a*1.25, rgb, m.n, m.sd);
+    ctx.restore();
+  }
+  for(const f of G.fogs){
+    if(f.x+f.rx<G.cam.x-260||f.x-f.rx>G.cam.x+VW+260||f.y+f.ry<G.cam.y-260||f.y-f.ry>G.cam.y+VH+260) continue;
+    ctx.save(); ctx.translate(G.cam.x*(1-(f.p||0.7)), G.cam.y*(1-(f.p||0.7)));
+    inkCloud(f.x, f.y, f.rx*0.5, f.a*2.6, rgb, f.n||3, (f.x*0.013)%6.28);
+    ctx.restore();
+  }
+}
+
 /* ============ 渲染 ============ */
 function render(){
   const p=G.player;
@@ -3597,16 +3683,8 @@ function render(){
   const vx0=G.cam.x-60, vx1=G.cam.x+VW+60, vy0=G.cam.y-60, vy1=G.cam.y+VH+60;
   const vis=o=>o.x>vx0&&o.x<vx1&&o.y>vy0&&o.y<vy1;
 
-  // 远山淡墨
-  if(!G.lowq) for(const m of G.mountains){ if(!vis(m))continue;   // 掉帧时省掉远山
-    const mg=ctx.createRadialGradient(m.x,m.y,1,m.x,m.y,m.rx);
-    mg.addColorStop(0,SS.fog+(m.a*2.1).toFixed(3)+')'); mg.addColorStop(1,SS.fog+'0)');
-    ctx.fillStyle=mg; ctx.beginPath(); ctx.ellipse(m.x,m.y,m.rx,m.ry,0,0,7); ctx.fill(); }
-  // 雾带
-  if(!G.lowq) for(const f of G.fogs){ if(f.x+f.rx<vx0||f.x-f.rx>vx1||f.y+f.ry<vy0||f.y-f.ry>vy1) continue;   // 掉帧时省掉雾带
-    const fg=ctx.createRadialGradient(f.x,f.y,1,f.x,f.y,f.rx);
-    fg.addColorStop(0,SS.fog+f.a.toFixed(3)+')'); fg.addColorStop(1,SS.fog+'0)');
-    ctx.fillStyle=fg; ctx.beginPath(); ctx.ellipse(f.x,f.y,f.rx,f.ry,0,0,7); ctx.fill(); }
+  // 远山墨云 + 雾带（视差纵深，替代原来的"糊成一团"正圆渐变）
+  drawBackdrop(SS);
 
   if(G.scene==='hub') drawHub(SS);
   // 地面墨渍 / 苔痕（最底层）
@@ -3619,11 +3697,8 @@ function render(){
   if(G.scene==='hub' && G.hubVeg) for(const e of G.hubVeg){ if(!vis(e))continue; if(LOWVEG[e.t]) drawTerrainEl(e); }
   // 地形：地面层（草/花/水/碎石/遗迹）
   for(const e of G.terrain){ if(!vis(e))continue; if(LOWVEG[e.t]) drawTerrainEl(e); }
-  // 网格（极淡墨线）
-  ctx.strokeStyle='rgba(198,212,228,.055)'; ctx.lineWidth=1;
-  const gx0=Math.floor(G.cam.x/70)*70, gy0=Math.floor(G.cam.y/70)*70;
-  for(let x=gx0;x<G.cam.x+VW+70;x+=70){ ctx.beginPath(); ctx.moveTo(x,G.cam.y); ctx.lineTo(x,G.cam.y+VH); ctx.stroke(); }
-  for(let y=gy0;y<G.cam.y+VH+70;y+=70){ ctx.beginPath(); ctx.moveTo(G.cam.x,y); ctx.lineTo(G.cam.x+VW,y); ctx.stroke(); }
+  // 地表织理（程序化颗粒，替代原先的"方格纸"网格）
+  drawGroundTexture();
   ctx.strokeStyle='rgba(236,231,219,.18)'; ctx.lineWidth=2; ctx.strokeRect(0,0,WW,WH);
 
   // 经验球
@@ -3873,8 +3948,9 @@ function render(){
     g2.addColorStop(0,'#ffffff'); g2.addColorStop(0.35,b.color); g2.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*2.4,0,7); ctx.fill();
   }
-  // 招式特效：各法宝形态不同
+  // 招式特效：各法宝形态不同 —— 叠加发光，让剑气/术法"亮"起来
   if(G.slashes.length){
+    ctx.save();
     ctx.lineCap='round';
     for(const sl of G.slashes){
       const k=1-sl.t/sl.tmax, fade=Math.max(0,1-k), kind=sl.kind||'sword';
@@ -3911,17 +3987,22 @@ function render(){
         for(let i=0;i<5;i++){ const a2=sl.a+rnd(-0.5,0.5), r2=34+k*54+i*5;
           ctx.beginPath(); ctx.arc(sl.x+Math.cos(a2)*r2, sl.y+Math.sin(a2)*r2, 1.6*fade+0.6,0,7); ctx.stroke(); }
       } else {
-        // 青锋剑 / 绝招：双道剑气弧
+        // 青锋剑 / 绝招：双道剑气弧（外弧有色 + 内芯提亮，剑气更锐）
         const wide = kind==='ult'?1.35:1;
         ctx.globalAlpha=fade*0.9; ctx.lineWidth=(3.6*fade+1.2)*wide;
         ctx.beginPath(); ctx.arc(sl.x,sl.y,32+k*16, sl.a-1.05+k*0.9, sl.a+0.75+k*0.9); ctx.stroke();
+        ctx.globalAlpha=fade*0.9; ctx.lineWidth=(1.2*fade+0.5)*wide; ctx.strokeStyle='rgba(255,255,255,.92)';
+        ctx.beginPath(); ctx.arc(sl.x,sl.y,32+k*16, sl.a-1.05+k*0.9, sl.a+0.75+k*0.9); ctx.stroke();
+        ctx.strokeStyle=sl.color;
         ctx.globalAlpha=fade*0.45; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.arc(sl.x,sl.y,47+k*16, sl.a-0.75+k*0.9, sl.a+0.5+k*0.9); ctx.stroke();
       }
       ctx.shadowBlur=0;
     }
     ctx.globalAlpha=1;
+    ctx.restore();
   }
+  // 粒子——叠加发光（小颗粒，安全）
   for(const pa of G.parts){ ctx.globalAlpha=Math.max(0,pa.life); ctx.fillStyle=pa.color; ctx.beginPath(); ctx.arc(pa.x,pa.y,pa.size,0,7); ctx.fill(); }
   ctx.globalAlpha=1;
   ctx.textAlign='center';
@@ -4099,8 +4180,7 @@ function fmt(s){ const m=Math.floor(s/60),ss=Math.floor(s%60); return m>0?m+':'+
 /* ===== 玄关物件：逐件手绘（有质感 + 光效） ===== */
 function _on(o,i){ const s=Math.sin((o.x||0)*12.9898+(o.y||0)*78.233+i*37.719)*43758.5453; return s-Math.floor(s); }
 function hubShadow(o,w,hh,a){
-  ctx.fillStyle='rgba(5,6,8,'+(a||0.5)+')';
-  ctx.beginPath(); ctx.ellipse(o.x,o.y+36,w,hh,0,0,7); ctx.fill();
+  softShadow(o.x+w*0.30, o.y+36, w*1.18, hh*1.20, (a||0.5));
 }
 function hubGlow(o,r,al,col){
   const g=ctx.createRadialGradient(o.x,o.y+4,2,o.x,o.y+4,r);
@@ -4547,14 +4627,34 @@ function drawHubObj(o){
   ctx.shadowBlur=0; ctx.textAlign='left';
   ctx.restore();
 }
+/* 大厅石砖地面：分格 + 磨损 + 柔砖缝（替代原先的"方格纸"网格线） */
+function drawHubFloor(R){
+  const tw=134, th=106;
+  ctx.save();
+  ctx.globalAlpha=0.52;
+  for(let gx=R.x, i=0; gx<R.x+R.w; gx+=tw, i++)
+    for(let gy=R.y, j=0; gy<R.y+R.h; gy+=th, j++){
+      const h=((i*73+j*151)%97)/97;
+      ctx.fillStyle='rgb('+Math.round(31+h*11)+','+Math.round(36+h*12)+','+Math.round(43+h*13)+')';
+      ctx.fillRect(gx+2, gy+2, tw-4, th-4);
+    }
+  ctx.globalAlpha=1;
+  for(let gx=R.x, i=0; gx<R.x+R.w; gx+=tw, i++)
+    for(let gy=R.y, j=0; gy<R.y+R.h; gy+=th, j++){
+      const h=((i*73+j*151)%97)/97;
+      inkBlob(gx+tw*0.5+(h-0.5)*24, gy+th*0.5+(h-0.5)*18, tw*0.44, th*0.42, 0.045+h*0.05, h>0.5?'0,0,0':'224,232,244');
+    }
+  ctx.globalAlpha=0.40; ctx.strokeStyle='rgba(6,8,11,.9)'; ctx.lineWidth=2.6;
+  for(let gx=R.x;gx<=R.x+R.w;gx+=tw){ ctx.beginPath(); ctx.moveTo(gx,R.y); ctx.lineTo(gx,R.y+R.h); ctx.stroke(); }
+  for(let gy=R.y;gy<=R.y+R.h;gy+=th){ ctx.beginPath(); ctx.moveTo(R.x,gy); ctx.lineTo(R.x+R.w,gy); ctx.stroke(); }
+  ctx.restore();
+}
 function drawHub(SS){
   const R=G.room||{x:96,y:96,w:WW-192,h:WH-192};
   // 地面
   ctx.fillStyle='rgba(28,32,38,.9)'; ctx.fillRect(R.x,R.y,R.w,R.h);
-  // 地砖网格
-  ctx.strokeStyle='rgba(198,212,228,.055)'; ctx.lineWidth=1;
-  for(let x=R.x;x<=R.x+R.w;x+=110){ ctx.beginPath(); ctx.moveTo(x,R.y); ctx.lineTo(x,R.y+R.h); ctx.stroke(); }
-  for(let y=R.y;y<=R.y+R.h;y+=110){ ctx.beginPath(); ctx.moveTo(R.x,y); ctx.lineTo(R.x+R.w,y); ctx.stroke(); }
+  // 石砖地面（分格 + 磨损）
+  drawHubFloor(R);
   // 墙
   ctx.strokeStyle='rgba(236,231,219,.28)'; ctx.lineWidth=9; ctx.strokeRect(R.x,R.y,R.w,R.h);
   ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=3; ctx.strokeRect(R.x-6,R.y-6,R.w+12,R.h+12);
