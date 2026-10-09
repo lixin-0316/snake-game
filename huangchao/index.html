@@ -3633,7 +3633,7 @@ function groundTile(){
     cx.save(); cx.globalAlpha=a; cx.translate(x,y); cx.scale(r/64,r/64); cx.drawImage(im,-64,-64,128,128); cx.restore(); };
   for(let i=0;i<76;i++){
     const x=Math.random()*S, y=Math.random()*S, r=5+Math.random()*30, a=0.035+Math.random()*0.075;
-    const rgb = Math.random()<0.52 ? '0,0,0' : '232,238,248';
+    const rgb = Math.random() < 0.60 ? '0,0,0' : '208,218,232';
     for(let ox=-1;ox<=1;ox++) for(let oy=-1;oy<=1;oy++) stamp(x+ox*S,y+oy*S,r,a,rgb);  // 九宫重绘保证无缝
   }
   _GTEX.t=cv; return cv;
@@ -3641,7 +3641,7 @@ function groundTile(){
 function drawGroundTexture(){
   const im=groundTile(), tile=300;
   const x0=Math.floor(G.cam.x/tile)*tile, y0=Math.floor(G.cam.y/tile)*tile;
-  ctx.save(); ctx.globalAlpha=0.34;
+  ctx.save(); ctx.globalAlpha=0.28;
   for(let x=x0;x<G.cam.x+VW+tile;x+=tile)
     for(let y=y0;y<G.cam.y+VH+tile;y+=tile)
       ctx.drawImage(im,x,y,tile,tile);
