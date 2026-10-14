@@ -46,6 +46,7 @@ input[type=range]{width:170px;accent-color:var(--gold)}
 <div class="row" data-k="thunderHit"><button class="play" onclick="hit(this,'thunderHit')">▶</button><div class="txt"><b>雷印 · 落点</b><span>短促落点雷：炸裂 + 双段滚雷</span></div></div>
 <div class="row" data-k="ebow"><button class="play" onclick="hit(this,'ebow')">▶</button><div class="txt"><b>妖弓手 · 放箭</b><span>弓弦弹响 + 箭矢破风</span></div></div>
 <div class="row" data-k="storm"><button class="play" onclick="hit(this,'storm')">▶</button><div class="txt"><b>九霄神雷 · 雷池</b><span>雷池低频电鸣 + 电火花（5 级）</span></div></div>
+<div class="row" data-k="crit"><button class="play" onclick="hit(this,'crit')">▶</button><div class="txt"><b>会心一击 · 暴击</b><span>七泛音金铁鸣（2300Hz 甜区）+ 破空锐响 + 入肉次低音 + 迸溅细碎</span></div></div>
 <div class="grp">五级进化</div>
 <div class="row" data-k="swordBig"><button class="play" onclick="hit(this,'swordBig')">▶</button><div class="txt"><b>诛仙剑阵 · 巨剑齐射</b><span>巨剑出鞘 + 七泛音剑鸣 + 三连剑气 + 低频（5 级）</span></div></div>
 <div class="row" data-k="volley"><button class="play" onclick="hit(this,'volley')">▶</button><div class="txt"><b>万剑归宗 · 离体齐射</b><span>五柄飞剑逐一出鞘，每柄 4 泛音 + 剑气（5 级）</span></div></div>
@@ -438,6 +439,12 @@ const SFXLIB={
     for(let i=0;i<7;i++) sfxNoise({f0:1200+rnd(0,2400), q:3, dur:0.09, vol:0.024, at:i*0.1});
     sfxCrackle({f0:2800, n:8, spread:0.8, vol:0.022});
   },
+  crit:function(){
+    sfxMetal({f0:2300, dur:0.30, vol:0.055, hp:1600, lp:14000, drift:1.15, spread:0.16, n:6});// 会心金铁鸣（落甜区）
+    sfxNoise({f0:1600, f1:6200, q:1.2, dur:0.14, vol:0.045});                                // 一击破空
+    sfxSub({f0:150, f1:52, dur:0.18, vol:0.05});                                              // 入肉的低沉
+    sfxCrackle({f0:4200, n:5, spread:0.5, vol:0.02});                                         // 迸溅细碎
+  },
   /* ===== 其它 ===== */
   ult:function(){
     sfxChirp({f0:520, f1:1900, dur:0.5, vol:0.035, w:'triangle', n:2});                     // 上扬蓄力
@@ -456,7 +463,7 @@ const SFXLIB={
 };
 
 const SFX_CD={}, SFX_GAP={sword:0.04,swordBig:0.05,orbit:0.06,volley:0.07,wave:0.06,aura:0.1,
-  fire:0.05,frost:0.05,thunder:0.15,fireHit:0.055,frostHit:0.055,thunderHit:0.05,storm:0.12,ebow:0.09,pick:0.06};
+  fire:0.05,frost:0.05,thunder:0.15,fireHit:0.055,frostHit:0.055,thunderHit:0.05,storm:0.12,ebow:0.09,pick:0.06,crit:0.09};
 function playSfx(name){
   if(muted) return; const f=SFXLIB[name]; if(!f) return;
   const now=(typeof performance!=='undefined'&&performance.now)?performance.now()/1000:Date.now()/1000;
