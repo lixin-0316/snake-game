@@ -772,7 +772,7 @@ function enterLevel(levelId, diffId, dailyCfg){
   }
   document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('on');});
   const afTxt=G.affix? (' · '+G.affix.n+'（'+G.affix.d+'）') : '';
-  bgmSet(lv.boss?'boss':'level');
+  bgmSlot=0; bgmSet(lv.boss?'boss':'level');
   teachOnce('level',
     '<div style="font-size:14px;line-height:2.1;color:var(--ink2)">'+
     '进关之后，地图上散布着几处 <b style="color:#b8402f">妖巢</b>。清光之后，<b>北方</b>会亮起通往下一关的路口。<br>'+
@@ -1728,36 +1728,133 @@ function tone(freq,dur,wave,vol){
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.06);
   }catch(e){}
 }
-/* 程序化 BGM：五声音阶随机游走，三种情绪，零素材体积 */
+/* 程序化 BGM v39：作曲式分层 —— 固定主题动机 + 鼓/低音/旋律/危机四层 + A→B→A 段落，零素材体积 */
+/* 音级 deg 用「连续级数」：第 5 级在五声音阶里 = 高八度的第 1 级，长句才顺。
+   音高 = root * 2^((floor(deg/n)*12 + scale[deg%n])/12 + oct)；len = 占几个 16 分音符 */
 const BGM={
-  hub  :{bpm:62,  root:196.00, wave:'sine',     vol:0.023, pent:[0,2,4,7,9],  bass:3.6, mel:1.7},
-  level:{bpm:94,  root:174.61, wave:'triangle', vol:0.018, pent:[0,2,4,7,9],  bass:1.9, mel:0.9},
-  boss :{bpm:136, root:146.83, wave:'sawtooth', vol:0.015, pent:[0,3,5,7,10], bass:1.4, mel:0.5},
+  hub  :{bpm:64,  root:196.00, wave:'sine',     vol:0.021, dv:0.013, pad:true,
+         scale:[0,2,4,7,9], bassBars:[0,3,1,3], plan:['A','A','B','A'], drums:'soft',
+         motifs:{
+           A:[[0,0,0,3],[2,2,0,2],[4,4,0,3],[6,3,0,2],[8,2,0,3],[10,0,0,2],[12,1,0,2],[14,0,0,4],
+              [16,2,0,3],[18,3,0,2],[20,4,0,3],[22,3,0,2],[24,2,0,3],[26,1,0,2],[28,1,0,1],[30,0,0,4]],
+           B:[[0,4,0,3],[2,3,0,2],[4,4,0,3],[6,5,0,2],[8,4,0,3],[10,3,0,2],[12,2,0,3],[14,3,0,3],
+              [16,4,0,3],[18,5,0,2],[20,6,0,3],[22,5,0,2],[24,4,0,3],[26,3,0,2],[28,2,0,2],[30,1,0,4]],
+         }},
+  level:{bpm:96,  root:174.61, wave:'triangle', vol:0.018, dv:0.029,
+         scale:[0,3,5,7,10], bassBars:[0,3,2,4], plan:['A','A','B','A'], drums:'mid',
+         motifs:{
+           A:[[0,0,0,2],[2,2,0,2],[4,3,0,2],[6,2,0,2],[8,0,0,3],[10,1,0,2],[12,2,0,2],[14,1,0,3],
+              [16,0,0,2],[18,2,0,2],[20,3,0,2],[22,4,0,2],[24,3,0,3],[26,2,0,2],[28,0,0,3],[30,0,0,2]],
+           B:[[0,4,0,3],[2,3,0,2],[4,2,0,3],[6,0,0,2],[8,2,0,3],[10,4,0,2],[12,3,0,3],[14,2,0,3],
+              [16,4,0,3],[18,3,0,2],[20,4,0,3],[22,5,0,2],[24,4,0,3],[26,3,0,2],[28,2,0,3],[30,1,0,3]],
+         }},
+  boss :{bpm:138, root:146.83, wave:'sawtooth', vol:0.015, dv:0.026,
+         scale:[0,3,5,6,10], bassBars:[0,1,0,3], plan:['A','B','A','B'], drums:'heavy',
+         motifs:{
+           A:[[0,0,0,1],[1,0,0,1],[2,1,0,2],[4,0,0,1],[5,0,0,1],[6,1,0,2],[8,2,0,2],[10,1,0,2],[12,0,0,2],[14,3,0,2],
+              [16,0,0,1],[17,0,0,1],[18,1,0,2],[20,2,0,1],[21,2,0,1],[22,3,0,2],[24,2,0,2],[26,1,0,2],[28,0,0,2],[30,4,0,3]],
+           B:[[0,3,0,2],[2,2,0,2],[4,1,0,2],[6,0,0,2],[8,0,1,2],[10,1,0,2],[12,2,0,2],[14,3,0,2],
+              [16,4,0,2],[18,3,0,2],[20,2,0,2],[22,1,0,2],[24,0,0,2],[26,1,0,2],[28,0,0,4]],
+         }},
 };
-let bgmMode='none', bgmT=0, bgmStep=99;
-function bgmSet(mode){ mode=mode||'none'; if(mode===bgmMode) return; bgmMode=mode; bgmT=0; bgmStep=99; }
+/* 鼓组：kick/snare/hat 为触发的 16 分格号；hat2 只在危机层叠（16 分密打）
+   音量全部按模式基准 B.dv 折算，保证鼓点不盖过旋律声部 */
+const DRUMS={
+  soft :{kick:[0,8],           snare:[],    hat:[4,12],                hat2:[2,6,10,14]},
+  mid  :{kick:[0,6,8,11],      snare:[4,12],hat:[2,6,10,14],           hat2:[1,3,5,7,9,11,13,15]},
+  heavy:{kick:[0,3,6,8,11,14], snare:[4,12],hat:[0,2,4,6,8,10,12,14],  hat2:[1,3,5,7,9,11,13,15]},
+};
+let bgmMode='none', bgmT=0, bgmSlot=0, bgmCrisisT=0, bgmCrisis=false;
+function bgmSet(mode){ mode=mode||'none'; if(mode===bgmMode) return; bgmMode=mode; bgmT=0; bgmSlot=0; bgmCrisisT=0; }
+/* BGM 独立走一路直达输出，不进 sfxOut 母带压缩，免得和音效互相压 */
+function bgmNote(f,dur,w,vol){
+  if(muted||!(vol>0)) return;
+  try{ const a=audioReady(); if(!a) return;
+    const t=a.currentTime, o=a.createOscillator(), g=a.createGain();
+    o.type=w||'sine'; o.frequency.value=Math.max(20,f);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*volMul()), t+0.028);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+Math.max(0.05,dur));
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.06);
+  }catch(e){}
+}
+function bgmPerc(ft,f0,f1,dur,vol){
+  if(muted||!(vol>0)) return;
+  try{ const a=audioReady(); if(!a) return;
+    const t=a.currentTime;
+    const src=a.createBufferSource(); src.buffer=sfxNoiseBuf(a);
+    const f=a.createBiquadFilter(); f.type=ft; f.Q.value=0.8;
+    f.frequency.setValueAtTime(Math.max(60,f0),t);
+    if(f1) f.frequency.exponentialRampToValueAtTime(Math.max(60,f1), t+dur);
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*volMul()), t+0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(f); f.connect(g); g.connect(a.destination);
+    src.start(t); src.stop(t+dur+0.03);
+  }catch(e){}
+}
+function bgmKick(v){ bgmNote(57,0.15,'sine',v); bgmPerc('lowpass',250,64,0.06,v*0.5); }
+function bgmSnare(v){ bgmPerc('bandpass',1750,950,0.11,v); bgmNote(186,0.05,'triangle',v*0.45); }
+function bgmHat(v){ bgmPerc('highpass',5800,7400,0.042,v); }
 function bgmUpdate(dt,silent){
   if(silent||muted||bgmMode==='none'||(P&&P.bgm===false)) return;
   const B=BGM[bgmMode]; if(!B) return;
-  const beat=60/B.bpm;
-  bgmT+=dt;
-  let guard=0;
-  while(bgmT>=beat && guard++<8){
-    bgmT-=beat; bgmStep++;
-    const s=bgmStep%8;
-    if(s===0){ tone(B.root/2, beat*B.bass, 'sine', B.vol*1.5);
-               tone(B.root*1.5, beat*B.bass*0.9, 'sine', B.vol*0.8); }
-    if(s%2===0 || (bgmMode!=='hub' && Math.random()<0.45)){
-      const n=B.pent[Math.floor(Math.random()*B.pent.length)];
-      const oct=(Math.random()<0.26)?2:1;
-      tone(B.root*Math.pow(2,n/12)*oct, beat*B.mel, B.wave, B.vol);
-    }
+  /* 危机层：血低或连杀高；留 1.6s 尾巴，免得在阈值上抖 */
+  if(bgmMode!=='hub' && G && G.scene==='level' && !G.over && G.player){
+    if(G.player.hp < G.player.maxhp*0.35 || (G.combo||0)>=12) bgmCrisisT=1.6;
   }
+  if(bgmCrisisT>0) bgmCrisisT-=dt;
+  bgmCrisis = bgmCrisisT>0;
+  const step=(60/B.bpm)/4;                 // 16 分音符
+  bgmT+=dt; let guard=0;
+  while(bgmT>=step && guard++<10){
+    bgmT-=step;
+    bgmPlaySlot(B);
+    bgmSlot++;
+    if(bgmSlot>=512) bgmSlot=0;            // 32 小节循环
+  }
+  if(guard>=10) bgmT=0;                    // 卡顿后别一下子补一堆音
+}
+function bgmPlaySlot(B){
+  const sl=bgmSlot%16, bar=Math.floor(bgmSlot/16), step=(60/B.bpm)/4;
+  const sc=B.scale, nn=sc.length;
+  const fdeg=function(i){ const o=Math.floor(i/nn), k=((i%nn)+nn)%nn; return o*12+sc[k]; };
+  const pf=function(i,oct){ return B.root*Math.pow(2,(fdeg(i)+((oct||0)*12))/12); };
+  const D=DRUMS[B.drums]||DRUMS.mid;
+  /* --- 旋律层：固定主题动机，段落由 plan 决定 --- */
+  const sect=B.plan[Math.floor(bar/8)%B.plan.length]||'A';
+  const mot=B.motifs[sect]||B.motifs.A;
+  for(let i=0;i<mot.length;i++){
+    const e=mot[i];
+    if(e[0]!==sl) continue;
+    const f=pf(e[1],e[2]), vel=0.86+Math.random()*0.18;
+    bgmNote(f, step*((e[3]||2))*0.94, B.wave, B.vol*vel);
+    if(bgmCrisis) bgmNote(f*2, step*((e[3]||2))*0.6, B.wave, B.vol*0.55*vel);
+  }
+  /* --- 低音层：每小节两个长音，进行由 bassBars 定 --- */
+  if(sl===0 || sl===8){
+    const bf=pf(B.bassBars[bar%B.bassBars.length], -1);
+    bgmNote(bf, step*7.2, 'sine', B.vol*1.7);
+    if(sl===8) bgmNote(bf*2, step*6.6, 'sine', B.vol*0.45);
+  }
+  /* --- 垫底和声层（仅大厅）：每 4 小节一次空五度长音 --- */
+  if(B.pad && sl===0 && bar%4===0){
+    bgmNote(pf(0,-1), step*62, 'sine', B.vol*0.85);
+    bgmNote(pf(3,-1), step*62, 'sine', B.vol*0.55);
+  }
+  /* --- 鼓点层 --- */
+  if(D.kick.indexOf(sl)>=0)  bgmKick(B.dv);
+  if(D.snare.indexOf(sl)>=0) bgmSnare(B.dv*0.58);
+  if(D.hat.indexOf(sl)>=0)   bgmHat(B.dv*0.30);
+  if(bgmCrisis && D.hat2.indexOf(sl)>=0) bgmHat(B.dv*0.21);
+  /* --- 危机层：低沉脉动 --- */
+  if(bgmCrisis && sl%4===0) bgmNote(B.root*0.5, step*3.6, 'sine', B.vol*1.25);
 }
 function toggleMute(){
   muted=!muted;
   if(P){ P.muted=muted; saveProfile(); }
-  if(!muted){ audioReady(); bgmT=0; }
+  if(!muted){ audioReady(); bgmT=0; bgmSlot=0; }
   toast(muted?'已静音':'声音已开');
   if(G&&G.pauseOn) openPause();
 }
@@ -5122,7 +5219,7 @@ function openPanel(type, from){
     body+='<div class="sec">声音</div>';
     body+='<div class="tnode"><div class="info"><div class="tn">总音量</div><div class="td">当前 '+Math.round((P.vol||1)*100)+'%</div></div>'+
       [0,0.35,0.7,1].map(function(v){ return '<button class="chipbtn '+((P.vol===v)?'on':'')+'" onclick="setVol('+v+')">'+Math.round(v*100)+'%</button>'; }).join('')+'</div>';
-    body+='<div class="tnode"><div class="info"><div class="tn">背景音乐</div><div class="td">程序化生成的大厅 / 战斗 / 妖王 BGM</div></div>'+
+    body+='<div class="tnode"><div class="info"><div class="tn">背景音乐</div><div class="td">作曲式分层：固定主题动机 + 鼓点 / 低音 / 旋律，血低或连杀高时自动叠「危机层」</div></div>'+
       '<button class="chipbtn '+(P.bgm!==false?'on':'')+'" onclick="toggleBgm()">'+(P.bgm!==false?'开':'关')+'</button></div>';
     body+='<div class="tnode"><div class="info"><div class="tn">全部音效</div><div class="td">受击 / 出招 / 拾取等提示音</div></div>'+
       '<button class="chipbtn '+(muted?'':'on')+'" onclick="toggleMute()">'+(muted?'已静音':'开')+'</button></div>';
@@ -5163,7 +5260,7 @@ function setQuality(v){ P.quality=v; saveProfile(); fitCanvas(); openPanel('sett
 function setVol(v){ P.vol=v; saveProfile(); beep(660,0.1,'sine',0.05); openPanel('settings',panelReturn); }
 function setShake(v){ P.shakeScale=(v==null?1:v); saveProfile(); openPanel('settings',panelReturn); toast('屏幕震动：'+(P.shakeScale===0?'已关':Math.round(P.shakeScale*100)+'%')); }
 function toggleHitStop(){ P.hitStopOn=(P.hitStopOn===false); saveProfile(); openPanel('settings',panelReturn); toast('命中顿帧：'+(P.hitStopOn?'开':'关')); }
-function toggleBgm(){ P.bgm=(P.bgm===false)?true:false; saveProfile(); bgmT=0; bgmSet(bgmMode);
+function toggleBgm(){ P.bgm=(P.bgm===false)?true:false; saveProfile(); bgmT=0; bgmSlot=0; bgmSet(bgmMode);
   openPanel('settings',panelReturn); toast('背景音乐：'+(P.bgm!==false?'开':'关')); }
 function startRebind(a){
   const btn=document.getElementById('bind_'+a); if(btn) btn.textContent='按任意键…';

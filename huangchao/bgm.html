@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>荒潮 · BGM 试听（v39 作曲式分层）</title>
+<style>
+:root{--bg:#0b0d11;--ink:#ece7db;--ink2:#b9b3a6;--ink3:#8d877c;--line:rgba(236,231,219,.18);--gold:#c9a24a;--cinnabar:#b8402f;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Kaiti SC",KaiTi,STKaiti,serif;padding:18px 18px 40px}
+h1{font-size:20px;letter-spacing:.2em;margin:0 0 6px;font-weight:400}
+.sub{color:var(--ink3);font-size:12.5px;margin-bottom:16px;line-height:1.7}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+button{background:rgba(236,231,219,.05);color:var(--ink);border:1px solid var(--line);border-radius:3px;
+  padding:7px 15px;font-size:13px;cursor:pointer;font-family:inherit;transition:.15s}
+button:hover{border-color:var(--gold)}
+button.on{background:rgba(201,162,74,.16);border-color:var(--gold);color:var(--gold)}
+canvas{width:100%;display:block;background:rgba(8,9,11,.55);border:1px solid var(--line);border-radius:3px}
+.stat{display:flex;gap:22px;flex-wrap:wrap;color:var(--ink3);font-size:12.5px;margin:12px 0 4px}
+.stat b{color:var(--gold);font-weight:400}
+.tip{color:var(--ink3);font-size:12.5px;line-height:2;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.k{color:var(--cinnabar)}
+</style>
+</head>
+<body>
+<h1>荒 潮 · 背 景 音 乐</h1>
+<div class="sub">v39 作曲式分层：固定主题动机（A/B 段）· 鼓点 / 低音 / 旋律三层 · 血低或连杀高时叠「危机层」<br>
+   下方是<b>钢琴卷帘</b>实时可视化 —— 看音符是「成句的线条」还是「随机散点」，一眼就能分辨。</div>
+
+<div class="row" id="modes"></div>
+<div class="row">
+  <button id="btnCrisis">危机层：关</button>
+  <button id="btnTempo">速度：原速</button>
+  <span class="sep"></span>
+  <button id="btnStop">停 止</button>
+</div>
+
+<canvas id="cv" height="360"></canvas>
+<div class="stat">
+  <span>版本 <b id="sVer">—</b></span><span>小节 <b id="sBar">0</b></span>
+  <span>段落 <b id="sSect">—</b></span><span>危机层 <b id="sCri">关</b></span>
+  <span>每秒音符 <b id="sRate">0</b></span>
+</div>
+
+<div class="tip">
+  <span class="k">玩法</span>：先点「战斗」听 v39，再点「对照 · 旧版随机游走」听改版前——差别在<b>旋律是否成句</b>。<br>
+  <span class="k">钢卷帘</span>：横轴时间（最近 8 秒），纵轴音高，方块越长音越长；金色=旋律、青色=低音、灰白=鼓点。<br>
+  <span class="k">提示</span>：浏览器要求先有交互才能出声，点任意按钮即可。
+</div>
+
+<script>
+/* ================= 从《荒潮》抽取：音频基础 ================= */
+let AC=null, muted=false;
+function audioReady(){
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+       if(AC.state==='suspended') AC.resume(); }catch(e){}
+  return AC;
+}
+function volMul(){ return (P&&typeof P.vol==='number')?P.vol:1; }
+/* ===== 程序化音效库：按「攻击类型」合成不同质感（噪声层 + 扫频振荡层），零素材体积 ===== */
+let _nzBuf=null;
+function sfxNoiseBuf(a){
+  if(_nzBuf) return _nzBuf;
+  const n=Math.max(1,Math.floor(a.sampleRate*1.2)), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  return _nzBuf=buf;
+}
+/* 棕噪声（1/f², -12dB/oct）：低频厚、像瀑布与滚雷 —— 雷声/气浪的正确基底 */
+let _brBuf=null;
+function sfxBrownBuf(a){
+  if(_brBuf) return _brBuf;
+  const n=Math.max(1,Math.floor(a.sampleRate*3)), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  let last=0;
+  for(let i=0;i<n;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; d[i]=last*3.5; }
+  return _brBuf=buf;
+}
+/* 噪声层：破空 / 火焰 / 雷鸣 / 碎冰，靠滤波与扫频区分音色 */
+
+/* ================= 从《荒潮》抽取：v39 作曲式分层 BGM ================= */
+/* 程序化 BGM v39：作曲式分层 —— 固定主题动机 + 鼓/低音/旋律/危机四层 + A→B→A 段落，零素材体积 */
+/* 音级 deg 用「连续级数」：第 5 级在五声音阶里 = 高八度的第 1 级，长句才顺。
+   音高 = root * 2^((floor(deg/n)*12 + scale[deg%n])/12 + oct)；len = 占几个 16 分音符 */
+const BGM={
+  hub  :{bpm:64,  root:196.00, wave:'sine',     vol:0.021, dv:0.013, pad:true,
+         scale:[0,2,4,7,9], bassBars:[0,3,1,3], plan:['A','A','B','A'], drums:'soft',
+         motifs:{
+           A:[[0,0,0,3],[2,2,0,2],[4,4,0,3],[6,3,0,2],[8,2,0,3],[10,0,0,2],[12,1,0,2],[14,0,0,4],
+              [16,2,0,3],[18,3,0,2],[20,4,0,3],[22,3,0,2],[24,2,0,3],[26,1,0,2],[28,1,0,1],[30,0,0,4]],
+           B:[[0,4,0,3],[2,3,0,2],[4,4,0,3],[6,5,0,2],[8,4,0,3],[10,3,0,2],[12,2,0,3],[14,3,0,3],
+              [16,4,0,3],[18,5,0,2],[20,6,0,3],[22,5,0,2],[24,4,0,3],[26,3,0,2],[28,2,0,2],[30,1,0,4]],
+         }},
+  level:{bpm:96,  root:174.61, wave:'triangle', vol:0.018, dv:0.029,
+         scale:[0,3,5,7,10], bassBars:[0,3,2,4], plan:['A','A','B','A'], drums:'mid',
+         motifs:{
+           A:[[0,0,0,2],[2,2,0,2],[4,3,0,2],[6,2,0,2],[8,0,0,3],[10,1,0,2],[12,2,0,2],[14,1,0,3],
+              [16,0,0,2],[18,2,0,2],[20,3,0,2],[22,4,0,2],[24,3,0,3],[26,2,0,2],[28,0,0,3],[30,0,0,2]],
+           B:[[0,4,0,3],[2,3,0,2],[4,2,0,3],[6,0,0,2],[8,2,0,3],[10,4,0,2],[12,3,0,3],[14,2,0,3],
+              [16,4,0,3],[18,3,0,2],[20,4,0,3],[22,5,0,2],[24,4,0,3],[26,3,0,2],[28,2,0,3],[30,1,0,3]],
+         }},
+  boss :{bpm:138, root:146.83, wave:'sawtooth', vol:0.015, dv:0.026,
+         scale:[0,3,5,6,10], bassBars:[0,1,0,3], plan:['A','B','A','B'], drums:'heavy',
+         motifs:{
+           A:[[0,0,0,1],[1,0,0,1],[2,1,0,2],[4,0,0,1],[5,0,0,1],[6,1,0,2],[8,2,0,2],[10,1,0,2],[12,0,0,2],[14,3,0,2],
+              [16,0,0,1],[17,0,0,1],[18,1,0,2],[20,2,0,1],[21,2,0,1],[22,3,0,2],[24,2,0,2],[26,1,0,2],[28,0,0,2],[30,4,0,3]],
+           B:[[0,3,0,2],[2,2,0,2],[4,1,0,2],[6,0,0,2],[8,0,1,2],[10,1,0,2],[12,2,0,2],[14,3,0,2],
+              [16,4,0,2],[18,3,0,2],[20,2,0,2],[22,1,0,2],[24,0,0,2],[26,1,0,2],[28,0,0,4]],
+         }},
+};
+/* 鼓组：kick/snare/hat 为触发的 16 分格号；hat2 只在危机层叠（16 分密打）
+   音量全部按模式基准 B.dv 折算，保证鼓点不盖过旋律声部 */
+const DRUMS={
+  soft :{kick:[0,8],           snare:[],    hat:[4,12],                hat2:[2,6,10,14]},
+  mid  :{kick:[0,6,8,11],      snare:[4,12],hat:[2,6,10,14],           hat2:[1,3,5,7,9,11,13,15]},
+  heavy:{kick:[0,3,6,8,11,14], snare:[4,12],hat:[0,2,4,6,8,10,12,14],  hat2:[1,3,5,7,9,11,13,15]},
+};
+let bgmMode='none', bgmT=0, bgmSlot=0, bgmCrisisT=0, bgmCrisis=false;
+function bgmSet(mode){ mode=mode||'none'; if(mode===bgmMode) return; bgmMode=mode; bgmT=0; bgmSlot=0; bgmCrisisT=0; }
+/* BGM 独立走一路直达输出，不进 sfxOut 母带压缩，免得和音效互相压 */
+function bgmNote(f,dur,w,vol){
+  if(muted||!(vol>0)) return;
+  try{ const a=audioReady(); if(!a) return;
+    const t=a.currentTime, o=a.createOscillator(), g=a.createGain();
+    o.type=w||'sine'; o.frequency.value=Math.max(20,f);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*volMul()), t+0.028);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+Math.max(0.05,dur));
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.06);
+  }catch(e){}
+}
+function bgmPerc(ft,f0,f1,dur,vol){
+  if(muted||!(vol>0)) return;
+  try{ const a=audioReady(); if(!a) return;
+    const t=a.currentTime;
+    const src=a.createBufferSource(); src.buffer=sfxNoiseBuf(a);
+    const f=a.createBiquadFilter(); f.type=ft; f.Q.value=0.8;
+    f.frequency.setValueAtTime(Math.max(60,f0),t);
+    if(f1) f.frequency.exponentialRampToValueAtTime(Math.max(60,f1), t+dur);
+    const g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol*volMul()), t+0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(f); f.connect(g); g.connect(a.destination);
+    src.start(t); src.stop(t+dur+0.03);
+  }catch(e){}
+}
+function bgmKick(v){ bgmNote(57,0.15,'sine',v); bgmPerc('lowpass',250,64,0.06,v*0.5); }
+function bgmSnare(v){ bgmPerc('bandpass',1750,950,0.11,v); bgmNote(186,0.05,'triangle',v*0.45); }
+function bgmHat(v){ bgmPerc('highpass',5800,7400,0.042,v); }
+function bgmUpdate(dt,silent){
+  if(silent||muted||bgmMode==='none'||(P&&P.bgm===false)) return;
+  const B=BGM[bgmMode]; if(!B) return;
+  /* 危机层：血低或连杀高；留 1.6s 尾巴，免得在阈值上抖 */
+  if(bgmMode!=='hub' && G && G.scene==='level' && !G.over && G.player){
+    if(G.player.hp < G.player.maxhp*0.35 || (G.combo||0)>=12) bgmCrisisT=1.6;
+  }
+  if(bgmCrisisT>0) bgmCrisisT-=dt;
+  bgmCrisis = bgmCrisisT>0;
+  const step=(60/B.bpm)/4;                 // 16 分音符
+  bgmT+=dt; let guard=0;
+  while(bgmT>=step && guard++<10){
+    bgmT-=step;
+    bgmPlaySlot(B);
+    bgmSlot++;
+    if(bgmSlot>=512) bgmSlot=0;            // 32 小节循环
+  }
+  if(guard>=10) bgmT=0;                    // 卡顿后别一下子补一堆音
+}
+function bgmPlaySlot(B){
+  const sl=bgmSlot%16, bar=Math.floor(bgmSlot/16), step=(60/B.bpm)/4;
+  const sc=B.scale, nn=sc.length;
+  const fdeg=function(i){ const o=Math.floor(i/nn), k=((i%nn)+nn)%nn; return o*12+sc[k]; };
+  const pf=function(i,oct){ return B.root*Math.pow(2,(fdeg(i)+((oct||0)*12))/12); };
+  const D=DRUMS[B.drums]||DRUMS.mid;
+  /* --- 旋律层：固定主题动机，段落由 plan 决定 --- */
+  const sect=B.plan[Math.floor(bar/8)%B.plan.length]||'A';
+  const mot=B.motifs[sect]||B.motifs.A;
+  for(let i=0;i<mot.length;i++){
+    const e=mot[i];
+    if(e[0]!==sl) continue;
+    const f=pf(e[1],e[2]), vel=0.86+Math.random()*0.18;
+    bgmNote(f, step*((e[3]||2))*0.94, B.wave, B.vol*vel);
+    if(bgmCrisis) bgmNote(f*2, step*((e[3]||2))*0.6, B.wave, B.vol*0.55*vel);
+  }
+  /* --- 低音层：每小节两个长音，进行由 bassBars 定 --- */
+  if(sl===0 || sl===8){
+    const bf=pf(B.bassBars[bar%B.bassBars.length], -1);
+    bgmNote(bf, step*7.2, 'sine', B.vol*1.7);
+    if(sl===8) bgmNote(bf*2, step*6.6, 'sine', B.vol*0.45);
+  }
+  /* --- 垫底和声层（仅大厅）：每 4 小节一次空五度长音 --- */
+  if(B.pad && sl===0 && bar%4===0){
+    bgmNote(pf(0,-1), step*62, 'sine', B.vol*0.85);
+    bgmNote(pf(3,-1), step*62, 'sine', B.vol*0.55);
+  }
+  /* --- 鼓点层 --- */
+  if(D.kick.indexOf(sl)>=0)  bgmKick(B.dv);
+  if(D.snare.indexOf(sl)>=0) bgmSnare(B.dv*0.58);
+  if(D.hat.indexOf(sl)>=0)   bgmHat(B.dv*0.30);
+  if(bgmCrisis && D.hat2.indexOf(sl)>=0) bgmHat(B.dv*0.21);
+  /* --- 危机层：低沉脉动 --- */
+  if(bgmCrisis && sl%4===0) bgmNote(B.root*0.5, step*3.6, 'sine', B.vol*1.25);
+}
+
+/* ================= 旧版对照 ================= */
+/* 旧版：五声音阶随机游走，每拍 45% 概率随机取音（改版前就是它） */
+function tone(freq,dur,wave,vol){
+  if(muted) return;
+  try{ const a=audioReady(); if(!a) return;
+    const o=a.createOscillator(), g=a.createGain(), t=a.currentTime;
+    o.type=wave||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002,(vol||0.02)*volMul()), t+0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.06);
+  }catch(e){}
+}
+const BGM_OLD={
+  hub  :{bpm:62,  root:196.00, wave:'sine',     vol:0.023, pent:[0,2,4,7,9],  bass:3.6, mel:1.7},
+  level:{bpm:94,  root:174.61, wave:'triangle', vol:0.018, pent:[0,2,4,7,9],  bass:1.9, mel:0.9},
+  boss :{bpm:136, root:146.83, wave:'sawtooth', vol:0.015, pent:[0,3,5,7,10], bass:1.4, mel:0.5},
+};
+let oldT=0, oldStep=99;
+function oldSet(mode){ oldT=0; oldStep=99; }
+function oldUpdate(dt,mode){
+  const B=BGM_OLD[mode]; if(!B) return;
+  const beat=60/B.bpm; oldT+=dt; let guard=0;
+  while(oldT>=beat && guard++<8){
+    oldT-=beat; oldStep++;
+    const st=oldStep%8;
+    if(st===0){ tone(B.root/2, beat*B.bass, 'sine', B.vol*1.5);
+                tone(B.root*1.5, beat*B.bass*0.9, 'sine', B.vol*0.8); }
+    if(st%2===0 || (mode!=='hub' && Math.random()<0.45)){
+      const n=B.pent[Math.floor(Math.random()*B.pent.length)];
+      const oct=(Math.random()<0.26)?2:1;
+      tone(B.root*Math.pow(2,n/12)*oct, beat*B.mel, B.wave, B.vol);
+    }
+  }
+}
+
+/* ================= 试听页逻辑 ================= */
+var P={vol:1};
+var G=null;
+var MODE='level', USE_OLD=false, CRISIS=false, TEMPO=1, RUNNING=true;
+var roll=[], noteTimes=[], t0=performance.now(), last=t0;
+
+/* 记录每个音符：供钢卷帘画图 */
+var _note=bgmNote, _perc=bgmPerc;
+bgmNote=function(f,dur,w,vol){ _note(f,dur,w,vol); roll.push({f:f,dur:dur,t:performance.now(),kind:(f<70?'drum':(dur>1.5?'pad':(dur>0.6?'bass':'mel')))}); noteTimes.push(performance.now()); };
+bgmPerc=function(ft,f0,f1,dur,vol){ _perc(ft,f0,f1,dur,vol); roll.push({f:0,dur:dur,t:performance.now(),kind:'drum'}); noteTimes.push(performance.now()); };
+/* 旧版对照也要进钢卷帘，否则看不出「散点 vs 成句」 */
+var _tone=tone;
+tone=function(f,dur,w,vol){ _tone(f,dur,w,vol); roll.push({f:f,dur:dur,t:performance.now(),kind:(dur>1?'bass':'mel')}); noteTimes.push(performance.now()); };
+
+function setMode(m){
+  MODE=m; USE_OLD=false;
+  bgmSet(m); bgmCrisisT=0; bgmCrisis=false; oldSet(m); oldStep=99;
+  roll=[]; last=performance.now(); t0=last;
+  paint();
+}
+function setOld(){
+  USE_OLD=true; oldSet(MODE); oldStep=99; oldT=0; bgmMode='none'; roll=[]; last=performance.now(); t0=last; paint();
+}
+function paint(){
+  var ops=document.querySelectorAll('#modes button');
+  ops.forEach(function(b,i){ b.classList.toggle('on', !USE_OLD && ['hub','level','boss'][i]===MODE); });
+  document.getElementById('btnOld').classList.toggle('on', USE_OLD);
+  document.getElementById('btnCrisis').textContent='危机层：'+(CRISIS?'开':'关');
+  document.getElementById('btnCrisis').classList.toggle('on', CRISIS);
+  document.getElementById('btnTempo').textContent='速度：'+(TEMPO===1?'原速':(TEMPO+'x'));
+  document.getElementById('btnStop').textContent=RUNNING?'停 止':'继 续';
+}
+
+/* 生成按钮 */
+(function(){
+  var host=document.getElementById('modes');
+  [['hub','大 厅'],['level','战 斗'],['boss','妖 王']].forEach(function(p){
+    var b=document.createElement('button'); b.textContent=p[1];
+    b.onclick=function(){ audioReady(); setMode(p[0]); };
+    host.appendChild(b);
+  });
+  var b2=document.createElement('button'); b2.id='btnOld'; b2.textContent='对照 · 旧版随机游走';
+  b2.onclick=function(){ audioReady(); setOld(); };
+  host.appendChild(b2);
+})();
+document.getElementById('btnCrisis').onclick=function(){ CRISIS=!CRISIS; paint(); };
+document.getElementById('btnTempo').onclick=function(){ TEMPO=(TEMPO===1?0.75:(TEMPO===0.75?1.25:1)); paint(); };
+document.getElementById('btnStop').onclick=function(){ RUNNING=!RUNNING; if(RUNNING){ last=performance.now(); } paint(); };
+
+/* 主循环：驱动 BGM + 画钢卷帘 */
+var cvs=document.getElementById('cv'), g2=cvs.getContext('2d');
+function fit(){ var r=cvs.parentNode?cvs.getBoundingClientRect():null; var w=Math.max(360,Math.floor(cvs.clientWidth));
+  var dpr=Math.min(2,window.devicePixelRatio||1); cvs.width=Math.floor(w*dpr); cvs.height=Math.floor(360*dpr);
+  g2.setTransform(dpr,0,0,dpr,0,0); VW=w; VH=360; }
+fit(); addEventListener('resize',fit);
+
+var VW=900, VH=360;
+function loop(){
+  var now=performance.now();
+  var dt=Math.min(0.05,(now-last)/1000)||0; last=now;
+  if(RUNNING){
+    var d=dt*TEMPO;
+    if(USE_OLD){ oldUpdate(d,MODE); }
+    else{
+      if(CRISIS) bgmCrisisT=1.6;
+      bgmUpdate(d,false);
+    }
+  }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+
+function draw(now){
+  var W=cvs.clientWidth||VW, H=360;
+  g2.clearRect(0,0,W,H);
+  var win=8;                                   // 显示最近 8 秒
+  var x0=now-win*1000;
+  while(roll.length && roll[0].t<x0) roll.shift();
+  /* 音高映射：80Hz ~ 900Hz 取对数 */
+  var fmin=Math.log2(80), fmax=Math.log2(900);
+  var y=function(f){ var v=Math.log2(Math.max(60,f)); var p=(v-fmin)/(fmax-fmin); return H-30-Math.max(0,Math.min(1,p))*(H-60); };
+  /* 网格 */
+  g2.strokeStyle='rgba(236,231,219,.08)'; g2.lineWidth=1;
+  for(var i=1;i<8;i++){ var x=W*i/8; g2.beginPath(); g2.moveTo(x,10); g2.lineTo(x,H-30); g2.stroke(); }
+  for(var k=0;k<6;k++){ var yy=10+k*(H-40)/5; g2.beginPath(); g2.moveTo(0,yy); g2.lineTo(W,yy); g2.stroke(); }
+  /* 音符 */
+  for(var i2=0;i2<roll.length;i2++){
+    var n=roll[i2];
+    var nx=W*(1-(now-n.t)/(win*1000));
+    var nw=Math.max(2,W*(n.dur*1000)/(win*1000));
+    if(nx+nw<0||nx>W) continue;
+    var col = n.kind==='drum' ? 'rgba(210,205,195,.65)'
+            : n.kind==='bass' ? 'rgba(120,190,220,.85)'
+            : n.kind==='pad'  ? 'rgba(120,190,160,.45)'
+            : 'rgba(201,162,74,.95)';
+    g2.fillStyle=col;
+    if(n.kind==='drum'){ g2.beginPath(); g2.arc(nx, n.f<70 ? H-20 : H-46, 2.6, 0, 7); g2.fill(); }
+    else g2.fillRect(nx, y(n.f)-2.2, nw, 4.4);
+  }
+  /* 底线 + 播放头 */
+  g2.strokeStyle='rgba(236,231,219,.22)'; g2.beginPath(); g2.moveTo(0,H-30); g2.lineTo(W,H-30); g2.stroke();
+  g2.fillStyle='rgba(184,64,47,.9)'; g2.fillRect(W-1.5,10,1.5,H-40);
+
+  /* 状态读数 */
+  var rate=0;
+  while(noteTimes.length && noteTimes[0]<now-1000) noteTimes.shift();
+  rate=noteTimes.length;
+  document.getElementById('sVer').textContent = USE_OLD ? '旧版（随机游走）' : 'v39 作曲式分层';
+  document.getElementById('sSect').textContent = USE_OLD ? '—' : ((BGM[MODE].plan[Math.floor(Math.floor(bgmSlot/16)/8)%BGM[MODE].plan.length])||'A');
+  document.getElementById('sBar').textContent = USE_OLD ? oldStep : Math.floor(bgmSlot/16);
+  document.getElementById('sCri').textContent = (!USE_OLD && bgmCrisis) ? '开' : '关';
+  document.getElementById('sRate').textContent = rate;
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
