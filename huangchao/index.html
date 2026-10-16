@@ -133,6 +133,7 @@
   <div class="overlay wide" id="panelScreen"></div>
   <div class="overlay wide" id="pauseScreen"></div>
   <div class="overlay wide" id="teachScreen"></div>
+  <div class="overlay" id="awakenScreen"></div>
   <div id="touchUI" style="display:none">
     <div id="joyBase"><div id="joyKnob"></div></div>
     <div class="tbtn" id="tbtnPause">暂停</div>
@@ -189,48 +190,85 @@ const WEAPONS={
     {d:'双剑齐发，呈扇形斩出'},
     {d:'贯石：飞剑伤害 +45%，飞行更快'},
     {d:'回锋：命中后原地回旋，再伤周围之妖'},
-    {n:'诛仙剑阵', d:'★ 化阵：三柄巨剑齐射，命中迸裂出索敌剑气，自行追斩众妖'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'诛仙剑阵', d:'三柄巨剑齐射，命中迸裂出 4 道索敌剑气，自行追斩众妖（面清场）'},
+            b:{n:'一剑破万法', d:'只出一柄巨大剑气，伤害 ×2.6 且无限贯穿，一剑扫穿整排之妖（射速略慢）'}}}
   ]},
   orbit:{name:'环身剑阵', max:5, tiers:[
     {d:'一柄飞剑绕身旋转，触碰即伤'},
     {d:'双剑对旋，覆盖面更大'},
     {d:'剑刃加速：转速 +40%，伤害提升'},
     {d:'剑气外放：剑阵周期性向外扫出一圈剑气'},
-    {n:'万剑归宗', d:'★ 化阵：双层剑阵，并周期离体齐射，飞剑自动索敌再归位'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'万剑归宗', d:'双层剑阵，并周期离体齐射，飞剑自动索敌再归位（远程压制）'},
+            b:{n:'剑冢', d:'剑阵扩为四层且永不离开己身，周期性向外连扫三道大剑气（贴身绞杀）'}}}
   ]},
   wave:{name:'浩然气浪', max:5, tiers:[
     {d:'周期性爆发冲击环，波及周身之妖'},
     {d:'双重气浪：相隔 0.15 秒连爆两道'},
     {d:'罡气：范围 +35%，伤害提升'},
     {d:'回震：气浪将妖击退'},
-    {n:'太虚罡气', d:'★ 化罡：三环连爆，并凝出一道随行罡气，持续绞碎近身之妖'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'太虚罡气', d:'三环连爆，并凝出一道随行罡气，持续绞碎近身之妖（持续压制）'},
+            b:{n:'崩山震', d:'只爆一道巨浪，范围 +75%、击退极强，并震裂地面掀翻近身之妖（控场推怪）'}}}
   ]},
   fire:{name:'炎符', max:5, tiers:[
     {d:'掷出一枚火符，命中灼伤一妖'},
     {d:'燃魂：命中后附着燃烧，5 秒内持续掉血'},
     {d:'爆裂：命中时炸开，波及周围之妖'},
     {d:'岩浆：命中处留下岩浆，持续灼烧踏入之妖'},
-    {n:'焚天火龙', d:'★ 化龙：召一条火龙游阵而过，贯穿众妖，沿途燃起烈焰'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'焚天火龙', d:'召一条火龙游阵而过，贯穿众妖，沿途燃起烈焰（穿透扫场）'},
+            b:{n:'燎原符雨', d:'一次朝视野内 5 只妖各掷一枚火符，每处落点必留岩浆（铺火封路）'}}}
   ]},
   thunder:{name:'雷印', max:5, tiers:[
     {d:'引天雷劈落视野内两处妖群'},
     {d:'连锁：落雷向附近之妖弹射一次'},
     {d:'雷暴：落雷增至四道，范围扩大'},
     {d:'麻痹：被劈中之妖短暂僵直'},
-    {n:'九霄神雷', d:'★ 化雷：落雷翻倍，并在落点凝成雷池，持续电击麻痹'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'九霄神雷', d:'落雷翻倍，并在落点凝成雷池，持续电击麻痹（群体覆盖）'},
+            b:{n:'五雷正法', d:'只劈两道，但锁定最厚之妖、雷柱粗及三倍、伤害 ×3.4，必定麻痹（定点斩首）'}}}
   ]},
   frost:{name:'玄冰诀', max:5, tiers:[
     {d:'射出一枚冰锥，贯穿一妖'},
     {d:'霜凝：命中后使其减速，持续 3 秒'},
     {d:'穿透：冰锥贯穿成排之妖，不再停下'},
     {d:'冰暴：击杀时炸开冰暴，冻伤周围之妖'},
-    {n:'万载冰龙', d:'★ 化龙：召一条冰龙游阵而过，贯穿众妖，触者凝滞'}
+    {n:'觉醒', d:'★ 满级觉醒：二选一，择一路而行，终身不改',
+     paths:{a:{n:'万载冰龙', d:'召一条冰龙游阵而过，贯穿众妖，触者凝滞（穿透扫场）'},
+            b:{n:'玄冰镜界', d:'射出一枚缓慢巨大冰球，触之炸开 196 范围冰暴并结出寒霜地面（区域封锁）'}}}
   ]},
 };
 function wTier(id,lv){ const t=WEAPONS[id].tiers; return t[Math.max(0,Math.min(t.length-1,(lv|0)-1))]; }
-function wName(id,lv){ const t=wTier(id,lv); return ((lv|0)>=WEAPONS[id].max && t.n) ? t.n : WEAPONS[id].name; }
-function wDesc(id,lv){ return wTier(id,lv).d; }
+/* 觉醒路径：'a' | 'b'；未选（老档 / 尚未满级）一律按 'a' = 旧行为 */
+function wPath(id){ const st=(G&&G.weapons)?G.weapons[id]:null; return (st&&st.path==='b')?'b':'a'; }
+function wAwake(id){
+  const W=WEAPONS[id]; if(!W) return null;
+  const t=W.tiers[W.max-1]; if(!t||!t.paths) return null;
+  const st=(G&&G.weapons)?G.weapons[id]:null;
+  if(!st||st.lv<W.max||!st.path) return null;
+  return t.paths[st.path]||null;
+}
+function wName(id,lv){
+  const t=wTier(id,lv);
+  if((lv|0)>=WEAPONS[id].max){
+    const p=wAwake(id); if(p) return p.n;
+    if(t.n) return t.n;
+  }
+  return WEAPONS[id].name;
+}
+function wDesc(id,lv){
+  if((lv|0)>=WEAPONS[id].max){ const p=wAwake(id); if(p) return p.d; }
+  return wTier(id,lv).d;
+}
 function wIsMax(id){ const st=G.weapons[id]; return !!(st && st.lv>=WEAPONS[id].max); }
+/* 环身剑阵环数：甲=双环（万剑归宗）/ 乙=四环（剑冢） */
+function orbitRings(id){
+  const st=(G&&G.weapons)?G.weapons[id]:null, lv=st?st.lv:0;
+  const t5=lv>=5, pb=t5&&wPath(id)==='b';
+  return {lv:lv, t5:t5, pb:pb, rings:(pb?4:(t5?2:1))};
+}
 const CHARACTERS=[
   {id:'hero', name:'青云剑修', desc:'均衡 · 起手【青锋剑】', hp:120, speed:215, atk:1,    start:'sword'},
   {id:'sword',name:'白霜剑客', desc:'攻速快 · 伤害高',       hp:100, speed:228, atk:1.18, aspd:1.18, start:'sword'},
@@ -529,6 +567,8 @@ function applyRun(r){
     for(const k in r.weapons){
       const w=r.weapons[k]; if(!w||!WEAPONS[k]) continue;
       G.weapons[k]={lv:Math.max(1, Math.min(WEAPONS[k].max, w.lv||1))};
+      if(w.path==='a'||w.path==='b') G.weapons[k].path=w.path;
+      else if(G.weapons[k].lv>=WEAPONS[k].max) G.weapons[k].path='a';   // 老档满级法宝：按旧行为补甲路
     }
   }
   if(r.atkMul) G.atkMul=r.atkMul;
@@ -2835,19 +2875,26 @@ function update(dt){
   /* ===== 法宝 5 级阶梯 ===== */
   // 青锋剑
   if(G.weapons.sword){
-    const lv=G.weapons.sword.lv, t5=lv>=5;
+    const lv=G.weapons.sword.lv, t5=lv>=5, pb=t5&&wPath('sword')==='b';
     G.wcd.sword-=dt;
     if(G.wcd.sword<=0){
       const best=nearestVisible(p);
       if(best){
-        G.wcd.sword=(0.70-lv*0.05)/G.aspdMul;
+        G.wcd.sword=(0.70-lv*0.05)/G.aspdMul*(pb?1.5:1);
         const base=Math.atan2(best.y-p.y,best.x-p.x);
         const sp=600+lv*22, dmg=(7+lv*5)*(lv>=3?1.45:1)*(t5?1.8:1)*G.atkMul;
-        const cnt=t5?3:(lv>=2?2:1), col=t5?'#ffd873':'#5fd6a8';
-        for(let i=0;i<cnt;i++){
-          const aa=base+(cnt>1?(i-(cnt-1)/2)*0.15:0);
-          G.bullets.push({x:p.x,y:p.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,dmg,r:t5?9:5,life:1.6,
-            color:col, kind:'blade', t5:t5, swirl:lv>=4, split:t5?4:0});
+        if(pb){
+          /* ★乙 一剑破万法：单柄巨剑气，无限贯穿整排 */
+          G.bullets.push({x:p.x,y:p.y,vx:Math.cos(base)*sp*1.15,vy:Math.sin(base)*sp*1.15,
+            dmg:dmg*2.6, r:16, life:1.9, color:'#fff2c0', kind:'blade', t5:true,
+            pierce:99, hit:new Set()});
+        } else {
+          const cnt=t5?3:(lv>=2?2:1), col=t5?'#ffd873':'#5fd6a8';
+          for(let i=0;i<cnt;i++){
+            const aa=base+(cnt>1?(i-(cnt-1)/2)*0.15:0);
+            G.bullets.push({x:p.x,y:p.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,dmg,r:t5?9:5,life:1.6,
+              color:col, kind:'blade', t5:t5, swirl:lv>=4, split:t5?4:0});
+          }
         }
         playerAttack(base, t5?'#ffd873':'#8fe0c0', 0, 'sword');
         playSfx(t5?'swordBig':'sword');
@@ -2856,15 +2903,23 @@ function update(dt){
   }
   // 环身剑阵
   if(G.weapons.orbit){
-    const lv=G.weapons.orbit.lv, t5=lv>=5;
+    const og=orbitRings('orbit'), lv=og.lv, t5=og.t5, pb=og.pb;
     G.orbitAngle+=dt*(2.0+lv*0.16)*(lv>=3?1.4:1);
     G.wcd.orbit-=dt;
     if(lv>=4 && G.wcd.orbit<=0){          // 4 级：剑气外放
-      G.wcd.orbit=t5?1.1:1.6;
-      G.waves.push({x:p.x,y:p.y,r:10,max:126,hit:new Set(),dmg:(5+lv*3)*G.atkMul*0.7,color:'#8fe0c0'});
+      G.wcd.orbit=pb?0.95:(t5?1.1:1.6);
+      const nw=pb?3:1;                     // ★乙 剑冢：一次连扫三道大剑气
+      for(let k=0;k<nw;k++){
+        (function(kk){
+          const go=function(){ if(!G||G.over) return;
+            G.waves.push({x:p.x,y:p.y,r:10,max:(pb?(148+lv*14):126)*(1+kk*0.4),hit:new Set(),
+              dmg:(5+lv*3)*G.atkMul*0.7*(1+kk*0.25),color:'#8fe0c0'}); };
+          if(kk===0) go(); else setTimeout(go, kk*130);
+        })(k);
+      }
       if(!t5) playSfx('orbit');
     }
-    if(t5){                                // ★ 万剑归宗：剑阵离体，索敌而击
+    if(t5 && !pb){                         // ★甲 万剑归宗：剑阵离体，索敌而击
       if(G.orbitShot==null) G.orbitShot=1.2;
       G.orbitShot-=dt;
       if(G.orbitShot<=0){
@@ -2884,16 +2939,24 @@ function update(dt){
   }
   // 浩然气浪
   if(G.weapons.wave){
-    const lv=G.weapons.wave.lv, t5=lv>=5;
+    const lv=G.weapons.wave.lv, t5=lv>=5, pb=t5&&wPath('wave')==='b';
     G.wcd.wave-=dt;
     if(G.wcd.wave<=0){
-      G.wcd.wave=(2.5-lv*0.14)/G.aspdMul;
-      const mk=(mult,dmg)=>({x:p.x,y:p.y,r:10,max:(190+lv*16)*mult,hit:new Set(),
-        dmg:(9+lv*6)*G.atkMul*dmg,color:t5?'#8fd0ff':'#7fb8d8',kick:lv>=4?(t5?330:250):0});
-      const cnt=t5?3:(lv>=2?2:1);
-      G.waves.push(mk(1,1));
-      for(let i=1;i<cnt;i++){ (function(k){ setTimeout(function(){ if(G&&!G.over) G.waves.push(mk(1+k*0.34, 1+k*0.30)); }, k*150); })(i); }
-      if(t5){                                // ★ 太虚罡气：一道随行罡气环
+      G.wcd.wave=(2.5-lv*0.14)/G.aspdMul*(pb?1.3:1);
+      const maxR=(190+lv*16)*(pb?1.75:1);
+      const mk=(mult,dmg)=>({x:p.x,y:p.y,r:10,max:maxR*mult,hit:new Set(),
+        dmg:(9+lv*6)*G.atkMul*dmg,color:pb?'#ffd9a0':(t5?'#8fd0ff':'#7fb8d8'),
+        kick:pb?620:(lv>=4?(t5?330:250):0)});
+      if(pb){
+        /* ★乙 崩山震：一道巨浪 + 震裂地面（掀翻并击退） */
+        G.waves.push(mk(1,1));
+        G.lavas.push({x:p.x,y:p.y,r:maxR*0.8,life:0.6,dps:0,tick:0,kind:'quake',color:'#d8c49a'});
+      } else {
+        const cnt=t5?3:(lv>=2?2:1);
+        G.waves.push(mk(1,1));
+        for(let i=1;i<cnt;i++){ (function(k){ setTimeout(function(){ if(G&&!G.over) G.waves.push(mk(1+k*0.34, 1+k*0.30)); }, k*150); })(i); }
+      }
+      if(t5 && !pb){                         // ★甲 太虚罡气：一道随行罡气环
         G.lavas.push({x:p.x,y:p.y,r:96,life:4,dps:(9+lv*6)*G.atkMul*0.85,tick:0,
           kind:'aura',follow:true,color:'#8fd0ff'});
         playSfx('aura');
@@ -2904,15 +2967,25 @@ function update(dt){
   }
   // 炎符
   if(G.weapons.fire){
-    const lv=G.weapons.fire.lv, t5=lv>=5;
+    const lv=G.weapons.fire.lv, t5=lv>=5, pb=t5&&wPath('fire')==='b';
     G.wcd.fire-=dt;
     if(G.wcd.fire<=0){
       const best=nearestVisible(p);
       if(best){
-        G.wcd.fire=(1.5-lv*0.09)/G.aspdMul;
+        G.wcd.fire=(1.5-lv*0.09)/G.aspdMul*(pb?1.4:1);
         const a=Math.atan2(best.y-p.y,best.x-p.x), sp=t5?400:430;
-        if(t5){
-          /* ★ 5 级：化火龙 —— 一条游龙，穿阵而过，沿途留下烈焰 */
+        if(pb){
+          /* ★乙 燎原符雨：朝视野内 5 只妖各掷一枚火符，落点必留岩浆 */
+          const pool=visEnemies().slice(0,5);
+          const angs=pool.length? pool.map(function(e){ return Math.atan2(e.y-p.y,e.x-p.x); }) : [a];
+          for(let i=0;i<angs.length;i++){
+            const aa=angs[i]+rnd(-0.07,0.07);
+            G.bullets.push({x:p.x,y:p.y,vx:Math.cos(aa)*520,vy:Math.sin(aa)*520,
+              dmg:(9+lv*6)*G.atkMul*1.05, r:10, life:2.2, color:'#ff8c3a',
+              kind:'fire', t5:false, burn:5, blast:70+lv*4, lava:true});
+          }
+        } else if(t5){
+          /* ★甲 焚天火龙 —— 一条游龙，穿阵而过，沿途留下烈焰 */
           G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
             dmg:(9+lv*6)*G.atkMul*5.0, r:26, life:2.6, color:'#ff8c3a',
             kind:'fire', t5:true, hit:new Set(), burn:5, blast:0, trail:'fire', trailCd:0});
@@ -2922,23 +2995,25 @@ function update(dt){
             kind:'fire', t5:false, burn:lv>=2?5:0, blast:lv>=3?(70+lv*4):0, lava:lv>=4});
         }
         playerAttack(a,'#ffb066', 0, 'fire');
-        playSfx(t5?'dragon':'fire');
+        playSfx((t5&&!pb)?'dragon':'fire');
       }
     }
   }
   // 雷印
   if(G.weapons.thunder){
-    const lv=G.weapons.thunder.lv, t5=lv>=5;
+    const lv=G.weapons.thunder.lv, t5=lv>=5, pb=t5&&wPath('thunder')==='b';
     G.wcd.thunder-=dt;
     if(G.wcd.thunder<=0){
       const pool=visEnemies();
       if(pool.length){
-        G.wcd.thunder=(2.5-lv*0.15)/G.aspdMul;
-        const n=t5?6:(lv>=3?4:2);
+        G.wcd.thunder=(2.5-lv*0.15)/G.aspdMul*(pb?1.35:1);
+        /* ★乙 五雷正法：只劈两道，但锁定最厚之妖、雷柱极粗、必麻痹 */
+        if(pb) pool.sort(function(x,y){ return (y.hp+(y.shield||0)*0.5)-(x.hp+(x.shield||0)*0.5); });
+        const n=pb?2:(t5?6:(lv>=3?4:2));
         for(let i=0;i<n && pool.length;i++){
-          const e=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
-          G.bolts.push({x:e.x,y:e.y,t:0.32,dmg:(14+lv*7)*G.atkMul*(t5?1.7:1),
-            chain:lv>=2, ring:t5, stun:lv>=4, r:lv>=3?82:66, color:'#a9d0ff'});
+          const e=pool.splice(pb?0:Math.floor(Math.random()*pool.length),1)[0];
+          G.bolts.push({x:e.x,y:e.y,t:0.32,dmg:(14+lv*7)*G.atkMul*(pb?3.4:(t5?1.7:1)),
+            chain:(lv>=2||pb), ring:(t5&&!pb), stun:(lv>=4||pb), r:pb?205:(lv>=3?82:66), color:'#a9d0ff'});
         }
         const bb=nearestVisible(p);
         playerAttack(bb?Math.atan2(bb.y-p.y,bb.x-p.x):p.face,'#a9d0ff',0,'thunder');
@@ -2948,19 +3023,27 @@ function update(dt){
   }
   // 玄冰诀
   if(G.weapons.frost){
-    const lv=G.weapons.frost.lv, t5=lv>=5;
+    const lv=G.weapons.frost.lv, t5=lv>=5, pb=t5&&wPath('frost')==='b';
     G.wcd.frost-=dt;
     if(G.wcd.frost<=0){
       const best=nearestVisible(p);
       if(best){
         G.wcd.frost=(1.35-lv*0.08)/G.aspdMul;
         const a=Math.atan2(best.y-p.y,best.x-p.x), sp=700;
-        G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
-          dmg:(8+lv*5)*G.atkMul*(t5?2.5:1), r:t5?24:6, life:t5?2.2:1.8, color:'#9fe4ff',
-          kind:'frost', t5:t5, pierce:t5?99:(lv>=3?9:1), hit:new Set(),
-          slow:lv>=2?3:0, iceBurst:lv>=4, trail:t5?'frost':null, trailCd:0});
+        if(pb){
+          /* ★乙 玄冰镜界：缓慢巨大冰球，触之炸开冰暴并结出寒霜地面 */
+          G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*330,vy:Math.sin(a)*330,
+            dmg:(8+lv*5)*G.atkMul*2.2, r:30, life:2.8, color:'#cfefff',
+            kind:'frost', t5:false, mirror:true, pierce:1, hit:new Set(),
+            slow:3, iceBurst:false, trail:'frost', trailCd:0});
+        } else {
+          G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+            dmg:(8+lv*5)*G.atkMul*(t5?2.5:1), r:t5?24:6, life:t5?2.2:1.8, color:'#9fe4ff',
+            kind:'frost', t5:t5, pierce:t5?99:(lv>=3?9:1), hit:new Set(),
+            slow:lv>=2?3:0, iceBurst:lv>=4, trail:t5?'frost':null, trailCd:0});
+        }
         playerAttack(a,'#bdeaff', 0, 'frost');
-        playSfx(t5?'dragonIce':'frost');
+        playSfx(pb?'frost':(t5?'dragonIce':'frost'));
       }
     }
   }
@@ -3243,6 +3326,15 @@ function update(dt){
               if(dist(e,t2)<92){ hurtEnemy(t2,b.dmg*0.75); addSlow(t2,2.5,0.5); } }
             burst(e.x,e.y,'#dff4ff',24);
           }
+          if(b.mirror && !b.mirrored){                                 // ★玄冰镜界：触之炸开
+            b.mirrored=true;
+            G.waves.push({x:b.x,y:b.y,r:10,max:196,hit:new Set(),dmg:b.dmg*0.55,color:'#bdeaff'});
+            for(const t2 of G.enemies){ if(t2.dead||t2===e)continue;
+              if(dist(b,t2)<196 && inView(t2)) addSlow(t2,3.2,0.45); }
+            G.lavas.push({x:b.x,y:b.y,r:118,life:5.5,dps:b.dmg*0.16,tick:0,kind:'frost',color:'#cfefff'});
+            burst(b.x,b.y,'#dff4ff',34); burst(b.x,b.y,'#ffffff',14);
+            G.shake=Math.max(G.shake,6); playSfx('frostHit');
+          }
           b.hit.add(e);
           if(--b.pierce<=0){ b.dead=true; break; }                     // 3 级：穿透
         } else {
@@ -3261,6 +3353,8 @@ function update(dt){
             }
             burst(b.x,b.y,'#ffe6a8',20);
           }
+          if(b.hit) b.hit.add(e);
+          if(b.pierce && --b.pierce>0){ burst(b.x,b.y,b.color,5); continue; }
           b.dead=true; burst(b.x,b.y,b.color,6); break;
         }
       }
@@ -3270,16 +3364,16 @@ function update(dt){
 
   // 环身剑阵（伤害）
   if(G.weapons.orbit){
-    const lv=G.weapons.orbit.lv, t5=lv>=5, rings=t5?2:1;
+    const og=orbitRings('orbit'), lv=og.lv, t5=og.t5, pb=og.pb, rings=og.rings;
     for(let ring=0;ring<rings;ring++){
-      const n=(t5?4:(1+Math.round(lv*0.6)))*(ring?1.2:1), rad=(54+lv*4)*(ring?1.42:1);
+      const n=(pb?3:(t5?4:(1+Math.round(lv*0.6))))*(ring?1.2:1), rad=(54+lv*4)*(ring?(1+ring*0.3):1);
       for(let i=0;i<n;i++){
         const a=G.orbitAngle+i*(Math.PI*2/n)+(ring?0.4:0);
         const bx=p.x+Math.cos(a)*rad, by=p.y+Math.sin(a)*rad;
         for(const e of G.enemies){ if(e.dead||e.hitCd>0||!inView(e))continue;
           if(dist({x:bx,y:by},e)<e.r+9){
-            hurtEnemy(e,(4+lv*3.4)*G.atkMul*(lv>=3?1.35:1)*(t5?2:1));
-            e.hitCd=0.32; burst(bx,by,t5?'#bff0ff':'#8fe0c0',4);
+            hurtEnemy(e,(4+lv*3.4)*G.atkMul*(lv>=3?1.35:1)*(pb?1.45:(t5?2:1)));
+            e.hitCd=0.32; burst(bx,by,pb?'#ffcf6a':(t5?'#bff0ff':'#8fe0c0'),5);
           } }
       }
     }
@@ -3301,17 +3395,21 @@ function update(dt){
   for(const l of G.lavas){
     l.life-=dt; l.tick=(l.tick||0)+dt;
     if(l.follow){ l.x=p.x; l.y=p.y; }                 // 随行罡气跟随玩家
-    const rate=(l.kind==='storm')?0.5:0.4;
+    const rate=(l.kind==='storm'||l.kind==='frost')?0.5:0.4;
     if(l.tick>=rate){ l.tick-=rate;
       for(const e of G.enemies){ if(e.dead)continue;
         if(Math.hypot(e.x-l.x,e.y-l.y)<l.r+e.r*0.5){
-          hurtEnemy(e,l.dps*0.4,{noCrit:true});
+          if(l.dps>0) hurtEnemy(e,l.dps*0.4,{noCrit:true});
           if(!e.dead && l.kind==='storm') e.stunT=Math.max(e.stunT||0,0.42);
           if(!e.dead && l.kind==='aura'){ const a=Math.atan2(e.y-l.y,e.x-l.x); e.kx=Math.cos(a)*180; e.ky=Math.sin(a)*180; }
+          if(!e.dead && l.kind==='quake'){ const a=Math.atan2(e.y-l.y,e.x-l.x); e.kx=Math.cos(a)*320; e.ky=Math.sin(a)*320; }
+          if(!e.dead && l.kind==='frost') addSlow(e,0.7,0.5);
         } }
     }
     const pk=(l.kind==='aura')?(Math.random()<0.5?'#8fd0ff':'#dff0ff')
            :(l.kind==='storm')?(Math.random()<0.5?'#bcd0ff':'#ffffff')
+           :(l.kind==='frost')?(Math.random()<0.5?'#cfefff':'#ffffff')
+           :(l.kind==='quake')?(Math.random()<0.5?'#d8c49a':'#f0e2c0')
            :(Math.random()<0.5?'#ff8c3a':'#ffd873');
     if(Math.random()<dt*16) burst(l.x+rnd(-l.r*0.7,l.r*0.7), l.y+rnd(-l.r*0.45,l.r*0.45), pk, 1);
   }
@@ -3540,7 +3638,8 @@ function rollCrit(opt){
   if(opt && opt.noCrit) return 1;                       // 持续伤害（燃烧/雷池/罡气/漩涡）不暴击，免得满屏都在爆
   const p=G && G.player; if(!p) return 1;
   const mul=(opt&&opt.critMul)||p.critMul||1.8;
-  const base=(opt&&opt.forceCrit)?1:((p.crit||0)+((opt&&opt.critAdd)||0));
+  if(opt && opt.forceCrit) return mul;                  // 强制暴击（元素反应）必须真必暴，别被概率帽削掉
+  const base=(p.crit||0)+((opt&&opt.critAdd)||0);
   return (Math.random()<Math.min(0.92,base))?mul:1;
 }
 function hurtEnemy(e,dmg,opt){
@@ -3727,17 +3826,55 @@ function showLevelUp(){
 }
 function pickChoice(i){
   const ch=window.__choices[i];
+  let awaken=null;
   if(ch.type==='new') G.weapons[ch.id]={lv:1};
-  else if(ch.type==='up') G.weapons[ch.id].lv=Math.min(WEAPONS[ch.id].max, ch.to||(G.weapons[ch.id].lv+1));
+  else if(ch.type==='up'){
+    const st=G.weapons[ch.id];
+    st.lv=Math.min(WEAPONS[ch.id].max, ch.to||(st.lv+1));
+    if(st.lv>=WEAPONS[ch.id].max && !st.path) awaken=ch.id;   // 刚满级 → 进觉醒面板
+  }
   if(ch.type!=='attr' && G.weapons[ch.id] && G.weapons[ch.id].lv>=WEAPONS[ch.id].max && P.stats) P.stats.maxWeapon=(P.stats.maxWeapon||0)+1;
   else { if(ch.id==='atk') G.atkMul*=1.15; else if(ch.id==='aspd') G.aspdMul*=1.12;
     else if(ch.id==='speed') G.player.speed*=1.08; else if(ch.id==='maxhp'){ G.player.maxhp+=25; G.player.hp=G.player.maxhp; }
     else if(ch.id==='regen') G.regen+=0.8; }
-  document.getElementById('levelScreen').classList.remove('on'); G.paused=false; beep(980,0.1,'sine',0.05);
+  document.getElementById('levelScreen').classList.remove('on');
+  if(awaken){ showAwaken(awaken); return; }
+  G.paused=false; beep(980,0.1,'sine',0.05);
+  syncResonance(true);
+}
+/* ============ 法宝觉醒（满级二选一，终身不改） ============ */
+function showAwaken(id){
+  G.paused=true;
+  const W=WEAPONS[id], t=W.tiers[W.max-1], ps=(t&&t.paths)||{};
+  const keys=Object.keys(ps).slice(0,2);
+  const el=document.getElementById('awakenScreen');
+  el.innerHTML='<div class="ttl" style="font-size:clamp(22px,3.4vw,34px)">法宝觉醒 · '+W.name+'</div>'+
+    '<div style="opacity:.62;font-size:13px;letter-spacing:.14em;margin-bottom:16px">Lv.5 圆满 · 择一路而行，终身不改</div>'+
+    '<div class="cards">'+keys.map(function(k,ix){ const p=ps[k];
+      return '<div class="card evo" onclick="pickAwaken(\''+id+'\',\''+k+'\')"><div class="k">觉 醒 · '+(ix?'乙':'甲')+'</div>'+
+        '<div class="n">'+p.n+'</div><div class="d">'+p.d+'</div><div class="lv">'+(ix?'另辟一道':'承其旧道')+'</div></div>';
+    }).join('')+'</div>';
+  el.classList.add('on'); G.flash=0.85; G.shake=14; beep(760,0.12,'sine',0.05);
+}
+function pickAwaken(id,k){
+  if(G.weapons[id]) G.weapons[id].path=k;
+  document.getElementById('awakenScreen').classList.remove('on');
+  G.paused=false; beep(980,0.1,'sine',0.05);
+  const W=WEAPONS[id], t=W.tiers[W.max-1], p=(t&&t.paths)?t.paths[k]:null;
+  if(p) toast('法宝觉醒 · '+W.name+' → '+p.n);
+  refreshOrbitShot();
+  syncResonance(false);
+}
+/* 觉醒会改变机制，剑阵齐射计时器要跟着复位 */
+function refreshOrbitShot(){
+  if(!G.weapons.orbit) return;
+  G.orbitShot = (wPath('orbit')==='b') ? null : 1.2;
+}
+function syncResonance(allowToast){
   const _r=activeResonance();
   if(_r && G.resId!==_r.id){
     const first=!G.resId; G.resId=_r.id;
-    setTimeout(function(){ if(G&&G.scene==='level'&&!G.over) toast('法宝共鸣 · '+_r.n+'（绝招已质变为组合技）'); }, first?600:900);
+    if(allowToast!==false) setTimeout(function(){ if(G&&G.scene==='level'&&!G.over) toast('法宝共鸣 · '+_r.n+'（绝招已质变为组合技）'); }, first?600:900);
   } else if(!_r) G.resId=null;
 }
 
@@ -4034,6 +4171,34 @@ function render(){
       ctx.beginPath(); ctx.arc(l.x,l.y,l.r*(0.72+0.1*pu),0,7); ctx.stroke();
       ctx.globalAlpha=0.4*k; ctx.strokeStyle='#8fd0ff'; ctx.lineWidth=1.6;
       ctx.beginPath(); ctx.arc(l.x,l.y,l.r*0.5,0,7); ctx.stroke();
+    } else if(l.kind==='frost'){
+      ctx.globalAlpha=0.34*k+0.12;
+      const fg=ctx.createRadialGradient(l.x,l.y,2,l.x,l.y,l.r);
+      fg.addColorStop(0,'rgba(245,253,255,.98)'); fg.addColorStop(0.40,'rgba(150,220,255,.68)');
+      fg.addColorStop(0.78,'rgba(110,190,255,.30)'); fg.addColorStop(1,'rgba(60,120,190,0)');
+      ctx.fillStyle=fg; ctx.beginPath(); ctx.ellipse(l.x,l.y,l.r,l.r*0.66,0,0,7); ctx.fill();
+      ctx.globalAlpha=0.72*k; ctx.strokeStyle='#eaffff'; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.ellipse(l.x,l.y,l.r*0.9,l.r*0.6,0,0,7); ctx.stroke();
+      ctx.globalAlpha=0.6*k; ctx.strokeStyle='#bfe8ff'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.ellipse(l.x,l.y,l.r*0.55,l.r*0.36,0,0,7); ctx.stroke();
+      /* 放射冰棱：一眼看出这是「霜」不是「水」 */
+      for(let i=0;i<7;i++){
+        const fa=i*0.897+l.r*0.01;
+        const r0=l.r*(0.18+0.1*((i*37)%5)/5), r1=l.r*(0.62+0.34*((i*53)%7)/7);
+        ctx.globalAlpha=(0.34+0.3*((i*29)%5)/5)*k;
+        ctx.strokeStyle=Math.random()<0.5?'#ffffff':'#cfeeff'; ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(l.x+Math.cos(fa)*r0, l.y+Math.sin(fa)*r0*0.66);
+        ctx.lineTo(l.x+Math.cos(fa)*r1, l.y+Math.sin(fa)*r1*0.66); ctx.stroke();
+      }
+    } else if(l.kind==='quake'){
+      ctx.globalAlpha=0.30*k+0.08;
+      const qg=ctx.createRadialGradient(l.x,l.y,2,l.x,l.y,l.r);
+      qg.addColorStop(0,'rgba(232,214,166,.9)'); qg.addColorStop(0.5,'rgba(170,140,90,.45)');
+      qg.addColorStop(1,'rgba(80,60,30,0)');
+      ctx.fillStyle=qg; ctx.beginPath(); ctx.ellipse(l.x,l.y,l.r,l.r*0.66,0,0,7); ctx.fill();
+      ctx.globalAlpha=0.55*k; ctx.strokeStyle='#e6d5a8'; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.ellipse(l.x,l.y,l.r*(0.55+0.4*Math.min(1,k*2)),l.r*0.42,0,0,7); ctx.stroke();
     } else {
       ctx.globalAlpha=0.32*k+0.10;
       const lg=ctx.createRadialGradient(l.x,l.y,2,l.x,l.y,l.r);
@@ -4059,7 +4224,15 @@ function render(){
         ctx.fillStyle='#ffe9b0'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.55,0,7); ctx.fill();
       }
     } else if(b.kind==='frost'){
-      if(b.t5){
+      if(b.mirror){
+        const mg=ctx.createRadialGradient(b.x,b.y,2,b.x,b.y,b.r*1.6);
+        mg.addColorStop(0,'#ffffff'); mg.addColorStop(0.38,'#9fe4ff'); mg.addColorStop(1,'rgba(120,200,255,0)');
+        ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.6,0,7); ctx.fill();
+        ctx.strokeStyle='#eaffff'; ctx.lineWidth=2.4;
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.8,0,7); ctx.stroke();
+        ctx.strokeStyle='#bdeaff'; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.5,0,7); ctx.stroke();
+      } else if(b.t5){
         drawDragon(b,'ice',ang);
       } else {
         ctx.shadowColor='#9fe4ff'; ctx.shadowBlur=12;
@@ -4088,13 +4261,13 @@ function render(){
   }
   // 环身剑阵
   if(G.weapons.orbit){
-    const lv=G.weapons.orbit.lv, t5=lv>=5, rings=t5?2:1;
+    const og=orbitRings('orbit'), lv=og.lv, t5=og.t5, pb=og.pb, rings=og.rings;
     for(let ring=0;ring<rings;ring++){
-      const n=(t5?4:(1+Math.round(lv*0.6)))*(ring?1.2:1), rad=(54+lv*4)*(ring?1.42:1), bw=t5?15:(9+lv);
+      const n=(pb?3:(t5?4:(1+Math.round(lv*0.6))))*(ring?1.2:1), rad=(54+lv*4)*(ring?(1+ring*0.3):1), bw=pb?16:(t5?15:(9+lv));
       for(let i=0;i<n;i++){ const a=G.orbitAngle+i*(Math.PI*2/n)+(ring?0.4:0);
         const bx=p.x+Math.cos(a)*rad, by=p.y+Math.sin(a)*rad, a2=a+Math.PI/2;
-        ctx.strokeStyle=t5?'#bff0ff':'#8fe0c0'; ctx.lineWidth=t5?4:3;
-        ctx.shadowColor=ctx.strokeStyle; ctx.shadowBlur=t5?15:9;
+        ctx.strokeStyle=pb?'#ffcf6a':(t5?'#bff0ff':'#8fe0c0'); ctx.lineWidth=pb?4.5:(t5?4:3);
+        ctx.shadowColor=ctx.strokeStyle; ctx.shadowBlur=pb?19:(t5?15:9);
         ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+Math.cos(a2)*bw,by+Math.sin(a2)*bw); ctx.stroke(); }
     }
     ctx.shadowBlur=0;
@@ -5352,6 +5525,8 @@ function togglePause(){
   if(!G||G.over||G.goalDone) return;
   const lv=document.getElementById('levelScreen');
   if(lv && lv.classList.contains('on')) return;   // 升级三选一时不接管
+  const aw=document.getElementById('awakenScreen');
+  if(aw && aw.classList.contains('on')) return;   // 法宝觉醒二选一时不接管
   if(G.pauseOn) closePause(); else openPause();
 }
 function openPause(){
@@ -5360,8 +5535,8 @@ function openPause(){
   const ws=Object.keys(G.weapons).map(function(id){
     const w=WEAPONS[id], st=G.weapons[id];
     if(!w||!st) return '';
-    const mn=wName(id,st.lv), mx=st.lv>=w.max;
-    return '<div class="tnode"><div class="info"><div class="tn">'+mn+(mx?' <span style="color:var(--gold)">★ 满级</span>':'')+
+    const mn=wName(id,st.lv), mx=st.lv>=w.max, aw=mx&&st.path;
+    return '<div class="tnode"><div class="info"><div class="tn">'+mn+(mx?(aw?' <span style="color:var(--gold)">★ 觉醒·'+(st.path==='b'?'乙':'甲')+'</span>':' <span style="color:var(--gold)">★ 满级</span>'):'')+
       '</div><div class="td">Lv.'+st.lv+' / '+w.max+' · '+wDesc(id,st.lv)+'</div></div></div>';
   }).join('');
   const inHub=(G.scene==='hub');
