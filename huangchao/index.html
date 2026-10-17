@@ -557,7 +557,7 @@ function runSnapshot(){
     weapons:JSON.parse(JSON.stringify(G.weapons||{})),
     atkMul:G.atkMul, aspdMul:G.aspdMul, regen:G.regen,
     speed:G.player.speed, maxhp:Math.round(G.player.maxhp),
-    energy:Math.floor(G.energy||0)
+    energy:Math.floor(G.energy||0), altars:G.altarCount||0
   };
 }
 function applyRun(r){
@@ -579,6 +579,7 @@ function applyRun(r){
   if(r.maxhp) G.player.maxhp=Math.round(r.maxhp);
   G.player.hp=G.player.maxhp;               // 每关开局回满气血
   G.energy=clamp(r.energy||0,0,100);
+  G.altarCount=r.altars||0;                 // 祭坛供奉次数随续局快照走（=「本局」而非「本关」）
   G.carried=true;
 }
 function loadRun(diffId, levelIdx){
@@ -671,7 +672,7 @@ function newState(scene, df, mods){
     items:loadItems(), rageT:0, shieldT:0, goalDone:false, pauseOn:false,
     mods:mods, daily:null, stoneBonus:0, eliteLeft:0,
     elmMul:(mb.elmMul||{fire:1,frost:1,thunder:1,rx:1}), rxfx:[],
-    clusters:[], exit:null, killTarget:0, hubObjs:[], prompt:null, room:null, obj:null, endless:null, altar:null,
+    clusters:[], exit:null, killTarget:0, hubObjs:[], prompt:null, room:null, obj:null, endless:null, altar:null, altarCount:0,
     sfx:null, slip:false, sight:1, heals:[], bolts:[], stormCd:0, fps:60, lowq:false, padActive:false,
     ultRes:null, vortex:null, tides:[], resId:null, orbitShot:1.2,
     combo:0, comboT:0, comboPop:0, maxCombo:0,
@@ -964,6 +965,7 @@ function altarPick(i){
     msg='血契既立 · 气血上限 −'+cut+' · 伤害 ×'+G.atkMul.toFixed(2);
   }
   G.altar.used=true;
+  G.altarCount=(G.altarCount||0)+1;
   G.prompt=null;
   closeAltar();
   toast('祭坛 · '+msg);
@@ -2779,7 +2781,7 @@ function spawnBoss(px,py,forceKind){
   const bkind=forceKind||BOSS_BY_LV[G.lv.idx]||({1:'charge',2:'barrage',3:'summon',4:'lord'})[G.lv.ch||1]||'charge';
   const BSUB={charge:'裂地冲撞',barrage:'万弹环射',summon:'群妖蔽日',lord:'天地同悲'};
   G.enemies.push({x,y,r:46,hp,maxhp:hp,sp:44,dmg:24*dm*(mo.edmg||1),color:'#8a3fd0',type:'boss',
-    atkCd:0,hitCd:0,flash:0,minionCd:5,boss:true,bkind:bkind,ph:0,lift:0,
+    atkCd:0,hitCd:0,flash:0,minionCd:5,boss:true,bkind:bkind,bname:BSUB[bkind],ph:0,lift:0,
     chargeCd:3.0,windT:0,chargeT:0,chargeA:0,barrageCd:2.6,waveCd:6.0});
   setBanner('妖王降临', BSUB[bkind], 3.2);
   beep(90,0.7,'sawtooth',0.08); G.shake=22;
@@ -3267,6 +3269,7 @@ function update(dt){
       burst(e.x,e.y,'#ff7a3c',64); burst(e.x,e.y,'#ffd873',30);
       G.waves.push({x:e.x,y:e.y,r:12,max:300,hit:new Set(),dmg:0,color:'#ff7a3c'});
       if(e.bkind!=='lord') e.bkind='lord';
+      e.bname='天地同悲';                    // 注意：BSUB 是 spawnBoss 的局部常量，这里不能用
       e.chargeCd=1.2; e.barrageCd=1.2; e.waveCd=2.2; e.minionCd=1.6;
       e.chargeT=0; e.windT=0;
     }
@@ -4527,12 +4530,23 @@ function render(){
   // 妖王血条（墨）
   const boss=G.enemies.find(e=>e.boss);
   if(boss){
-    const bw=420,bx=(VW-bw)/2;
-    ctx.fillStyle='rgba(8,9,11,.8)'; ctx.fillRect(bx-6,58,bw+12,26);
+    const bw=420,bx=(VW-bw)/2, bpr=Math.max(0,Math.min(1,boss.hp/boss.maxhp));
+    ctx.fillStyle='rgba(8,9,11,.84)'; ctx.fillRect(bx-7,56,bw+14,30);
     ctx.fillStyle='rgba(236,231,219,.14)'; ctx.fillRect(bx,64,bw,15);
-    ctx.fillStyle='#8a3fd0'; ctx.fillRect(bx,64,bw*Math.max(0,boss.hp/boss.maxhp),15);
-    ctx.strokeStyle='rgba(201,162,74,.6)'; ctx.lineWidth=1; ctx.strokeRect(bx,64,bw,15);
-    ctx.fillStyle='#c9a24a'; ctx.font='700 12px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center'; ctx.fillText('妖 王',VW/2,57);
+    const bgr=ctx.createLinearGradient(bx,0,bx+bw,0);
+    bgr.addColorStop(0,'#7d2418'); bgr.addColorStop(0.55,'#b8402f'); bgr.addColorStop(1,'#e07a4a');
+    ctx.fillStyle=bgr; ctx.fillRect(bx,64,bw*bpr,15);
+    /* 半血刻度：二阶段分界线 */
+    ctx.strokeStyle='rgba(201,162,74,.85)'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(bx+bw*0.5,61); ctx.lineTo(bx+bw*0.5,82); ctx.stroke();
+    ctx.strokeStyle='rgba(201,162,74,.55)'; ctx.lineWidth=1; ctx.strokeRect(bx,64,bw,15);
+    ctx.textAlign='center';
+    ctx.font='700 12px "Kaiti SC",KaiTi,serif';
+    ctx.fillStyle=boss.phase2?'#ff9a6a':'#c9a24a';
+    ctx.fillText((boss.phase2?'妖王 · 玄变 · ':'妖王 · ')+(boss.bname||'荒潮之主'), VW/2, 53);
+    ctx.font='700 10.5px sans-serif'; ctx.fillStyle='rgba(246,241,229,.92)';
+    ctx.fillText(Math.ceil(Math.max(0,boss.hp))+' / '+Math.round(boss.maxhp), VW/2, 76);
+    ctx.textAlign='left';
   }
   // 道具栏
   if(G.items && G.items.length){
@@ -4570,11 +4584,27 @@ function render(){
   const mm=TOUCHUI?104:150, mx=VW-mm-16, my=TOUCHUI?62:(VH-mm-16), k=mm/WW;   // 触屏时挪到右上，避免与虚拟按键打架
   ctx.fillStyle='rgba(8,9,11,.7)'; ctx.fillRect(mx,my,mm,mm);
   ctx.strokeStyle='rgba(236,231,219,.25)'; ctx.lineWidth=1; ctx.strokeRect(mx,my,mm,mm);
+  /* 妖巢：未破=朱砂圈（妖王巢更粗更亮）／已破=暗灰细圈 + 一道斜杠 */
   if(G.clusters) for(const c of G.clusters){
-    const alive=G.enemies.some(function(e){ return Math.hypot(e.x-c.x,e.y-c.y)<c.r+40; });
-    if(!alive) continue;
-    ctx.strokeStyle=c.boss?'rgba(180,138,224,.9)':'rgba(192,80,63,.85)'; ctx.lineWidth=1.4;
-    ctx.beginPath(); ctx.arc(mx+c.x*k,my+c.y*k,Math.max(3,c.r*k),0,7); ctx.stroke();
+    const cxp=mx+c.x*k, cyp=my+c.y*k, pr=Math.max(3,c.r*k);
+    if(!c.done){
+      ctx.strokeStyle=c.boss?'rgba(224,150,84,.95)':'rgba(192,80,63,.85)';
+      ctx.lineWidth=c.boss?2:1.4;
+      ctx.beginPath(); ctx.arc(cxp,cyp,pr,0,7); ctx.stroke();
+    } else {
+      ctx.strokeStyle='rgba(236,231,219,.18)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(cxp,cyp,pr*0.76,0,7); ctx.stroke();
+      ctx.strokeStyle='rgba(236,231,219,.26)';
+      ctx.beginPath(); ctx.moveTo(cxp-pr*0.5,cyp+pr*0.5); ctx.lineTo(cxp+pr*0.5,cyp-pr*0.5); ctx.stroke();
+    }
+  }
+  /* 未供奉的荒原祭坛：金色小星，呼吸闪烁 */
+  if(G.altar && !G.altar.used){
+    const axp=mx+G.altar.x*k, ayp=my+G.altar.y*k, pu=0.42+0.58*Math.abs(Math.sin(G.t*3.1));
+    ctx.globalAlpha=pu; ctx.fillStyle='#e6c877'; ctx.beginPath();
+    for(let i=0;i<8;i++){ const aa=i*Math.PI/4, rr=(i%2)?1.6:4.6;
+      const sx2=axp+Math.cos(aa)*rr, sy2=ayp+Math.sin(aa)*rr; i?ctx.lineTo(sx2,sy2):ctx.moveTo(sx2,sy2); }
+    ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
   }
   if(G.exit){ ctx.fillStyle='#f0d78a'; ctx.beginPath(); ctx.arc(mx+G.exit.x*k,my+G.exit.y*k,4.5,0,7); ctx.fill(); }
   if(G.scene==='level' && G.enemies.length>0 && G.enemies.length<=3){
@@ -4584,7 +4614,8 @@ function render(){
     ctx.globalAlpha=1;
   }
   ctx.fillStyle='rgba(196,92,76,.85)'; for(let i=0;i<G.enemies.length;i+=3){ const e=G.enemies[i]; ctx.fillRect(mx+e.x*k-0.5,my+e.y*k-0.5,1.6,1.6); }
-  if(boss){ ctx.fillStyle='#a86ee0'; ctx.beginPath(); ctx.arc(mx+boss.x*k,my+boss.y*k,4,0,7); ctx.fill(); }
+  if(boss){ ctx.fillStyle='#f0b060'; ctx.beginPath(); ctx.arc(mx+boss.x*k,my+boss.y*k,4.5,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(201,162,74,.8)'; ctx.lineWidth=1; ctx.stroke(); }
   ctx.fillStyle='#f2ecdd'; ctx.beginPath(); ctx.arc(mx+p.x*k,my+p.y*k,3,0,7); ctx.fill();
   ctx.strokeStyle='rgba(236,231,219,.22)'; ctx.strokeRect(mx+G.cam.x*k,my+G.cam.y*k,VW*k,VH*k);
 
@@ -5303,8 +5334,34 @@ function showResult(won, exp, stone, dropsGear, dropsItem, leveled, dailyBonus){
     '<div class="sec">结算</div>'+
     '<div class="pbar"><span class="st">经验<b>+'+exp+'</b></span><span class="st">灵石<b>+'+stone+'</b></span>'+
       (leveled?'<span class="st" style="color:var(--gold)">等级 +'+leveled+'　天赋点 +'+leveled+'</span>':'<span class="st">当前 Lv.'+P.level+'（'+P.exp+'/'+P.expNext+'）</span>')+'</div>'+
+    (function(){
+      const ws=Object.keys(G.weapons||{});
+      if(!ws.length) return '';
+      const p=G.player||{};
+      const ch=CHARACTERS.find(function(x){ return x.id===G.char; })||CHARACTERS[0];
+      const items=ws.map(function(id){
+        const W=WEAPONS[id], st=G.weapons[id];
+        const mx=st.lv>=W.max, aw=mx&&st.path;
+        return '<span class="dropitem'+(mx?' rare':'')+'">'+wName(id,st.lv)+' · Lv.'+st.lv+
+          (aw?' <span style="color:#c9a24a">★'+(st.path==='b'?'乙':'甲')+'</span>':'')+'</span>';
+      }).join('');
+      let res=null;
+      try{ res=activeResonance(); }catch(e){ res=null; }
+      return '<div class="sec">本局所成</div>'+
+        '<div class="pbar">'+
+          '<span class="st">角色<b>'+ch.name+'</b></span>'+
+          '<span class="st">气血上限<b>'+Math.round(p.maxhp||0)+'</b></span>'+
+          '<span class="st">伤害<b>×'+(G.atkMul||1).toFixed(2)+'</b></span>'+
+          '<span class="st">暴击<b>'+Math.round((p.crit||0)*100)+'% · '+Math.round((p.critMul||1.8)*100)+'%</b></span>'+
+          (G.maxCombo?'<span class="st">最高连杀<b>'+G.maxCombo+'</b></span>':'')+
+        '</div>'+
+        (items?('<div style="display:flex;flex-wrap:wrap;align-items:flex-start">'+items+'</div>')
+              :'<div style="color:var(--ink3);font-size:13px">这一局没有取到法宝</div>')+
+        (res?'<div style="margin-top:10px;color:#c9a24a;font-size:13px">共鸣 · 【'+res.n+'】</div>':'')+
+        (G.altarCount?'<div style="margin-top:4px;color:var(--ink3);font-size:12.5px">荒原祭坛 · 本局供奉 '+G.altarCount+' 次</div>':'');
+    })()+
     '<div class="sec">掉落</div>'+
-    ((dg||di)? (dg+di) : '<div style="color:var(--ink3);font-size:13.5px">本次无掉落（难度越高掉率越高）</div>')+
+    ((dg||di)? ('<div style="display:flex;flex-wrap:wrap">'+dg+di+'</div>') : '<div style="color:var(--ink3);font-size:13.5px">本次无掉落（难度越高掉率越高）</div>')+
     '<div style="text-align:center;color:var(--ink3);font-size:11.5px;margin-top:10px">进度已自动保存（'+saveSrc+'）</div>'+
     (G.endless ? '<div style="text-align:center;color:var(--gold);font-size:12.5px;margin-top:6px">无尽荒潮不计入闯关进度，只记最远层数</div>' : '')+
     (!won && !G.daily && !G.endless ? '<div style="text-align:center;color:var(--gold);font-size:12.5px;margin-top:6px">本局仍在：境界与法宝按进关时保留，可直接重打第 '+idx+' 关</div>' : '')+
@@ -5322,13 +5379,14 @@ function showStart(){
   document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('on');});
   const el=document.getElementById('menuScreen');
   el.innerHTML='<div class="mbrand" style="font-size:42px;letter-spacing:.5em">荒 潮</div>'+
-    '<div class="sub" style="margin-top:18px">荒潮漫过大地，妖从潮中来。<br>'+
+    '<div class="sub" style="margin-top:18px;max-width:880px;margin-left:auto;margin-right:auto;text-align:left;line-height:2.05">荒潮漫过大地，妖从潮中来。<br>'+
     '玄关之上，有一道通往荒原的路口——<b style="color:#c9a24a">十又五关</b>，第五、第十、第十五关各有妖王镇守。<br>'+
-    '进关之后，寻妖而战；荒原清尽，北方自现下一道路口。<br>'+
-    '法宝共 <b style="color:#c9a24a">五级</b>，每一级解锁新招，五级<b style="color:#c9a24a">质变化形</b>（化龙/化阵/化罡/化雷）；<br>'+
-    '法器只斩<b style="color:#c9a24a">眼前可见</b>之妖，屏外之敌不予理会。<br>'+
-    '炎符 · 玄冰诀 · 雷印 先后命中同一妖，会引动<b style="color:#c9a24a">元素反应</b>：<br>'+
-    '蒸发（炎+冰）/ 感电（冰+雷）/ 爆燃（炎+雷）——集齐元素套装可大幅增益。</div>'+
+    '进关之后，寻妖而战；荒原清尽（或斩妖王、或限时猎杀达成），北方自现下一道路口。<br>'+
+    '法宝共 <b style="color:#c9a24a">五级</b>，每一级解锁新招；练到五级不必定形，而是<b style="color:#c9a24a">觉醒二选一</b>——<br>'+
+    '甲路承旧（诛仙剑阵 / 万剑归宗 / 太虚罡气…），乙路另开一派（一剑破万法 / 剑冢 / 崩山震 / 玄冰镜界…），<b style="color:#c9a24a">择定终身不改</b>。<br>'+
+    '任意两门法宝都练到 <b style="color:#c9a24a">三级</b>，绝招会质变为<b style="color:#c9a24a">共鸣组合技</b>；炎·冰·雷三门齐备则引动<b style="color:#c9a24a">三灾</b>。<br>'+
+    '荒原上偶有<b style="color:#c9a24a">祭坛</b>，按 E 以物易物：气血换法宝 · 装备换灵石 · 气血上限换伤害。<br>'+
+    '法器只斩<b style="color:#c9a24a">眼前可见</b>之妖，屏外之敌不予理会；炎·冰·雷先后命中同一妖会引动<b style="color:#c9a24a">元素反应</b>（蒸发 / 感电 / 爆燃）。</div>'+
     '<div class="stat-row" style="margin-top:22px"><span>存档来源 <b>'+saveSrc+'</b></span>'+
       '<span>境界 <b>'+P.level+'</b></span><span>天赋点 <b>'+P.tp+'</b></span>'+
       '<span>灵石 <b>'+P.stone+'</b></span><span>最高通关 <b>第 '+Math.max(1,bestCleared())+' 关</b></span></div>'+
