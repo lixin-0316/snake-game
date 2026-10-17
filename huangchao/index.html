@@ -134,6 +134,7 @@
   <div class="overlay wide" id="pauseScreen"></div>
   <div class="overlay wide" id="teachScreen"></div>
   <div class="overlay" id="awakenScreen"></div>
+  <div class="overlay" id="altarScreen"></div>
   <div id="touchUI" style="display:none">
     <div id="joyBase"><div id="joyKnob"></div></div>
     <div class="tbtn" id="tbtnPause">暂停</div>
@@ -670,7 +671,7 @@ function newState(scene, df, mods){
     items:loadItems(), rageT:0, shieldT:0, goalDone:false, pauseOn:false,
     mods:mods, daily:null, stoneBonus:0, eliteLeft:0,
     elmMul:(mb.elmMul||{fire:1,frost:1,thunder:1,rx:1}), rxfx:[],
-    clusters:[], exit:null, killTarget:0, hubObjs:[], prompt:null, room:null, obj:null, endless:null,
+    clusters:[], exit:null, killTarget:0, hubObjs:[], prompt:null, room:null, obj:null, endless:null, altar:null,
     sfx:null, slip:false, sight:1, heals:[], bolts:[], stormCd:0, fps:60, lowq:false, padActive:false,
     ultRes:null, vortex:null, tides:[], resId:null, orbitShot:1.2,
     combo:0, comboT:0, comboPop:0, maxCombo:0,
@@ -861,7 +862,115 @@ function buildClusters(lv){
     const tc=((lv.idx||1)>=6?2:1);
     for(let i=0;i<tc;i++) G.tides.push({at:14+i*17+rnd(0,6), edge:Math.floor(Math.random()*4), fired:false});
   }
+  placeAltar(cx,cy,R);
 }
+/* ============ 荒原祭坛（局内随机事件） ============ */
+/* 位置每次随机：先试环带外侧，再退到内圈，始终避开妖巢与石障 */
+function placeAltar(cx,cy,R){
+  G.altar=null;
+  const solid=(G.solids&&G.solids.length)?G.solids:(G.terrain||[]).filter(function(t){return t.solid;});
+  const bad=function(x,y){
+    if(G.clusters && G.clusters.some(function(c){ return Math.hypot(c.x-x,c.y-y)<c.r+76; })) return true;
+    return solid.some(function(s){ return Math.hypot(s.x-x,s.y-y)<66; });
+  };
+  let ax=cx, ay=cy-R*0.62, ok=false;
+  for(let i=0;i<36;i++){
+    const a=rnd(0,Math.PI*2), rr=R*(i<20?rnd(0.52,0.86):rnd(0.28,0.92));
+    ax=clamp(cx+Math.cos(a)*rr,170,WW-170); ay=clamp(cy+Math.sin(a)*rr,170,WH-170);
+    if(!bad(ax,ay)){ ok=true; break; }
+  }
+  if(!ok){ ax=cx; ay=clamp(cy,170,WH-170); }
+  /* 祭坛脚下清干净：石障挪走，免得走不到 */
+  if(G.terrain){
+    G.terrain=G.terrain.filter(function(t){ return !(t.solid && Math.hypot(t.x-ax,t.y-ay)<=58); });
+    G.solids=G.terrain.filter(function(t){return t.solid;});
+  }
+  G.altar={id:'altar', x:ax, y:ay, r:80, kind:'altar', name:'荒原祭坛', hint:'以物易物', color:'#c9a24a', used:false};
+}
+const ALTAR_OPTS=[
+  {id:'sac',  k:'献 血', n:'血 祭',
+   d:'献出当前气血的三成。六门法宝未齐 → 随机一门未得法宝直达 Lv.2；六门俱备 → 随机一门精进一级',
+   lv:'气血 −30%'},
+  {id:'burn', k:'焚 器', n:'焚 器',
+   d:'焚去一件未穿戴的装备（连同强化与随机词条），化作双倍灵石',
+   lv:'灵石 ×2'},
+  {id:'pact', k:'血 契', n:'血 契',
+   d:'以气血上限为质立契，本局伤害永久 ×1.20（可反复立契叠加）',
+   lv:'气血上限 −15%'},
+];
+function altarGearPool(){
+  const eq=P.equipped||{};
+  return (P.owned.gear||[]).filter(function(id){ const g=gearById(id); return !!g && eq[g.slot]!==id; });
+}
+function openAltar(){
+  if(!G||!G.altar||G.altar.used||G.paused) return;
+  G.paused=true;
+  const pool=altarGearPool();
+  const el=document.getElementById('altarScreen');
+  el.innerHTML='<div class="ttl" style="font-size:clamp(22px,3.4vw,34px)">荒 原 祭 坛</div>'+
+    '<div style="opacity:.62;font-size:13px;letter-spacing:.14em;margin-bottom:16px">取一而去 · 一座祭坛只受一次供奉</div>'+
+    '<div class="cards">'+ALTAR_OPTS.map(function(o,i){
+      const bad=(o.id==='burn' && !pool.length);
+      return '<div class="card evo"'+(bad?' style="opacity:.4"':' onclick="altarPick('+i+')"')+'>'+
+        '<div class="k">'+o.k+'</div><div class="n">'+o.n+'</div>'+
+        '<div class="d">'+o.d+(bad?'<br><span style="color:var(--cinnabar)">（身上没有可焚的装备）</span>':'')+'</div>'+
+        '<div class="lv">'+o.lv+'</div></div>';
+    }).join('')+'</div>'+
+    '<div style="margin-top:16px"><button class="chipbtn" onclick="closeAltar()">离 去（暂不供奉）</button></div>';
+  el.classList.add('on'); G.flash=0.7; G.shake=10; beep(540,0.16,'triangle',0.05);
+}
+function closeAltar(){
+  const el=document.getElementById('altarScreen'); if(el) el.classList.remove('on');
+  if(G) G.paused=false;
+}
+function altarPick(i){
+  const o=ALTAR_OPTS[i]; if(!o||!G||!G.altar||G.altar.used) return;
+  const p=G.player;
+  let msg='', awaken=null;
+  if(o.id==='sac'){
+    const cost=Math.max(1, Math.round(p.hp*0.30));
+    p.hp=Math.max(1, p.hp-cost);
+    const miss=Object.keys(WEAPONS).filter(function(k){ return !G.weapons[k]; });
+    if(miss.length){
+      const id=miss[Math.floor(Math.random()*miss.length)];
+      G.weapons[id]={lv:2};
+      msg='法宝现世 · '+WEAPONS[id].name+' Lv.2　·　气血 −'+cost;
+    } else {
+      const own=Object.keys(G.weapons).filter(function(k){ return WEAPONS[k]; });
+      const id=own[Math.floor(Math.random()*own.length)];
+      const st=G.weapons[id], W=WEAPONS[id];
+      if(st.lv>=W.max){
+        P.stone+=260; saveProfile();
+        msg=W.name+' 已至圆满 · 折为灵石 +260　·　气血 −'+cost;
+      } else {
+        st.lv++;
+        if(st.lv>=W.max && !st.path) awaken=id;
+        msg=W.name+' 精进至 Lv.'+st.lv+'　·　气血 −'+cost;
+      }
+    }
+  } else if(o.id==='burn'){
+    const pool=altarGearPool();
+    if(!pool.length){ closeAltar(); return; }
+    const id=pool[Math.floor(Math.random()*pool.length)];
+    const g=gearById(id), gain=Math.round(refineGain(id)*2.2);
+    P.owned.gear=P.owned.gear.filter(function(x){ return x!==id; });
+    delete P.gearlv[id]; if(P.garoll) delete P.garoll[id];
+    P.stone+=gain; saveProfile();
+    msg='焚去 '+g.n+' · 灵石 +'+gain;
+  } else {
+    const cut=Math.max(8, Math.round(p.maxhp*0.15));
+    p.maxhp-=cut; if(p.hp>p.maxhp) p.hp=p.maxhp; if(p.hp<1) p.hp=1;
+    G.atkMul*=1.20;
+    msg='血契既立 · 气血上限 −'+cut+' · 伤害 ×'+G.atkMul.toFixed(2);
+  }
+  G.altar.used=true;
+  G.prompt=null;
+  closeAltar();
+  toast('祭坛 · '+msg);
+  beep(o.id==='pact'?210:860, 0.2, o.id==='pact'?'sawtooth':'sine', 0.05);
+  if(awaken) setTimeout(function(){ if(G && !G.over) showAwaken(awaken); }, 420);
+}
+window.openAltar=openAltar; window.closeAltar=closeAltar; window.altarPick=altarPick;
 /* ============ 关卡目标 ============ */
 const OBJ_PLAN={1:'clear',2:'clear',3:'hold',4:'escort',5:'boss',
                 6:'hunt',7:'hold',8:'escort',9:'clear',10:'boss',
@@ -2784,10 +2893,12 @@ function update(dt){
   // 相机
   G.cam.x=clamp(p.x-VW/2,0,WW-VW); G.cam.y=clamp(p.y-VH/2,0,WH-VH);
 
-  // 大厅：交互检测
+  // 大厅 / 关内：交互检测
   if(G.scene==='hub'){
     G.prompt=null;
     for(const o of G.hubObjs){ if(Math.hypot(p.x-o.x,p.y-o.y)<o.r){ G.prompt=o; break; } }
+  } else if(G.scene==='level'){
+    G.prompt=(G.altar && !G.altar.used && Math.hypot(p.x-G.altar.x,p.y-G.altar.y)<G.altar.r) ? G.altar : null;
   }
 
   /* ===== 太虚漩涡（共鸣技） ===== */
@@ -4036,6 +4147,8 @@ function render(){
     ctx.fillText('走入即过关', ex, ey+118);
     ctx.shadowBlur=0; ctx.textAlign='left'; ctx.restore();
   }
+  // 荒原祭坛
+  if(G.scene==='level' && G.altar) drawAltar();
   // 四季天象：回春草甸 / 落雷
   if(G.scene==='level'){
     if(G.heals && G.heals.length) for(const h of G.heals){
@@ -4939,6 +5052,70 @@ function drawBeast(){
   ctx.fillRect(hx,hy,w*Math.max(0,b.hp/b.maxhp),4);
   ctx.restore();
 }
+function drawAltar(){
+  const a=G.altar; if(!a) return;
+  const t=G.t, near=(G.prompt===a), used=!!a.used;
+  ctx.save();
+  /* 地面辉光 */
+  if(!used){
+    const pu=0.5+0.5*Math.sin(t*2.2);
+    ctx.globalAlpha=0.20+0.14*pu;
+    const g=ctx.createRadialGradient(a.x,a.y+8,3,a.x,a.y+8,86);
+    g.addColorStop(0,'rgba(255,220,140,.78)'); g.addColorStop(1,'rgba(120,70,10,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(a.x,a.y+8,86,86*0.5,0,0,7); ctx.fill();
+    ctx.globalAlpha=0.4*pu+0.12;
+    ctx.strokeStyle='#e6c877'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(a.x,a.y+8,58,29,0,0,7); ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  /* 三级石台（下大上小，中心吸附在 a.y） */
+  const bs=[{w:64,h:12,dy:10},{w:50,h:11,dy:0},{w:36,h:10,dy:-10}];
+  for(const s of bs){
+    ctx.fillStyle='#33333a';
+    ctx.beginPath(); ctx.ellipse(a.x,a.y+s.dy+s.h*0.5,s.w/2,s.h*0.5,0,0,7); ctx.fill();
+    ctx.fillStyle='#54545e';
+    ctx.beginPath(); ctx.ellipse(a.x,a.y+s.dy,s.w/2,s.h*0.5,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.42)'; ctx.lineWidth=1; ctx.stroke();
+  }
+  /* 柱身 */
+  ctx.fillStyle='#3f3f47'; ctx.fillRect(a.x-11,a.y-56,22,48);
+  ctx.fillStyle='#5b5b66'; ctx.fillRect(a.x-11,a.y-56,7,48);
+  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(a.x+5,a.y-56,6,48);
+  /* 火盆 */
+  ctx.fillStyle='#2c2c32'; ctx.beginPath(); ctx.ellipse(a.x,a.y-58,18,7.5,0,0,7); ctx.fill();
+  ctx.strokeStyle='#7d7d8a'; ctx.lineWidth=2; ctx.stroke();
+  if(!used){
+    const fl=1+0.22*Math.sin(t*7.3), fy=a.y-58-12*fl;
+    ctx.globalAlpha=0.22; ctx.fillStyle='#ffd873';
+    ctx.beginPath(); ctx.arc(a.x,fy,30*fl,0,7); ctx.fill();
+    ctx.globalAlpha=0.88; ctx.fillStyle='#c9a24a';
+    ctx.beginPath(); ctx.ellipse(a.x,fy,9.5*fl,18*fl,0,0,7); ctx.fill();
+    ctx.globalAlpha=0.95; ctx.fillStyle='#fff0c4';
+    ctx.beginPath(); ctx.ellipse(a.x,fy,4.4*fl,10*fl,0,0,7); ctx.fill();
+    for(let i=0;i<2;i++){
+      const sx=a.x+rnd(-7,7), sy=fy-rnd(8,22);
+      ctx.globalAlpha=0.7; ctx.fillStyle='#ffd873';
+      ctx.beginPath(); ctx.arc(sx,sy,1.7,0,7); ctx.fill();
+    }
+  } else {
+    ctx.globalAlpha=0.30; ctx.fillStyle='#6d6d78';
+    ctx.beginPath(); ctx.arc(a.x,a.y-60,4.2,0,7); ctx.fill();
+    ctx.globalAlpha=0.22; ctx.strokeStyle='#8a8a96'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.ellipse(a.x,a.y+8,20,10,0,0,7); ctx.stroke();
+  }
+  /* 名牌 + 交互提示（和玄关物件同一套写法） */
+  ctx.globalAlpha=1; ctx.textAlign='center';
+  ctx.font='700 13px "Kaiti SC",KaiTi,serif';
+  ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=8;
+  ctx.fillStyle=used?'#6d6d78':(near?'#fff':'#c9a24a');
+  ctx.fillText(used?'祭坛（已供奉）':a.name, a.x, a.y+46);
+  if(near && !used){
+    ctx.font='700 12px "Kaiti SC",KaiTi,serif'; ctx.fillStyle='#e6c877';
+    ctx.fillText('［E］'+a.hint, a.x, a.y+65);
+  }
+  ctx.shadowBlur=0; ctx.textAlign='left';
+  ctx.restore();
+}
 function drawHubObj(o){
   const near=(G.prompt===o), t=G.t;
   ctx.save();
@@ -5495,7 +5672,13 @@ function resetProfile(){ if(window.confirm('确定重置全部档案（等级/�
 
 /* ============ 交互（E） ============ */
 function tryInteract(){
-  if(!G||G.paused||G.over||G.scene!=='hub') return;
+  if(!G||G.paused||G.over) return;
+  if(G.scene==='level'){                    // 关内只有祭坛可交互
+    const o=G.prompt;
+    if(o && o.id==='altar'){ beep(700,0.07,'sine',0.03); openAltar(); }
+    return;
+  }
+  if(G.scene!=='hub') return;
   const o=G.prompt; if(!o) return;
   beep(700,0.07,'sine',0.03);
   if(o.id==='portal') openPanel('diff');
@@ -5527,6 +5710,8 @@ function togglePause(){
   if(lv && lv.classList.contains('on')) return;   // 升级三选一时不接管
   const aw=document.getElementById('awakenScreen');
   if(aw && aw.classList.contains('on')) return;   // 法宝觉醒二选一时不接管
+  const al=document.getElementById('altarScreen');
+  if(al && al.classList.contains('on')){ closeAltar(); return; }   // 祭坛：Esc 直接离去
   if(G.pauseOn) closePause(); else openPause();
 }
 function openPause(){
