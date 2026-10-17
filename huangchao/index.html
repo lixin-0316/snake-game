@@ -282,6 +282,14 @@ const LV_NAME=['荒原初啼','妖潮涌动','血月之夜','万妖来袭','首�
   '寂静林','断魂谷','双王之争','血雨荒原','万妖之主',
   '玄冥裂谷','万冢鬼哭','尸山血海','荒潮尽头','荒潮之源'];
 const BOSS_BY_LV={5:'charge',10:'summon',15:'lord'};
+/* v43 妖王个性表：真名 / 两阶段招式名 / 专属色 / 一句话机制
+   ⚠ 这张表必须在顶层——spawnBoss 里的局部 const 外面读不到（v42 踩过） */
+const BOSS_KIT={
+  charge :{n:'撼地巨魈', m1:'裂地冲撞', m2:'三连怒冲', c:'#d9a24a', tip:'冲撞撞上石障会当场崩碎'},
+  barrage:{n:'万目妖瞳', m1:'万弹环射', m2:'瞳裂螺旋', c:'#b48ae0', tip:'弹幕成网，二阶段射完就瞬移'},
+  summon :{n:'驱兽巫祝', m1:'群妖蔽日', m2:'妖群同命', c:'#a97fd6', tip:'小妖未灭，妖王不伤'},
+  lord   :{n:'荒潮之主', m1:'天地同悲', m2:'三灾轮转', c:'#c9a0ff', tip:'终章之敌，三灾轮转不歇'}
+};
 const LEVELS=LV_NAME.map(function(n,i){
   const idx=i+1;
   return {id:String(idx), idx:idx, ch:Math.min(4,Math.ceil(idx/4)), name:n,
@@ -2559,10 +2567,11 @@ const MONSTER_TINT={
 };
 function drawBars(e){
   const w=e.r*2.1, x=e.x-e.r*1.05, top=e.y-e.r-(e.elite?18:10);
-  if(e.phase2){                                     // 二阶段：朱砂血环
+  if(e.phase2){                                     // 二阶段：专属血环（v43 各王不同色）
+    const bcc=e.bcolor||'#ff7a3c';
     ctx.save(); ctx.globalAlpha=0.28+0.22*Math.sin(G.t*6.5);
-    ctx.strokeStyle='#ff7a3c'; ctx.lineWidth=2.6;
-    ctx.shadowColor='#ff7a3c'; ctx.shadowBlur=16;
+    ctx.strokeStyle=bcc; ctx.lineWidth=2.6;
+    ctx.shadowColor=bcc; ctx.shadowBlur=16;
     ctx.beginPath(); ctx.arc(e.x,e.y,e.r*1.2,0,7); ctx.stroke();
     ctx.restore();
   }
@@ -2779,11 +2788,12 @@ function spawnBoss(px,py,forceKind){
   const dm=((G.df&&G.df.mult)||1)*(1+((G.lv.idx||1)-1)*0.13)*(mo.ehp||1);
   const hp=(900+d*520)*dm;
   const bkind=forceKind||BOSS_BY_LV[G.lv.idx]||({1:'charge',2:'barrage',3:'summon',4:'lord'})[G.lv.ch||1]||'charge';
-  const BSUB={charge:'裂地冲撞',barrage:'万弹环射',summon:'群妖蔽日',lord:'天地同悲'};
+  const kit=BOSS_KIT[bkind]||BOSS_KIT.charge;
   G.enemies.push({x,y,r:46,hp,maxhp:hp,sp:44,dmg:24*dm*(mo.edmg||1),color:'#8a3fd0',type:'boss',
-    atkCd:0,hitCd:0,flash:0,minionCd:5,boss:true,bkind:bkind,bname:BSUB[bkind],ph:0,lift:0,
-    chargeCd:3.0,windT:0,chargeT:0,chargeA:0,barrageCd:2.6,waveCd:6.0});
-  setBanner('妖王降临', BSUB[bkind], 3.2);
+    atkCd:0,hitCd:0,flash:0,minionCd:5,boss:true,bkind:bkind,bname:kit.m1,bname2:kit.m2,bcolor:kit.c,ph:0,lift:0,
+    chargeCd:3.0,windT:0,chargeT:0,chargeA:0,barrageCd:2.6,waveCd:6.0,chain:0});
+  setBanner('妖王 · '+kit.n, kit.m1, 3.2);
+  toast(kit.tip);
   beep(90,0.7,'sawtooth',0.08); G.shake=22;
   playerTaunt();
 }
@@ -3264,57 +3274,95 @@ function update(dt){
       e.phase2=true;
       e.r*=1.14; e.sp*=1.22; e.dmg*=1.28;
       G.shake=26; G.flash=0.95; G.hitStop=0.12;
-      setBanner('妖王 · 变身','血怒焚身，招式更烈',3.0);
+      const kit2=BOSS_KIT[e.bkind]||BOSS_KIT.lord;
+      setBanner('妖王 · 玄变', kit2.m2, 3.0);
       beep(70,0.85,'sawtooth',0.09);
       burst(e.x,e.y,'#ff7a3c',64); burst(e.x,e.y,'#ffd873',30);
-      G.waves.push({x:e.x,y:e.y,r:12,max:300,hit:new Set(),dmg:0,color:'#ff7a3c'});
-      if(e.bkind!=='lord') e.bkind='lord';
-      e.bname='天地同悲';                    // 注意：BSUB 是 spawnBoss 的局部常量，这里不能用
+      G.waves.push({x:e.x,y:e.y,r:12,max:300,hit:new Set(),dmg:0,color:kit2.c});
+      /* v43：半血不再统一变成「荒潮之主」——每位王保留自己的招式，各自升级 */
+      e.bname=kit2.m2;
       e.chargeCd=1.2; e.barrageCd=1.2; e.waveCd=2.2; e.minionCd=1.6;
-      e.chargeT=0; e.windT=0;
+      e.chargeT=0; e.windT=0; e.chain=0;
+      if(e.bkind==='summon'){ e.maxshield=Math.round(e.maxhp*0.20); e.shield=e.maxshield; e.broken=false; }
+      if(e.bkind==='lord'){ e.rot=0; e.rotCd=1.6; }
     }
     if(e.boss){
+      /* v43 荒潮之主二阶段：三灾轮转（地裂 / 万目 / 天罚），不再三招齐发 */
+      if(e.bkind==='lord' && e.phase2){
+        e.rotCd=(e.rotCd==null?1.6:e.rotCd)-dt;
+        if(e.rotCd<=0){ e.rotCd=3.6; e.rot=((e.rot||0)+1)%3;
+          toast('三灾 · '+['地裂','万目','天罚'][e.rot]); beep(300,0.18,'square',0.04); }
+      }
+      const lr=(e.bkind==='lord'&&e.phase2)?(e.rot||0):-1;      // -1 = 不轮转，三招都放
       // 通用：召唤小妖
       e.minionCd-=dt;
       if((e.bkind==='summon'||e.bkind==='lord') && e.minionCd<=0){
         e.minionCd=(e.bkind==='lord'?6:7);
         const cnt=e.bkind==='lord'?4:3;
         for(let i=0;i<cnt;i++){ const aa=Math.random()*Math.PI*2;
-          G.enemies.push({x:e.x+Math.cos(aa)*60,y:e.y+Math.sin(aa)*60,r:12,hp:20,maxhp:20,sp:rnd(70,95),dmg:8,color:'#d9564a',type:'grunt',atkCd:0,hitCd:0,flash:0,ph:Math.random()*6,lift:0}); }
+          G.enemies.push({x:e.x+Math.cos(aa)*60,y:e.y+Math.sin(aa)*60,r:12,hp:20,maxhp:20,sp:rnd(70,95),dmg:8,color:'#d9564a',type:'grunt',atkCd:0,hitCd:0,flash:0,ph:Math.random()*6,lift:0,bossOwner:e}); }
       }
       // 冲撞型
-      if(e.bkind==='charge'||e.bkind==='lord'){
+      if(e.bkind==='charge'||(e.bkind==='lord'&&(lr<0||lr===0||e.chargeT>0||e.windT>0))){
         if(e.chargeT>0){
           e.chargeT-=dt; chasing=false;
           e.x=clamp(e.x+Math.cos(e.chargeA)*680*dt,30,WW-30);
           e.y=clamp(e.y+Math.sin(e.chargeA)*680*dt,30,WH-30);
           burst(e.x,e.y,'#c9a0ff',2);
-          if(dist(e,p)<e.r+p.r*0.9 && p.iframe<=0){ p.hp-=e.dmg*0.8; p.iframe=0.4; G.hurt=1; G.shake=20;
+          /* 撼地狻猊专属：撞上石障当场崩碎，碎石四溅并打断冲撞 */
+          if(e.bkind==='charge' && G.solids){
+            for(const s of G.solids){
+              if(Math.hypot(s.x-e.x,s.y-e.y) < e.r*0.85+(s.cr||30)){
+                G.shake=Math.max(G.shake,20); burst(e.x,e.y,'#cbb389',30);
+                const mu3=((G.df&&G.df.mult)||1);
+                for(let i=0;i<8;i++){ const aa3=Math.random()*Math.PI*2;
+                  G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(aa3)*260,vy:Math.sin(aa3)*260,dmg:9*mu3,life:1.7,r:7,color:'#d8c49a'}); }
+                beep(160,0.35,'square',0.05); toast('妖王 · 石障崩碎');
+                e.chargeT=0; e.chain=0; e.chargeCd=e.phase2?1.8:3.2;
+                break;
+              }
+            }
+          }
+          if(e.chargeT>0 && dist(e,p)<e.r+p.r*0.9 && p.iframe<=0){ p.hp-=e.dmg*0.8; p.iframe=0.4; G.hurt=1; G.shake=20;
             playerHurt(e.dmg*0.8, e.chargeA); floatText(p.x,p.y-26,'-'+Math.round(e.dmg*0.8),'#ef6b52');
             if(p.hp<=0){ p.hp=0; gameOver(); return; } }
         } else if(e.windT>0){
           e.windT-=dt; chasing=false;
-          if(e.windT<=0){ e.chargeT=0.72; e.chargeA=Math.atan2(p.y-e.y,p.x-e.x); G.shake=15; beep(120,0.3,'sawtooth',0.05); }
+          if(e.windT<=0){ e.chargeT=e.phase2?0.86:0.72; e.chargeA=Math.atan2(p.y-e.y,p.x-e.x); G.shake=15; beep(120,0.3,'sawtooth',0.05); }
+        } else if(e.bkind==='charge' && e.phase2 && (e.chain||0)>0){
+          /* 三连怒冲：上一次刚冲完，立刻转身再冲 */
+          e.chain--; e.windT=0.26; e.chargeA=Math.atan2(p.y-e.y,p.x-e.x);
+          toast('怒冲 ×'+(3-e.chain)); beep(150,0.22,'sawtooth',0.05);
         } else {
           e.chargeCd-=dt;
-          if(e.chargeCd<=0){ e.chargeCd=4.8; e.windT=0.72; }
+          if(e.chargeCd<=0){ e.chargeCd=e.phase2?3.4:4.8; e.windT=e.phase2?0.5:0.72; e.chain=e.phase2?2:0; }
         }
       }
       // 弹幕型
-      if(e.bkind==='barrage'||e.bkind==='lord'){
+      if(e.bkind==='barrage'||(e.bkind==='lord'&&(lr<0||lr===1))){
         e.barrageCd-=dt;
         if(e.barrageCd<=0){
-          e.barrageCd=(e.bkind==='lord'?4.0:3.4);
-          const n=(e.bkind==='lord'?12:9), dm2=((G.df&&G.df.mult)||1)*1.5;
-          for(let i=0;i<n;i++){ const aa=i*(Math.PI*2/n)+G.t*0.6;
-            G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(aa)*205,vy:Math.sin(aa)*205,dmg:10*dm2,life:4.5,r:8,color:'#b48ae0'}); }
+          const lord=(e.bkind==='lord');
+          e.barrageCd=lord?(e.phase2?3.2:4.0):(e.phase2?2.4:3.4);
+          const n=lord?(e.phase2?16:12):(e.phase2?12:9), dm2=((G.df&&G.df.mult)||1)*1.5;
+          const spd=(e.phase2?238:205), dir=(e.spinDir||1);
+          for(let i=0;i<n;i++){ const aa=i*(Math.PI*2/n)+G.t*0.6*dir;
+            G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(aa)*spd,vy:Math.sin(aa)*spd,dmg:10*dm2,life:4.5,r:8,color:e.bcolor||'#b48ae0'}); }
+          /* 万目玄蛛专属：射完立刻瞬移换位，逼你一直挪 */
+          if(e.phase2 && !lord){
+            e.spinDir=-(e.spinDir||1);
+            burst(e.x,e.y,'#b48ae0',20);
+            const aa2=Math.random()*Math.PI*2;
+            e.x=clamp(p.x+Math.cos(aa2)*330,60,WW-60); e.y=clamp(p.y+Math.sin(aa2)*330,60,WH-60);
+            burst(e.x,e.y,'#b48ae0',20); toast('妖王 · 瞬移');
+          }
           beep(210,0.3,'square',0.05);
         }
       }
       // 荒潮之主：全屏震地波
-      if(e.bkind==='lord'){
+      if(e.bkind==='lord'&&(lr<0||lr===2)){
         e.waveCd-=dt;
-        if(e.waveCd<=0){ e.waveCd=7.0;
+        if(e.waveCd<=0){ e.waveCd=e.phase2?4.6:7.0;
           G.waves.push({x:e.x,y:e.y,r:14,max:540,hit:new Set(),dmg:0,color:'#c9a0ff'});
           G.shake=22; beep(90,0.5,'sawtooth',0.07);
           if(ed<540 && p.iframe<=0){ const wd=18*((G.df&&G.df.mult)||1); p.hp-=wd; p.iframe=0.4; G.hurt=1;
@@ -3322,8 +3370,26 @@ function update(dt){
             if(p.hp<=0){ p.hp=0; gameOver(); return; } }
         }
       }
-      // 召魂妖王：半血后自愈
-      if(e.bkind==='summon' && e.hp<e.maxhp*0.5) e.hp=Math.min(e.maxhp,e.hp+e.maxhp*0.035*dt);
+      /* 驱兽巫祝：半血后靠小妖续命 —— 场上有它召来的小妖就回盾，盾破即硬直 */
+      if(e.bkind==='summon'){
+        let mn=0;
+        for(const t2 of G.enemies){ if(!t2.dead && t2.bossOwner===e) mn++; }
+        e.minionN=mn;
+        if(e.phase2){
+          /* 先判破盾，再回盾 —— 顺序反了会在同一帧把盾从 0 抬起来，破盾永远不触发（v43 实测踩到） */
+          if(e.shield<=0 && !e.broken){ e.broken=true;
+            G.shake=Math.max(G.shake,26); toast('妖王 · 妖群同命已破');
+            burst(e.x,e.y,'#a97fd6',36); burst(e.x,e.y,'#e6c877',16);
+            e.chargeCd=2.2; e.barrageCd=2.2; e.minionCd=2.0;
+            e.specialCd=Math.max(e.specialCd||0,2.2);
+            if(P&&P.stats) P.stats.shieldBreak=(P.stats.shieldBreak||0)+1;
+          }
+          if(mn>0 && e.shield<e.maxshield) e.shield=Math.min(e.maxshield, e.shield+e.maxshield*0.22*dt);
+          if(e.shield>e.maxshield*0.6) e.broken=false;
+        } else if(e.hp<e.maxhp*0.5){
+          e.hp=Math.min(e.maxhp,e.hp+e.maxhp*0.02*dt);
+        }
+      }
       /* 妖王专属杀手锏：三王各有各的狠 */
       e.specialCd=(e.specialCd==null?6:e.specialCd)-dt;
       if(e.specialCd<=0){
@@ -3343,7 +3409,7 @@ function update(dt){
           for(let i=0;i<3;i++){ const aa=Math.random()*Math.PI*2;
             G.enemies.push({x:e.x+Math.cos(aa)*70, y:e.y+Math.sin(aa)*70, r:12, hp:26, maxhp:26,
               sp:rnd(96,126), dmg:12, color:'#a97fd6', type:'bomber', atkCd:0, hitCd:0, flash:0,
-              ph:Math.random()*6, lift:0}); }
+              ph:Math.random()*6, lift:0, bossOwner:e}); }
           beep(240,0.3,'square',0.05); toast('妖王 · 魂爆');
         } else if(e.bkind==='lord'){            // 荒潮之主 · 天罚：震地 + 四波弹幕
           e.specialCd=e.phase2?8:11;
@@ -4531,7 +4597,7 @@ function render(){
   const boss=G.enemies.find(e=>e.boss);
   if(boss){
     const bw=420,bx=(VW-bw)/2, bpr=Math.max(0,Math.min(1,boss.hp/boss.maxhp));
-    ctx.fillStyle='rgba(8,9,11,.84)'; ctx.fillRect(bx-7,56,bw+14,30);
+    ctx.fillStyle='rgba(8,9,11,.84)'; ctx.fillRect(bx-7,56,bw+14,34);
     ctx.fillStyle='rgba(236,231,219,.14)'; ctx.fillRect(bx,64,bw,15);
     const bgr=ctx.createLinearGradient(bx,0,bx+bw,0);
     bgr.addColorStop(0,'#7d2418'); bgr.addColorStop(0.55,'#b8402f'); bgr.addColorStop(1,'#e07a4a');
@@ -4540,6 +4606,10 @@ function render(){
     ctx.strokeStyle='rgba(201,162,74,.85)'; ctx.lineWidth=1.6;
     ctx.beginPath(); ctx.moveTo(bx+bw*0.5,61); ctx.lineTo(bx+bw*0.5,82); ctx.stroke();
     ctx.strokeStyle='rgba(201,162,74,.55)'; ctx.lineWidth=1; ctx.strokeRect(bx,64,bw,15);
+    if(boss.shield>0 && boss.maxshield){                 // 妖群同命：护盾细条
+      ctx.fillStyle='rgba(30,44,58,.9)'; ctx.fillRect(bx,81,bw,3);
+      ctx.fillStyle='#3f89c0'; ctx.fillRect(bx,81,bw*Math.max(0,Math.min(1,boss.shield/boss.maxshield)),3);
+    }
     ctx.textAlign='center';
     ctx.font='700 12px "Kaiti SC",KaiTi,serif';
     ctx.fillStyle=boss.phase2?'#ff9a6a':'#c9a24a';
