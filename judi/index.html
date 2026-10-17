@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>荒潮·据点</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#0b0d11;overflow:hidden;
+    -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+    user-select:none;touch-action:manipulation;
+    font-family:"Kaiti SC",KaiTi,"Songti SC",serif;color:#ece7db}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{display:block;touch-action:none;image-rendering:auto}
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(6,7,9,.90);z-index:20;flex-direction:column;text-align:center;padding:24px}
+  .overlay.on{display:flex}
+  .ttl{font-size:34px;letter-spacing:.22em;color:#e6c877;text-shadow:0 0 22px rgba(201,162,74,.28)}
+  .sub{font-size:14.5px;line-height:2.05;color:#a9a294;max-width:660px;margin-top:18px;text-align:left}
+  .sub b{color:#ece7db;font-weight:400}
+  .kbd{display:inline-block;min-width:20px;padding:1px 6px;border:1px solid rgba(236,231,219,.3);
+    border-radius:4px;font-size:12px;color:#e6c877;font-family:system-ui,sans-serif}
+  .btn{margin-top:26px;padding:12px 42px;border:1px solid rgba(201,162,74,.6);border-radius:6px;
+    background:rgba(201,162,74,.10);color:#e6c877;font-size:17px;letter-spacing:.2em;cursor:pointer;
+    font-family:inherit;transition:.18s}
+  .btn:hover{background:rgba(201,162,74,.22);border-color:#c9a24a}
+  .stat{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px;max-width:560px}
+  .stat div{padding:8px 16px;border:1px solid rgba(236,231,219,.14);border-radius:6px;
+    font-size:13.5px;color:#a9a294;background:rgba(236,231,219,.03)}
+  .stat b{color:#e6c877;font-weight:400}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+
+<div class="overlay on" id="startScreen">
+  <div class="ttl">荒 潮 · 据 点</div>
+  <div class="sub">
+    你是荒原上最后一处据点的管事。<b>白天经营，夜里挡潮。</b><br><br>
+    <b>灵石</b>是唯一硬通货 —— 建灵田养人、建矿场进账、建民居招人、建塔守家，四样抢同一笔钱。<br>
+    <b>人口</b>越多矿场产出越高，但吃粮也越凶。粮断了会饿死人。<br><br>
+    妖潮从<b>四处妖门</b>扑向中央的<b>据点核心</b>。头两波只开一门，波次越高开得越多。
+    塔会自己打，你也可以按
+    <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span>
+    操作守将上场补刀。<br><br>
+    <b>塔会挡路，但封不死妖门。</b>把塔摆成迷宫，妖就得绕远 —— 顶栏的<b>妖路</b>步数会当场变长，
+    同样的塔就能多打好几秒。这是这游戏最值钱的一手。<br><br>
+    <span class="kbd">1</span>~<span class="kbd">6</span> 选建筑 · 左键放置 · 左键点塔升级（最高四阶）· 右键拆除<br>
+    左键点<b>核心</b>：伤了花 40 修 80，满血花 90 加固上限 · 
+    <span class="kbd">空格</span>提前开波换灵石
+  </div>
+  <button class="btn" id="startBtn">进 场</button>
+</div>
+
+<div class="overlay" id="endScreen">
+  <div class="ttl" id="endTtl">据点已破</div>
+  <div class="stat" id="endStat"></div>
+  <button class="btn" id="againBtn">再 来 一 局</button>
+</div>
+
+<script>
+/* ============================================================
+   《荒潮·据点》 —— 经营 + 迷宫塔防
+   逻辑坐标 960×560，格子 24×14，每格 40px
+   ============================================================ */
+'use strict';
+
+const CW=24, CH=14, CS=40;
+const BW=CW*CS, BH=CH*CS;          // 棋盘（世界）尺寸 960×560
+const PAD_T=46, PAD_B=64;          // 顶栏 / 建造栏
+const W=BW, H=PAD_T+BH+PAD_B;      // 整块画布 960×670
+const INK='#ece7db', INK2='#a9a294', INK3='#6b665e';
+const CINNABAR='#b8402f', GOLD='#c9a24a', GOLD2='#e6c877';
+const BG='#0b0d11';
+
+const cv=document.getElementById('c');
+const ctx=cv.getContext('2d');
+let DPR=1, SCALE=1, OX=0, OY=0;
+
+/* ---------------- 建筑表 ---------------- */
+const BUILD={
+  farm   :{n:'灵田', key:'1', cost:30,  up:1.55, tower:false, c:'#7f9a52', d:'+4 粮 / 结算'},
+  mine   :{n:'矿场', key:'2', cost:45,  up:1.55, tower:false, c:'#c9a24a', d:'+3.2 灵石 / 结算'},
+  house  :{n:'民居', key:'3', cost:55,  up:1.55, tower:false, c:'#b07a52', d:'+2 人口上限'},
+  sword  :{n:'剑塔', key:'4', cost:50,  up:1.70, tower:true,  c:'#dcd6c4', d:'单体 · 高伤'},
+  frost  :{n:'冰塔', key:'5', cost:55,  up:1.70, tower:true,  c:'#9fe4ff', d:'单体 · 减速'},
+  thunder:{n:'雷塔', key:'6', cost:70,  up:1.70, tower:true,  c:'#c9a2ff', d:'连锁 · 对群'}
+};
+const ORDER=['farm','mine','house','sword','frost','thunder'];
+
+const TOWER={
+  sword  :{range:3.25*CS, cd:0.75, dmg:15, col:'#f2ecd8', bolt:'#ffeab4'},
+  frost  :{range:2.8*CS,  cd:1.05, dmg:7,  col:'#cfefff', bolt:'#9fe4ff', slow:0.45, slowT:1.6},
+  thunder:{range:3.0*CS,  cd:1.35, dmg:11, col:'#c9a2ff', bolt:'#c9a2ff', chain:3}
+};
+
+/* ---------------- 妖种表 ---------------- */
+const CREEP={
+  grunt:{hp:58,  sp:46, dmg:9,  bg:0.86, r:13, c:'#b8402f', n:'小妖'},
+  fast :{hp:40,  sp:98, dmg:7,  bg:0.80, r:11, c:'#d9803f', n:'疾妖'},
+  armor:{hp:170, sp:33, dmg:15, bg:0.72, r:16, c:'#6e7f8c', n:'甲妖', armor:0.45},
+  boss :{hp:900, sp:27, dmg:60, bg:0.62, r:26, c:'#8a3fd0', n:'妖王', armor:0.25}
+};
+
+/* ---------------- 全局状态 ---------------- */
+let G=null, lastT=0, raf=0;
+
+function newGame(){
+  G={
+    phase:'prep',          // prep | wave | over
+    stone:120, food:40, pop:3, popMax:3,
+    wave:0, maxWave:10,
+    prepT:45, prepMax:45,
+    tickT:0, day:0,
+    cells:[], creeps:[], bolts:[], fx:[], beams:[],
+    sel:null, hover:null, msg:null, msgT:0,
+    core:{cx:12, cy:7, hp:1000, maxhp:1000, shake:0},
+    hero:{x:0,y:0,vx:0,vy:0,hp:120,maxhp:120,cd:0,down:0,face:1},
+    spawnQ:[], spawnT:0,
+    dist:null, pathLen:0, pathMin:0, gateNeed:1,
+    bonus:0, kills:0, built:0
+  };
+  for(let y=0;y<CH;y++){
+    const row=[];
+    for(let x=0;x<CW;x++) row.push({t:null,lv:0,cd:0,flash:0,hurt:0});
+    G.cells.push(row);
+  }
+  // 核心占位（不可建造，敌人到此即攻击）
+  G.cells[G.core.cy][G.core.cx].core=true;
+  // 妖门：四个固定入口。塔只能改「绕多远」，不能把门封死（place 后统一校验）
+  G.gates=[{x:0,y:3},{x:12,y:0},{x:CW-1,y:10},{x:5,y:CH-1}].map(function(g,i){
+    return {x:g.x, y:g.y, i:i, act:false, len:0};
+  });
+  G.hero.x=G.core.cx*CS+CS/2;
+  G.hero.y=G.core.cy*CS+CS/2+CS*1.2;
+  buildFlow();
+}
+
+/* ---------------- 流场寻路 ---------------- */
+function blocked(x,y){
+  if(x<0||y<0||x>=CW||y>=CH) return true;
+  const c=G.cells[y][x];
+  return !!(c.core || (c.t && BUILD[c.t].tower));
+}
+function buildFlow(){
+  const d=new Int16Array(CW*CH).fill(-1);
+  const q=[];
+  const ci=G.core.cy*CW+G.core.cx;
+  d[ci]=0; q.push(ci);
+  for(let i=0;i<q.length;i++){
+    const v=q[i], x=v%CW, y=(v/CW)|0, dv=d[v];
+    if(x>0     && d[v-1]<0  && !blocked(x-1,y)){ d[v-1]=dv+1;  q.push(v-1); }
+    if(x<CW-1  && d[v+1]<0  && !blocked(x+1,y)){ d[v+1]=dv+1;  q.push(v+1); }
+    if(y>0     && d[v-CW]<0 && !blocked(x,y-1)){ d[v-CW]=dv+1; q.push(v-CW); }
+    if(y<CH-1  && d[v+CW]<0 && !blocked(x,y+1)){ d[v+CW]=dv+1; q.push(v+CW); }
+  }
+  G.dist=d;
+  for(const g of G.gates) g.len=d[g.y*CW+g.x];   // -1 表示这个门已被封死
+  syncGates();
+}
+/* 波次决定开几道妖门：1~2 波一门，3~5 两门，6~8 三门，9 波起全开 */
+function syncGates(){
+  const need = G.wave<=2? 1 : G.wave<=5? 2 : G.wave<=8? 3 : 4;
+  G.gateNeed=need;
+  let mx=0, mn=9999;
+  for(const g of G.gates){
+    g.act = (g.i < need);
+    if(!g.act) continue;
+    if(g.len>mx) mx=g.len;
+    if(g.len>=0 && g.len<mn) mn=g.len;
+  }
+  G.pathLen=mx;
+  G.pathMin=(mn===9999? 0 : mn);
+}
+/* 规则：妖门不能被彻底封死 —— 塔只能让妖路变长，不能变没 */
+function borderReachable(){
+  for(const g of G.gates) if(G.dist[g.y*CW+g.x]<0) return false;
+  return true;
+}
+
+/* ---------------- 汇总 ---------------- */
+function lvSum(t){
+  let s=0;
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const c=G.cells[y][x]; if(c.t===t) s+=c.lv;
+  }
+  return s;
+}
+function countT(t){
+  let s=0;
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++) if(G.cells[y][x].t===t) s++;
+  return s;
+}
+function costOf(t){
+  const c=G.cells[0][0]; // unused
+  return BUILD[t].cost;
+}
+function upCost(c){ return Math.round(BUILD[c.t].cost*Math.pow(BUILD[c.t].up,c.lv)*0.9); }
+
+/* ---------------- 提示 ---------------- */
+function toast(s){ G.msg=s; G.msgT=2.0; }
+
+/* ---------------- 音效 ---------------- */
+let AC=null;
+function ac(){
+  if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+  return AC;
+}
+function tone(f1,f2,dur,type,vol,delay){
+  const a=ac(); if(!a) return;
+  const t0=a.currentTime+(delay||0);
+  const o=a.createOscillator(), g=a.createGain();
+  o.type=type||'sine';
+  o.frequency.setValueAtTime(f1,t0);
+  if(f2&&f2!==f1) o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol||0.06,t0+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+dur+0.02);
+}
+function noise(dur,vol,lp,delay){
+  const a=ac(); if(!a) return;
+  const t0=a.currentTime+(delay||0);
+  const n=Math.floor(a.sampleRate*dur);
+  const buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=a.createBufferSource(); s.buffer=buf;
+  const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=lp||900;
+  const g=a.createGain(); g.gain.value=vol||0.05;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start(t0);
+}
+const SFX={
+  build(){ tone(340,520,0.10,'triangle',0.05); },
+  deny(){ tone(180,120,0.10,'square',0.035); },
+  shoot(){ tone(880,600,0.05,'square',0.018); },
+  frost(){ tone(1200,700,0.09,'sine',0.02); },
+  bolt(){ tone(1500,900,0.06,'square',0.016); },
+  hit(){ noise(0.05,0.03,1400); },
+  core(){ tone(90,55,0.28,'sawtooth',0.07); noise(0.2,0.05,500); },
+  wave(){ tone(70,150,0.7,'sawtooth',0.05); noise(0.6,0.04,700); },
+  win(){ [0,0.13,0.27].forEach((d,i)=>tone([392,523,659][i],0,0.42,'triangle',0.05,d)); },
+  lose(){ tone(200,60,1.1,'sawtooth',0.08); }
+};
+
+/* ---------------- 建造 ---------------- */
+function canPlace(x,y){
+  if(x<0||y<0||x>=CW||y>=CH) return false;
+  const c=G.cells[y][x];
+  if(c.t||c.core) return false;
+  return true;
+}
+function place(x,y,t){
+  if(!canPlace(x,y)) return toast('这里不能建'), SFX.deny();
+  const b=BUILD[t];
+  if(G.stone<b.cost) return toast('灵石不足'), SFX.deny();
+  const lenBefore=G.pathLen;
+  // 塔会挡路：试放一下看是否还有路
+  if(b.tower){
+    G.cells[y][x].t=t; G.cells[y][x].lv=1;
+    buildFlow();
+    if(!borderReachable()){ G.cells[y][x].t=null; G.cells[y][x].lv=0; buildFlow(); toast('妖门会被封死，妖就没路走了'); SFX.deny(); return; }
+  } else {
+    G.cells[y][x].t=t; G.cells[y][x].lv=1;
+  }
+  G.stone-=b.cost; G.built++;
+  addFX(x*CS+CS/2, y*CS+CS/2, b.c, 12);
+  SFX.build();
+  if(t==='house') G.popMax=3+2*lvSum('house');
+  if(b.tower){
+    const grow=G.pathLen-lenBefore;
+    if(grow>0) toast('妖路 +'+grow+' 步 · 现在 '+G.pathLen+' 步');
+  }
+}
+function upgrade(x,y){
+  const c=G.cells[y][x];
+  if(!c.t) return;
+  if(c.lv>=4) return toast('已至四阶，再无可升'), SFX.deny();
+  const cost=upCost(c);
+  if(G.stone<cost) return toast('灵石不足'), SFX.deny();
+  G.stone-=cost; c.lv++; c.flash=1;
+  addFX(x*CS+CS/2,y*CS+CS/2,GOLD,10);
+  SFX.build();
+  if(c.t==='house') G.popMax=3+2*lvSum('house');
+}
+function sell(x,y){
+  const c=G.cells[y][x];
+  if(!c.t) return;
+  const b=BUILD[c.t];
+  let paid=b.cost;
+  for(let i=1;i<c.lv;i++) paid+=Math.round(b.cost*Math.pow(b.up,i)*0.9);
+  G.stone+=Math.round(paid*0.55);
+  addFX(x*CS+CS/2,y*CS+CS/2,INK3,10);
+  c.t=null; c.lv=0;
+  if(b.tower) buildFlow();
+  if(c.t==='house') G.popMax=3+2*lvSum('house');
+  G.popMax=3+2*lvSum('house');
+  if(G.pop>G.popMax) G.pop=G.popMax;
+}
+
+/* ---------------- 粒子 ---------------- */
+function addFX(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, s=30+Math.random()*90;
+    G.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-30,life:0.5+Math.random()*0.4,
+      max:0.9,col,size:1.6+Math.random()*2.2});
+  }
+}
+
+/* ---------------- 妖潮 ---------------- */
+function waveComp(w){
+  const s=[];
+  const n=5+Math.round(w*2.95);
+  for(let i=0;i<n;i++) s.push('grunt');
+  if(w>=2) for(let i=0;i<Math.round(w*0.9);i++) s.push('fast');
+  if(w>=3) for(let i=0;i<Math.round(w*0.7)+Math.floor(w/5);i++) s.push('armor');
+  if(w%5===0) s.push('boss');
+  // 打散
+  for(let i=s.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=s[i]; s[i]=s[j]; s[j]=t; }
+  return s;
+}
+function startWave(){
+  G.wave++;
+  if(G.wave>G.maxWave){ return endGame(true); }
+  syncGates();
+  const opened=G.gates.filter(g=>g.act).length;
+  if(opened>1) toast('第 '+G.wave+' 波 · 妖门开至 '+opened+' 处');
+  G.phase='wave';
+  G.spawnQ=waveComp(G.wave);
+  G.spawnT=0;
+  toast('第 '+G.wave+' 波 · 妖潮来袭');
+  SFX.wave();
+}
+function spawnOne(type){
+  // 只从已开启、且还通得过的妖门出来
+  const spots=G.gates.filter(g=>g.act && g.len>=0);
+  if(!spots.length) return;
+  const gp=spots[(Math.random()*spots.length)|0];
+  const gx=gp.x, gy=gp.y;
+  const base=CREEP[type];
+  const ws=1+(G.wave-1)*0.31;
+  G.creeps.push({
+    type, x:gx*CS+CS/2+(Math.random()-0.5)*10, y:gy*CS+CS/2+(Math.random()-0.5)*10,
+    hp:base.hp*ws, maxhp:base.hp*ws, sp:base.sp, dmg:base.dmg,
+    armor:base.armor||0, r:base.r, c:base.c, bgb:base.bg,
+    slowT:0, slowF:1, flash:0, ph:Math.random()*6, boss:type==='boss',
+    face:1
+  });
+}
+
+/* ---------------- 战斗 ---------------- */
+function hurtCreep(c,dmg,opt){
+  let d=dmg;
+  if(c.armor) d*= (1-c.armor*(opt&&opt.pierce?0.4:1));
+  c.hp-=d; c.flash=0.6;
+  if(opt&&opt.slow){ c.slowT=Math.max(c.slowT,opt.slowT||1.6); c.slowF=Math.min(c.slowF,opt.slow); }
+  if(c.hp<=0 && !c.dead){
+    c.dead=true; G.kills++;
+    addFX(c.x,c.y,c.c,c.boss?26:10);
+    SFX.hit();
+    G.stone += c.boss? 55 : (c.type==='armor'?3:2);
+  }
+}
+function towerFire(c,x,y){
+  const T=TOWER[c.t];
+  const dmg=T.dmg*(1+(c.lv-1)*0.85);
+  const range=T.range+(c.lv-1)*10;
+  let target=null,best=1e9;
+  for(const k of G.creeps){
+    if(k.dead) continue;
+    const d=Math.hypot(k.x-x,k.y-y);
+    if(d<range && d<best){ best=d; target=k; }
+  }
+  if(!target) return;
+  if(c.t==='thunder'){
+    // 连锁：主目标 + 最近的两个
+    let hit=[target];
+    for(let i=0;i<(T.chain-1);i++){
+      let nb=null,nd=1e9;
+      for(const k of G.creeps){
+        if(k.dead||hit.indexOf(k)>=0) continue;
+        const d=Math.hypot(k.x-hit[hit.length-1].x,k.y-hit[hit.length-1].y);
+        if(d<CS*2.6 && d<nd){ nd=d; nb=k; }
+      }
+      if(!nb) break; hit.push(nb);
+    }
+    for(let i=0;i<hit.length;i++){
+      hurtCreep(hit[i],dmg*(i===0?1:0.62),{});
+      G.beams.push({x1:i===0?x:hit[i-1].x, y1:i===0?y:hit[i-1].y, x2:hit[i].x,y2:hit[i].y, life:0.16, max:0.16, c:T.col});
+    }
+    SFX.bolt();
+  } else {
+    G.bolts.push({x,y,tx:target.x,ty:target.y,tgt:target,dmg,
+      sp:c.t==='frost'?420:620, c:T.bolt, kind:c.t});
+    if(c.t==='frost') SFX.frost(); else SFX.shoot();
+  }
+  c.flash=0.25;
+}
+
+/* ---------------- 修核心 ---------------- */
+function repairCore(){
+  if(G.core.hp>=G.core.maxhp) return reinforceCore();   // 满血点核心 = 加固上限
+  if(G.stone<40) return toast('灵石不足'), SFX.deny();
+  G.stone-=40;
+  G.core.hp=Math.min(G.core.maxhp, G.core.hp+80);
+  addFX(G.core.cx*CS+CS/2, G.core.cy*CS+CS/2, GOLD, 14);
+  toast('核心修复 +80');
+  SFX.build();
+}
+/* 核心加固：后期灵石的主要去处。上限越高，越扛得住最后几波 */
+const CORE_CAP=1600, CORE_FIX=90, CORE_ADD=50;
+function reinforceCore(){
+  if(G.core.maxhp>=CORE_CAP) return toast('核心已至极限 '+CORE_CAP), SFX.deny();
+  if(G.stone<CORE_FIX) return toast('灵石不足'), SFX.deny();
+  G.stone-=CORE_FIX;
+  G.core.maxhp=Math.min(CORE_CAP, G.core.maxhp+CORE_ADD);
+  G.core.hp=Math.min(G.core.maxhp, G.core.hp+CORE_ADD);
+  addFX(G.core.cx*CS+CS/2, G.core.cy*CS+CS/2, GOLD2, 18);
+  toast('核心加固 · 上限 '+G.core.maxhp);
+  SFX.build();
+}
+
+/* ---------------- 伤害核心 ---------------- */
+function coreHurt(d){
+  G.core.hp-=d; G.core.shake=1;
+  addFX(G.core.cx*CS+CS/2,G.core.cy*CS+CS/2,CINNABAR,8);
+  SFX.core();
+  if(G.core.hp<=0){ G.core.hp=0; endGame(false); }
+}
+
+/* ---------------- 结束 ---------------- */
+function endGame(win){
+  G.phase='over';
+  if(win) SFX.win(); else SFX.lose();
+  document.getElementById('endTtl').textContent = win? '荒潮退去' : '据点已破';
+  const el=document.getElementById('endStat');
+  el.innerHTML =
+    '<div>撑到第 <b>'+Math.min(G.wave,G.maxWave)+'</b> 波</div>'+
+    '<div>斩妖 <b>'+G.kills+'</b></div>'+
+    '<div>建了 <b>'+G.built+'</b> 座</div>'+
+    '<div>核心 <b>'+Math.max(0,Math.round(G.core.hp))+'</b> / '+G.core.maxhp+'</div>';
+  document.getElementById('endScreen').classList.add('on');
+}
+
+/* ---------------- 更新 ---------------- */
+function update(dt){
+  if(!G||G.phase==='over') return;
+
+  // 结算 tick（2 秒一次）
+  G.tickT+=dt;
+  while(G.tickT>=2){
+    G.tickT-=2; G.day++;
+    const farm=lvSum('farm'), mine=lvSum('mine');
+    const tw=countT('sword')+countT('frost')+countT('thunder');
+    const upkeep=G.pop*0.5+tw*0.62;          // 人吃粮，塔也要驻军养
+    G.food += farm*5.2 - upkeep;
+    G.stone += mine*2.35*(1+G.pop*0.10);
+    if(G.food<0){
+      G.food=0;
+      G.starve=(G.starve||0)+3.5;            // 断粮：塔变慢 + 核心持续掉血
+      if(G.pop>1 && G.day%2===0){ G.pop--; toast('缺粮，饿走了一个人'); }
+    } else if(G.food>G.pop*4 && G.pop<G.popMax){
+      G.pop++; toast('有人来投，人口 +1');
+    }
+    if(G.starve>0 && (G.starve-dt)<=0) toast('粮草已断，塔势渐衰');
+  }
+
+  // 断粮惩罚
+  if(G.starve>0){
+    G.starve-=dt;
+    G.core.hp-=5*dt;
+    if(G.core.hp<=0){ G.core.hp=0; return endGame(false); }
+  }
+
+  // 准备期倒计时
+  if(G.phase==='prep'){
+    G.prepT-=dt;
+    if(G.prepT<=0) startWave();
+  }
+  // 妖潮生成
+  if(G.phase==='wave'){
+    G.spawnT-=dt;
+    if(G.spawnT<=0 && G.spawnQ.length){
+      G.spawnT=Math.max(0.26, 0.76-G.wave*0.042);
+      spawnOne(G.spawnQ.shift());
+    }
+    if(!G.spawnQ.length && !G.creeps.some(c=>!c.dead)){
+      // 本波结束
+      const reward=18+G.wave*6;
+      G.stone+=reward;
+      toast('第 '+G.wave+' 波已退 · 灵石 +'+reward);
+      if(G.wave>=G.maxWave) return endGame(true);
+      G.phase='prep'; G.prepT=G.prepMax=Math.max(24,42-G.wave*2.2);
+    }
+  }
+
+  // 妖移动
+  for(const c of G.creeps){
+    if(c.dead) continue;
+    if(c.slowT>0){ c.slowT-=dt; if(c.slowT<=0) c.slowF=1; }
+    if(c.flash>0) c.flash-=dt*3;
+    const gx=Math.floor(c.x/CS), gy=Math.floor(c.y/CS);
+    // 到了核心格
+    if(gx===G.core.cx && gy===G.core.cy){ coreHurt(c.dmg); c.dead=true; continue; }
+    // 找下坡
+    let bestD=G.dist[gy*CW+gx], tx=null, ty=null;
+    if(bestD<0) bestD=9999;
+    const nb=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(const [dx,dy] of nb){
+      const nx=gx+dx, ny=gy+dy;
+      if(nx<0||ny<0||nx>=CW||ny>=CH) continue;
+      const dv=G.dist[ny*CW+nx];
+      if(dv<0) continue;
+      if(dv<bestD){ bestD=dv; tx=nx*CS+CS/2; ty=ny*CS+CS/2; }
+    }
+    if(tx==null){
+      // 无路可走（被塔挤住）：朝核心硬闯
+      tx=G.core.cx*CS+CS/2; ty=G.core.cy*CS+CS/2;
+    }
+    const ang=Math.atan2(ty-c.y, tx-c.x);
+    const sp=c.sp*(c.slowT>0?c.slowF:1);
+    c.x+=Math.cos(ang)*sp*dt;
+    c.y+=Math.sin(ang)*sp*dt;
+    c.face=Math.cos(ang)>=0?1:-1;
+    c.ph+=dt*4;
+    // 若踩进塔格，往回推
+    const ngx=Math.floor(c.x/CS), ngy=Math.floor(c.y/CS);
+    if(blocked(ngx,ngy) && !(ngx===G.core.cx&&ngy===G.core.cy)){
+      c.x-=Math.cos(ang)*sp*dt*1.6; c.y-=Math.sin(ang)*sp*dt*1.6;
+    }
+  }
+  G.creeps=G.creeps.filter(c=>!c.dead);
+
+  // 塔开火
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const c=G.cells[y][x];
+    if(c.flash>0) c.flash-=dt*3;
+    if(!c.t||!BUILD[c.t].tower) continue;
+    c.cd-=dt;
+    if(c.cd<=0){
+      const T=TOWER[c.t];
+      const before=G.bolts.length+G.beams.length;
+      towerFire(c, x*CS+CS/2, y*CS+CS/2-CS*0.35);
+      const pen=(G.starve>0?1.75:1);          // 断粮：塔势衰，攻速掉
+      if(G.bolts.length+G.beams.length>before) c.cd=T.cd*pen;
+      else c.cd=0.12;   // 没目标：短冷却重扫
+    }
+  }
+
+  // 子弹
+  for(const b of G.bolts){
+    if(b.tgt && !b.tgt.dead){ b.tx=b.tgt.x; b.ty=b.tgt.y; }
+    const dx=b.tx-b.x, dy=b.ty-b.y, d=Math.hypot(dx,dy);
+    if(d<12 || (!b.tgt&&d<16)){
+      if(b.tgt && !b.tgt.dead){
+        hurtCreep(b.tgt,b.dmg, b.kind==='frost'?{slow:TOWER.frost.slow,slowT:TOWER.frost.slowT}:{});
+        addFX(b.tx,b.ty,b.c,4);
+      }
+      b.dead=true; continue;
+    }
+    const sp=b.sp*dt;
+    b.x+=dx/d*sp; b.y+=dy/d*sp;
+  }
+  G.bolts=G.bolts.filter(b=>!b.dead && b.x>-40&&b.x<BW+40&&b.y>-40&&b.y<BH+40);
+
+  // 光束
+  for(const b of G.beams) b.life-=dt;
+  G.beams=G.beams.filter(b=>b.life>0);
+
+  // 守将
+  updateHero(dt);
+
+  // 粒子
+  for(const p of G.fx){
+    p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=340*dt; p.vx*=0.985;
+  }
+  G.fx=G.fx.filter(p=>p.life>0);
+
+  if(G.msgT>0) G.msgT-=dt;
+  if(G.core.shake>0) G.core.shake-=dt*3;
+}
+
+function updateHero(dt){
+  const h=G.hero;
+  if(h.down>0){ h.down-=dt; if(h.down<=0){ h.hp=h.maxhp*0.6;
+    h.x=G.core.cx*CS+CS/2; h.y=G.core.cy*CS+CS/2+CS*1.2; } return; }
+  const sp=205;
+  let dx=0,dy=0;
+  if(keys['w']||keys['arrowup'])    dy-=1;
+  if(keys['s']||keys['arrowdown'])  dy+=1;
+  if(keys['a']||keys['arrowleft'])  dx-=1;
+  if(keys['d']||keys['arrowright']) dx+=1;
+  if(dx||dy){
+    const l=Math.hypot(dx,dy);
+    h.vx=dx/l*sp; h.vy=dy/l*sp;
+    if(dx) h.face=dx>0?1:-1;
+  } else { h.vx*=0.8; h.vy*=0.8; }
+  h.x=Math.max(CS*0.4,Math.min(BW-CS*0.4,h.x+h.vx*dt));
+  h.y=Math.max(CS*0.4,Math.min(BH-CS*0.4,h.y+h.vy*dt));
+  // 撞塔就推开
+  const gx=Math.floor(h.x/CS), gy=Math.floor(h.y/CS);
+  if(blocked(gx,gy)){ h.x-=h.vx*dt*2; h.y-=h.vy*dt*2; }
+  // 自动攻击
+  h.cd-=dt;
+  if(h.cd<=0){
+    let t=null,best=150;
+    for(const c of G.creeps){
+      if(c.dead) continue;
+      const d=Math.hypot(c.x-h.x,c.y-h.y);
+      if(d<best){ best=d; t=c; }
+    }
+    if(t){
+      h.cd=0.36;
+      G.bolts.push({x:h.x,y:h.y-14,tx:t.x,ty:t.y,tgt:t,dmg:10+Math.floor(G.wave*0.6),
+        sp:760,c:'#ffeab4',kind:'sword'});
+      SFX.shoot();
+    } else h.cd=0.1;
+  }
+  if(h.hp<=0 && h.down<=0){ h.down=5; addFX(h.x,h.y,CINNABAR,20); }
+}
+
+/* ---------------- 渲染 ---------------- */
+function render(){
+  ctx.setTransform(DPR*SCALE,0,0,DPR*SCALE,OX*DPR,OY*DPR);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0b0d11'; ctx.fillRect(0,0,W,H);   // 画布底（含上下两条 UI 带）
+  // 棋盘整体下移到顶栏之下，再裁到棋盘矩形 —— 塔尖不会漫到 UI 带上
+  ctx.save();
+  ctx.translate(0,PAD_T);
+  ctx.beginPath(); ctx.rect(0,0,BW,BH); ctx.clip();
+
+  // 地
+  ctx.fillStyle='#101318'; ctx.fillRect(0,0,BW,BH);
+  drawGround();
+  drawPaths();
+
+  // 可建造预览
+  if(G.sel && G.hover){
+    const [hx,hy]=G.hover;
+    const ok=canPlace(hx,hy) && G.stone>=BUILD[G.sel].cost;
+    ctx.save();
+    ctx.globalAlpha=0.16;
+    ctx.fillStyle= ok?'#8fd0ff':'#d9534a';
+    ctx.fillRect(hx*CS+2,hy*CS+2,CS-4,CS-4);
+    ctx.restore();
+    ctx.strokeStyle= ok?'rgba(143,208,255,.7)':'rgba(217,83,74,.7)';
+    ctx.lineWidth=1.4; ctx.strokeRect(hx*CS+2,hy*CS+2,CS-4,CS-4);
+    if(BUILD[G.sel].tower){
+      ctx.save(); ctx.globalAlpha=0.10; ctx.strokeStyle='#8fd0ff';
+      ctx.beginPath(); ctx.arc(hx*CS+CS/2,hy*CS+CS/2,TOWER[G.sel].range,0,7); ctx.stroke(); ctx.restore();
+    }
+  }
+
+  // 建筑
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const c=G.cells[y][x];
+    if(!c.t) continue;
+    drawBuilding(c,x*CS,y*CS);
+  }
+
+  drawGates();
+  drawCore();
+  drawCreeps();
+  drawBolts();
+  drawHero();
+  drawFX();
+  ctx.restore();
+  drawHUD();
+}
+
+function drawGround(){
+  // 稀疏的地表点阵 + 几片墨渍，不做整格网格线
+  ctx.save();
+  ctx.fillStyle='rgba(236,231,219,.055)';
+  for(let y=0;y<=CH;y++) for(let x=0;x<=CW;x++){
+    ctx.fillRect(x*CS-1,y*CS-1,2,2);
+  }
+  const blobs=[[3,3,52],[19,2,44],[6,11,60],[21,10,48],[12,1,38],[1,7,42]];
+  for(const [gx,gy,r] of blobs){
+    const g=ctx.createRadialGradient(gx*CS,gy*CS,2,gx*CS,gy*CS,r);
+    g.addColorStop(0,'rgba(150,140,120,.045)');
+    g.addColorStop(1,'rgba(150,140,120,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx*CS,gy*CS,r,0,7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* 妖路：从每道开启的妖门顺着流场下坡画一条淡朱砂点串
+   —— 玩家能直接看见妖从哪来、自己的迷宫到底劈出了几道弯 */
+function drawPaths(){
+  if(!G.gates) return;
+  ctx.save();
+  ctx.fillStyle='rgba(208,86,60,.46)';
+  for(const g of G.gates){
+    if(!g.act || g.len<0) continue;
+    ctx.beginPath();
+    let x=g.x, y=g.y, guard=0;
+    while(guard++<420){
+      ctx.moveTo(x*CS+CS/2+2.1, y*CS+CS/2);
+      ctx.arc(x*CS+CS/2, y*CS+CS/2, 2.1, 0, 7);
+      if(x===G.core.cx && y===G.core.cy) break;
+      let bd=G.dist[y*CW+x], nx=-1, ny=-1;
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(let i=0;i<4;i++){
+        const ax=x+dirs[i][0], ay=y+dirs[i][1];
+        if(ax<0||ay<0||ax>=CW||ay>=CH) continue;
+        const dv=G.dist[ay*CW+ax];
+        if(dv<0 || dv>=bd) continue;
+        bd=dv; nx=ax; ny=ay;
+      }
+      if(nx<0) break;
+      x=nx; y=ny;
+    }
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* 妖门：血环 + 裂隙。未开启的画成灰石圈，让玩家提前规划 */
+function drawGates(){
+  if(!G.gates) return;
+  const t=G.t||0;
+  for(const g of G.gates){
+    const cx=g.x*CS+CS/2, cy=g.y*CS+CS/2;
+    const pulse=0.5+0.5*Math.sin(t*2.1+g.i*1.7);
+    ctx.save();
+    ctx.fillStyle= g.act? 'rgba(184,64,47,'+(0.12+0.13*pulse).toFixed(3)+')'
+                          : 'rgba(126,120,110,.13)';
+    ctx.beginPath(); ctx.arc(cx,cy,CS*0.45,0,7); ctx.fill();
+    ctx.strokeStyle= g.act? 'rgba(224,122,90,'+(0.50+0.35*pulse).toFixed(3)+')'
+                           : 'rgba(146,138,126,.44)';
+    ctx.lineWidth= g.act? 2 : 1.2;
+    ctx.beginPath(); ctx.arc(cx,cy,CS*0.45,0,7); ctx.stroke();
+    ctx.strokeStyle= g.act? '#e07a4a' : 'rgba(150,140,128,.55)';
+    ctx.lineWidth=1.6;
+    ctx.beginPath();
+    ctx.moveTo(cx-CS*0.13,cy-CS*0.21); ctx.lineTo(cx+CS*0.05,cy-CS*0.05);
+    ctx.lineTo(cx-CS*0.06,cy+CS*0.05); ctx.lineTo(cx+CS*0.13,cy+CS*0.21);
+    ctx.stroke();
+    if(g.act){
+      let ly=cy-CS*0.66, lx=cx, ta='center';
+      if(g.y===0){ lx=cx+CS*0.80; ly=cy+CS*0.30; ta='left'; }        // 顶门标签让开出兵道
+      else if(g.y===CH-1){ lx=cx+CS*0.80; ly=cy-CS*0.16; ta='left'; }
+      if(g.x===0){ lx=cx+CS*0.70; ly=cy-CS*0.66; ta='left'; }
+      else if(g.x===CW-1){ lx=cx-CS*0.70; ly=cy-CS*0.66; ta='right'; }
+      ctx.fillStyle='rgba(224,122,90,'+(0.55+0.30*pulse).toFixed(3)+')';
+      ctx.font='11px "Kaiti SC",KaiTi,serif';
+      ctx.textAlign=ta;
+      ctx.fillText('妖门', lx, ly);
+      ctx.textAlign='left';
+    }
+    ctx.restore();
+  }
+}
+
+function drawBuilding(c,x,y){
+  const cx=x+CS/2, cy=y+CS/2;
+  const b=BUILD[c.t];
+  ctx.save();
+  // 影子
+  ctx.globalAlpha=0.34; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(cx,cy+13,15+c.lv*2,6+c.lv,0,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+
+  if(c.t==='farm'){
+    ctx.strokeStyle='#5a4a30'; ctx.lineWidth=1.6;
+    for(let i=0;i<3;i++){
+      const yy=cy-8+i*8;
+      ctx.beginPath(); ctx.moveTo(cx-12,yy); ctx.lineTo(cx+12,yy); ctx.stroke();
+    }
+    ctx.strokeStyle='#7f9a52'; ctx.lineWidth=2;
+    for(let i=0;i<4;i++){
+      const xx=cx-9+i*6, yy=cy-4;
+      ctx.beginPath(); ctx.moveTo(xx,yy+8); ctx.lineTo(xx-1,yy-4-c.lv*1.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xx,yy+8); ctx.lineTo(xx+3,yy-2-c.lv); ctx.stroke();
+    }
+  } else if(c.t==='mine'){
+    ctx.fillStyle='#4b4238';
+    ctx.beginPath(); ctx.moveTo(cx-13,cy+11); ctx.lineTo(cx-7,cy-9); ctx.lineTo(cx+5,cy-11);
+    ctx.lineTo(cx+13,cy+11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#2b2620';
+    ctx.beginPath(); ctx.moveTo(cx-5,cy+11); ctx.lineTo(cx-2,cy-3); ctx.lineTo(cx+6,cy+2);
+    ctx.lineTo(cx+4,cy+11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#c9a24a';
+    for(let i=0;i<c.lv+1;i++){
+      ctx.beginPath(); ctx.arc(cx-8+i*7,cy+6,1.8,0,7); ctx.fill();
+    }
+  } else if(c.t==='house'){
+    ctx.fillStyle='#3a2f26';
+    ctx.fillRect(cx-12,cy-2,24,14);
+    ctx.fillStyle='#b07a52';
+    ctx.beginPath(); ctx.moveTo(cx-15,cy-1); ctx.lineTo(cx,cy-14); ctx.lineTo(cx+15,cy-1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ffd873';
+    ctx.beginPath(); ctx.arc(cx,cy+5,2.6+c.lv*0.4,0,7); ctx.fill();
+    ctx.globalAlpha=0.22; ctx.fillStyle='#ffd873';
+    ctx.beginPath(); ctx.arc(cx,cy+5,9,0,7); ctx.fill(); ctx.globalAlpha=1;
+  } else {
+    // 塔
+    const T=TOWER[c.t];
+    const base=cy+12;
+    ctx.fillStyle='#241f1a';
+    ctx.beginPath(); ctx.moveTo(cx-11,base); ctx.lineTo(cx-8,base-14); ctx.lineTo(cx+8,base-14); ctx.lineTo(cx+11,base); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(236,231,219,.16)'; ctx.lineWidth=1; ctx.stroke();
+    const hh=16+c.lv*7;
+    ctx.fillStyle='#2f2923';
+    ctx.fillRect(cx-6,base-14-hh,12,hh);
+    ctx.strokeStyle='rgba(236,231,219,.12)'; ctx.strokeRect(cx-6,base-14-hh,12,hh);
+    // 塔头
+    const hy=base-14-hh;
+    if(c.t==='sword'){
+      ctx.fillStyle='#f2ecd8';
+      ctx.beginPath(); ctx.moveTo(cx,hy-16); ctx.lineTo(cx+3,hy-2); ctx.lineTo(cx-3,hy-2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#c9a24a'; ctx.fillRect(cx-6,hy-2,12,2.4);
+    } else if(c.t==='frost'){
+      ctx.fillStyle='#cfefff';
+      ctx.beginPath(); ctx.moveTo(cx,hy-17); ctx.lineTo(cx+7,hy-7); ctx.lineTo(cx,hy+1); ctx.lineTo(cx-7,hy-7);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha=0.25; ctx.beginPath(); ctx.arc(cx,hy-8,12,0,7); ctx.fill(); ctx.globalAlpha=1;
+    } else {
+      ctx.strokeStyle='#c9a2ff'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(cx,hy-8,7,0,7); ctx.stroke();
+      ctx.fillStyle='#c9a2ff'; ctx.beginPath(); ctx.arc(cx,hy-8,3,0,7); ctx.fill();
+    }
+    // 等级点
+    for(let i=0;i<c.lv;i++){
+      ctx.fillStyle='#e6c877';
+      ctx.beginPath(); ctx.arc(cx-4+i*4, base+4, 1.8, 0, 7); ctx.fill();
+    }
+    if(c.flash>0){
+      ctx.globalAlpha=c.flash*0.5; ctx.strokeStyle=T.col; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(cx,hy-8,14+c.lv*2,0,7); ctx.stroke(); ctx.globalAlpha=1;
+    }
+  }
+  ctx.restore();
+}
+
+function drawCore(){
+  const {cx,cy}=G.core;
+  const x=cx*CS+CS/2+(G.core.shake>0?Math.sin(G.t||0)*2:0);
+  const y=cy*CS+CS/2;
+  const r=CS*0.72;
+  ctx.save();
+  // 光晕
+  const g=ctx.createRadialGradient(x,y,4,x,y,r*2.4);
+  g.addColorStop(0,'rgba(201,162,74,.22)');
+  g.addColorStop(1,'rgba(201,162,74,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*2.4,0,7); ctx.fill();
+  // 底座
+  ctx.fillStyle='#241f1a';
+  ctx.beginPath(); ctx.ellipse(x,y+r*0.62,r*1.1,r*0.42,0,0,7); ctx.fill();
+  // 碑身
+  ctx.fillStyle='#3a2f26';
+  ctx.beginPath();
+  ctx.moveTo(x-r*0.5,y+r*0.55); ctx.lineTo(x-r*0.42,y-r*0.8);
+  ctx.lineTo(x,y-r*1.15); ctx.lineTo(x+r*0.42,y-r*0.8); ctx.lineTo(x+r*0.5,y+r*0.55);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(201,162,74,.55)'; ctx.lineWidth=1.4; ctx.stroke();
+  // 核心玉
+  const pul=0.6+0.4*Math.sin((G.t||0)*2.4);
+  ctx.fillStyle='rgba(230,200,119,'+pul.toFixed(2)+')';
+  ctx.beginPath(); ctx.arc(x,y-r*0.15,r*0.26,0,7); ctx.fill();
+  // 血条
+  const bw=CS*1.5, bh=4;
+  const bx=x-bw/2, by=y-r*1.45;
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(bx,by,bw,bh);
+  const pr=Math.max(0,G.core.hp/G.core.maxhp);
+  ctx.fillStyle= pr>0.4?'#b8402f':'#d9534a';
+  ctx.fillRect(bx,by,bw*pr,bh);
+  ctx.strokeStyle='rgba(201,162,74,.5)'; ctx.lineWidth=1; ctx.strokeRect(bx,by,bw,bh);
+  ctx.restore();
+}
+
+function drawCreeps(){
+  for(const c of G.creeps){
+    if(c.dead) continue;
+    const bob=Math.sin(c.ph)*1.6;
+    ctx.save();
+    ctx.globalAlpha=0.4; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(c.x,c.y+c.r*0.75,c.r*0.9,c.r*0.34,0,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+    // 身体
+    ctx.fillStyle=c.c;
+    ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r,0,7); ctx.fill();
+    ctx.globalAlpha=0.5; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.arc(c.x,c.y+bob+c.r*0.3,c.r*0.82,0,Math.PI); ctx.fill();
+    ctx.globalAlpha=1;
+    // 眼
+    ctx.fillStyle='#ffeab4';
+    const ex=c.face*3;
+    ctx.beginPath(); ctx.arc(c.x-4+ex,c.y+bob-2,1.9,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(c.x+4+ex,c.y+bob-2,1.9,0,7); ctx.fill();
+    // 甲
+    if(c.armor){
+      ctx.strokeStyle='rgba(200,215,230,.55)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r+2.5,-2.4,-0.7); ctx.stroke();
+    }
+    // 王
+    if(c.boss){
+      // 锯齿灵环：小妖是圆，妖王是刺，一眼能分
+      const spin=c.ph*0.35, N=12;
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const a1=spin+i*Math.PI*2/N, a2=a1+Math.PI/N;
+        const r1=c.r+10, r2=c.r+3;
+        if(i===0) ctx.moveTo(c.x+Math.cos(a1)*r1, c.y+bob+Math.sin(a1)*r1);
+        else ctx.lineTo(c.x+Math.cos(a1)*r1, c.y+bob+Math.sin(a1)*r1);
+        ctx.lineTo(c.x+Math.cos(a2)*r2, c.y+bob+Math.sin(a2)*r2);
+      }
+      ctx.closePath();
+      ctx.fillStyle='rgba(138,63,208,.22)'; ctx.fill();
+      ctx.strokeStyle='rgba(180,138,224,.55)'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.strokeStyle='rgba(201,162,74,.85)'; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r+6,0,7); ctx.stroke();
+      ctx.strokeStyle='rgba(201,162,74,.28)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r+11,0,7); ctx.stroke();
+      ctx.fillStyle='rgba(201,162,74,.95)';
+      ctx.font='12px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center';
+      ctx.fillText('妖王', c.x, c.y-c.r-14);
+      ctx.textAlign='left';
+    }
+    // 减速
+    if(c.slowT>0){
+      ctx.strokeStyle='rgba(159,228,255,.75)'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r+5,0,7); ctx.stroke();
+    }
+    // 血条
+    if(c.hp<c.maxhp || c.boss){
+      const bw=c.r*(c.boss?2.9:2.2), bh=c.boss?4.6:3, bx=c.x-bw/2, by=c.y-c.r-(c.boss?13:9);
+      ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(bx,by,bw,bh);
+      ctx.fillStyle= c.boss? '#c9a24a' : '#e0524a';
+      ctx.fillRect(bx,by,bw*Math.max(0,c.hp/c.maxhp),bh);
+      if(c.boss){ ctx.strokeStyle='rgba(201,162,74,.55)'; ctx.lineWidth=1; ctx.strokeRect(bx,by,bw,bh); }
+    }
+    if(c.flash>0){
+      ctx.globalAlpha=c.flash*0.5; ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r,0,7); ctx.fill(); ctx.globalAlpha=1;
+    }
+    ctx.restore();
+  }
+}
+
+function drawBolts(){
+  ctx.save();
+  for(const b of G.bolts){
+    if(b.dead) continue;
+    ctx.fillStyle=b.c;
+    ctx.shadowColor=b.c; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.kind==='frost'?4:3,0,7); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  for(const b of G.beams){
+    const a=Math.max(0,b.life/b.max);
+    ctx.globalAlpha=a; ctx.strokeStyle=b.c; ctx.lineWidth=2.4;
+    ctx.shadowColor=b.c; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.moveTo(b.x1,b.y1);
+    const mx=(b.x1+b.x2)/2+(Math.random()-0.5)*10, my=(b.y1+b.y2)/2+(Math.random()-0.5)*10;
+    ctx.lineTo(mx,my); ctx.lineTo(b.x2,b.y2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawHero(){
+  const h=G.hero;
+  ctx.save();
+  if(h.down>0){
+    ctx.globalAlpha=0.4;
+    ctx.fillStyle=INK3;
+    ctx.beginPath(); ctx.ellipse(h.x,h.y,12,5,0,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=INK3; ctx.font='11px system-ui,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('昏迷 '+Math.ceil(h.down),h.x,h.y-12);
+    ctx.textAlign='left';
+    ctx.restore(); return;
+  }
+  ctx.globalAlpha=0.45; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(h.x,h.y+12,10,3.6,0,0,7); ctx.fill();
+  ctx.globalAlpha=1;
+  // 身
+  ctx.fillStyle='#2b333d';
+  ctx.beginPath(); ctx.ellipse(h.x,h.y,8,11,0,0,7); ctx.fill();
+  // 头
+  ctx.fillStyle='#e8dfc9';
+  ctx.beginPath(); ctx.arc(h.x,h.y-12,5.2,0,7); ctx.fill();
+  // 剑
+  ctx.strokeStyle='#f2ecd8'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(h.x+h.face*6,h.y+2);
+  ctx.lineTo(h.x+h.face*16,h.y-12);
+  ctx.stroke();
+  // 血条
+  const bw=26,bx=h.x-bw/2,by=h.y-25;
+  ctx.fillStyle='rgba(0,0,0,.65)'; ctx.fillRect(bx,by,bw,3.4);
+  ctx.fillStyle='#7fbf6a'; ctx.fillRect(bx,by,bw*Math.max(0,h.hp/h.maxhp),3.4);
+  ctx.restore();
+}
+
+function drawFX(){
+  for(const p of G.fx){
+    const a=Math.max(0,p.life/p.max);
+    ctx.globalAlpha=a; ctx.fillStyle=p.col;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawHUD(){
+  // 顶部条
+  ctx.save();
+  ctx.fillStyle='rgba(8,9,11,.82)';
+  ctx.fillRect(0,0,W,46);
+  ctx.strokeStyle='rgba(201,162,74,.22)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,46.5); ctx.lineTo(W,46.5); ctx.stroke();
+
+  ctx.font='15px "Kaiti SC",KaiTi,serif';
+  ctx.textBaseline='middle';
+  const y=24;
+  ctx.fillStyle=GOLD2; ctx.fillText('灵石',16,y);
+  ctx.fillStyle=INK;  ctx.fillText(Math.floor(G.stone),58,y);
+
+  ctx.fillStyle='#9fbf7a'; ctx.fillText('存粮',132,y);
+  ctx.fillStyle=INK;  ctx.fillText(Math.floor(G.food),174,y);
+
+  ctx.fillStyle='#b08ae0'; ctx.fillText('人口',248,y);
+  ctx.fillStyle=INK;  ctx.fillText(G.pop+' / '+G.popMax,290,y);
+  if(G.starve>0){
+    ctx.fillStyle='#e0916a'; ctx.font='13px "Kaiti SC",KaiTi,serif';
+    ctx.fillText('断粮',332,y);
+  }
+
+  ctx.fillStyle=CINNABAR; ctx.fillText('核心',372,y);
+  ctx.fillStyle=INK;
+  ctx.fillText(Math.max(0,Math.round(G.core.hp)),414,y);
+  const bw=110,bx=452,by=y-5;
+  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(bx,by,bw,10);
+  ctx.fillStyle= G.core.hp/G.core.maxhp>0.4? '#b8402f':'#d9534a';
+  ctx.fillRect(bx,by,bw*Math.max(0,G.core.hp/G.core.maxhp),10);
+  ctx.strokeStyle='rgba(201,162,74,.4)'; ctx.strokeRect(bx,by,bw,10);
+
+  // 妖路：最远妖门到核心要走几步（建塔变长会当场跳数）
+  const openedG=G.gates.filter(g=>g.act).length;
+  ctx.fillStyle='#8fb6d0'; ctx.fillText('妖门',576,y);
+  ctx.fillStyle=INK;  ctx.fillText(openedG+'/4',618,y);
+  ctx.fillStyle='#e0916a'; ctx.fillText('妖路',664,y);
+  ctx.fillStyle=INK;  ctx.fillText(G.pathLen+' 步',706,y);
+
+  // 波次 / 倒计时
+  ctx.textAlign='right';
+  if(G.phase==='prep'){
+    ctx.fillStyle=INK2; ctx.fillText('第 '+(G.wave+1)+' 波',W-92,y);
+    ctx.fillStyle=GOLD2; ctx.font='17px "Kaiti SC",KaiTi,serif';
+    ctx.fillText(Math.ceil(G.prepT)+'s',W-24,y);
+  } else if(G.phase==='wave'){
+    const left=G.spawnQ.length+G.creeps.length;
+    ctx.fillStyle='#e0916a'; ctx.fillText('妖潮 '+left,W-24,y);
+  } else {
+    ctx.fillStyle=INK3; ctx.fillText('已结束',W-24,y);
+  }
+  ctx.textAlign='left';
+
+  // 提示
+  if(G.msgT>0 && G.msg){
+    ctx.globalAlpha=Math.min(1,G.msgT*2);
+    ctx.textAlign='center';
+    ctx.font='15px "Kaiti SC",KaiTi,serif';
+    ctx.fillStyle='rgba(8,9,11,.8)';
+    const tw=ctx.measureText(G.msg).width+28;
+    const my=PAD_T+BH-40;
+    ctx.fillRect(W/2-tw/2,my,tw,26);
+    ctx.fillStyle=GOLD2; ctx.fillText(G.msg,W/2,my+14);
+    ctx.textAlign='left'; ctx.globalAlpha=1;
+  }
+
+  ctx.restore();
+  drawBuildBar();
+}
+
+function drawBuildBar(){
+  const bh=PAD_B, by=H-PAD_B;
+  ctx.save();
+  ctx.fillStyle='rgba(8,9,11,.86)';
+  ctx.fillRect(0,by,W,bh);
+  ctx.strokeStyle='rgba(201,162,74,.2)';
+  ctx.beginPath(); ctx.moveTo(0,by+0.5); ctx.lineTo(W,by+0.5); ctx.stroke();
+
+  const cw=132, gap=8;
+  const total=ORDER.length*cw+(ORDER.length-1)*gap;
+  let x=(W-total)/2;
+  for(const t of ORDER){
+    const b=BUILD[t], sel=(G.sel===t), afford=G.stone>=b.cost;
+    ctx.fillStyle= sel? 'rgba(201,162,74,.18)' : 'rgba(236,231,219,.035)';
+    ctx.fillRect(x,by+9,cw,bh-18);
+    ctx.strokeStyle= sel? '#c9a24a' : 'rgba(236,231,219,.14)';
+    ctx.lineWidth= sel?1.6:1;
+    ctx.strokeRect(x,by+9,cw,bh-18);
+    // 色块
+    ctx.fillStyle=b.c; ctx.globalAlpha=afford?1:0.35;
+    ctx.fillRect(x+9,by+20,10,10);
+    ctx.globalAlpha=1;
+    // 名
+    ctx.fillStyle= afford? INK : INK3;
+    ctx.font='14px "Kaiti SC",KaiTi,serif';
+    ctx.fillText(b.n, x+26, by+25);
+    // 价
+    ctx.fillStyle= afford? GOLD2 : '#7a5a3a';
+    ctx.font='12px system-ui,sans-serif';
+    ctx.fillText(b.cost+' 灵石', x+26, by+41);
+    // 键位
+    ctx.fillStyle=INK3; ctx.font='10.5px system-ui,sans-serif';
+    ctx.textAlign='right'; ctx.fillText(b.key, x+cw-10, by+20); ctx.textAlign='left';
+    x+=cw+gap;
+  }
+  ctx.restore();
+}
+
+/* ---------------- 输入 ---------------- */
+const keys={};
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  keys[k]=true;
+  if(k===' '){ e.preventDefault();
+    if(G&&G.phase==='prep'){
+      const gain=Math.round(G.prepT*2);
+      G.stone+=gain; G.bonus+=gain;
+      toast('提前开波 · 灵石 +'+gain);
+      startWave();
+    }
+  }
+  if(k==='escape'){ G.sel=null; }
+  for(const t of ORDER){
+    if(k===BUILD[t].key){ G.sel = (G.sel===t? null : t); }
+  }
+});
+window.addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+
+function toWorld(ev){
+  const r=cv.getBoundingClientRect();
+  const px=(ev.clientX-r.left)/SCALE;
+  const py=(ev.clientY-r.top)/SCALE-PAD_T;
+  return [px,py];
+}
+cv.addEventListener('mousemove',ev=>{
+  if(!G) return;
+  const [px,py]=toWorld(ev);
+  const gx=Math.floor(px/CS), gy=Math.floor(py/CS);
+  if(gx>=0&&gy>=0&&gx<CW&&gy<CH) G.hover=[gx,gy]; else G.hover=null;
+});
+cv.addEventListener('mouseleave',()=>{ if(G) G.hover=null; });
+cv.addEventListener('contextmenu',ev=>ev.preventDefault());
+cv.addEventListener('mousedown',ev=>{
+  if(!G||G.phase==='over') return;
+  ac();
+  const [px,py]=toWorld(ev);
+  const gx=Math.floor(px/CS), gy=Math.floor(py/CS);
+  if(gx<0||gy<0||gx>=CW||gy>=CH) return;
+  const c=G.cells[gy][gx];
+  if(c.core){ if(ev.button===0) repairCore(); return; }
+  if(ev.button===2){ sell(gx,gy); return; }
+  if(c.t){ upgrade(gx,gy); return; }
+  if(G.sel) place(gx,gy,G.sel);
+});
+
+/* ---------------- 缩放 ---------------- */
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  const ww=window.innerWidth, wh=window.innerHeight;
+  SCALE=Math.min(ww/W, wh/H);
+  // 画布 CSS 尺寸本来就被设成 W*SCALE × H*SCALE，居中交给 #stage 的 flex 去做。
+  // 这里再算一次留白就会双重偏移：画面被推出画布右边、而且鼠标坐标会偏掉。
+  OX=0; OY=0;
+  cv.width=Math.round(W*SCALE*DPR);
+  cv.height=Math.round(H*SCALE*DPR);
+  cv.style.width=Math.round(W*SCALE)+'px';
+  cv.style.height=Math.round(H*SCALE)+'px';
+  render();
+}
+window.addEventListener('resize',resize);
+
+/* ---------------- 主循环 ---------------- */
+function loop(ts){
+  raf=requestAnimationFrame(loop);
+  if(!lastT) lastT=ts;
+  let dt=(ts-lastT)/1000; lastT=ts;
+  dt=Math.max(0,Math.min(0.05,dt));
+  G.t=(G.t||0)+dt;
+  update(dt);
+  render();
+}
+
+/* ---------------- 启动 ---------------- */
+function boot(){
+  newGame();
+  resize();
+  lastT=0;
+  if(raf) cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(loop);
+}
+document.getElementById('startBtn').addEventListener('click',()=>{
+  ac();
+  document.getElementById('startScreen').classList.remove('on');
+  boot();
+});
+document.getElementById('againBtn').addEventListener('click',()=>{
+  ac();
+  document.getElementById('endScreen').classList.remove('on');
+  boot();
+});
+
+// 首帧先画个底，避免开场黑屏
+newGame(); resize();
+</script>
+</body>
+</html>
