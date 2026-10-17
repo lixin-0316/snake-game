@@ -11,6 +11,12 @@
     user-select:none;touch-action:manipulation;
     font-family:"Kaiti SC",KaiTi,"Songti SC",serif;color:#ece7db}
   #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  /* 手机竖屏时棋盘会被压成一条，提醒横过来（不挡画面） */
+  #rotHint{position:fixed;left:0;right:0;top:0;z-index:30;display:none;
+    padding:7px 12px;text-align:center;font:13px/1.5 "Kaiti SC",KaiTi,serif;
+    color:#e6c877;background:rgba(201,162,74,.12);
+    border-bottom:1px solid rgba(201,162,74,.28);pointer-events:none}
+  @media (orientation:portrait) and (max-width:820px){ #rotHint{display:block} }
   canvas{display:block;touch-action:none;image-rendering:auto}
   .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
     background:rgba(6,7,9,.90);z-index:20;flex-direction:column;text-align:center;padding:24px}
@@ -31,6 +37,7 @@
 </style>
 </head>
 <body>
+<div id="rotHint">↻ 手机横过来玩，棋盘才铺得开</div>
 <div id="stage"><canvas id="c"></canvas></div>
 
 <div class="overlay on" id="startScreen">
@@ -45,7 +52,8 @@
     操作守将上场补刀。<br><br>
     <b>塔会挡路，但封不死妖门。</b>把塔摆成迷宫，妖就得绕远 —— 顶栏的<b>妖路</b>步数会当场变长，
     同样的塔就能多打好几秒。这是这游戏最值钱的一手。<br><br>
-    <span class="kbd">1</span>~<span class="kbd">6</span> 选建筑 · 左键放置 · 左键点塔升级（最高四阶）· 右键拆除<br>
+    <span class="kbd">1</span>~<span class="kbd">6</span> 或<b>直接点下方卡片</b>选建筑 · 左键放置 · 左键点塔升级（最高四阶）· 右键拆除<br>
+    <span style="color:#8a8378">手机上：点卡片选建筑 → 点格子建造 → 再点同格升级，横屏更好操作</span><br>
     左键点<b>核心</b>：伤了花 40 修 80，满血花 90 加固上限 · 
     <span class="kbd">空格</span>提前开波换灵石
   </div>
@@ -1147,17 +1155,34 @@ cv.addEventListener('mousemove',ev=>{
 });
 cv.addEventListener('mouseleave',()=>{ if(G) G.hover=null; });
 cv.addEventListener('contextmenu',ev=>ev.preventDefault());
-cv.addEventListener('mousedown',ev=>{
+/* 统一指针处理：鼠标和触屏走同一条路。
+   toWorld 已经把 PAD_T 减掉，所以 py>=BH 就是落在底部建造栏上。 */
+function handleTap(px,py,button){
   if(!G||G.phase==='over') return;
-  ac();
-  const [px,py]=toWorld(ev);
+  if(py>=BH){                       // 点建造栏 = 选建筑（手机上唯一能选的方式）
+    const cw=132, gap=8;
+    const total=ORDER.length*cw+(ORDER.length-1)*gap;
+    let bx=(W-total)/2;
+    for(const k of ORDER){
+      if(px>=bx && px<bx+cw){ G.sel = (G.sel===k? null : k); return; }
+      bx+=cw+gap;
+    }
+    return;
+  }
   const gx=Math.floor(px/CS), gy=Math.floor(py/CS);
   if(gx<0||gy<0||gx>=CW||gy>=CH) return;
   const c=G.cells[gy][gx];
-  if(c.core){ if(ev.button===0) repairCore(); return; }
-  if(ev.button===2){ sell(gx,gy); return; }
+  if(c.core){ if(button!==2) repairCore(); return; }
+  if(button===2){ sell(gx,gy); return; }
   if(c.t){ upgrade(gx,gy); return; }
   if(G.sel) place(gx,gy,G.sel);
+}
+cv.addEventListener('pointerdown',ev=>{
+  if(!G) return;
+  ac();
+  if(ev.pointerType!=='mouse') ev.preventDefault();
+  const [px,py]=toWorld(ev);
+  handleTap(px,py,ev.button||0);
 });
 
 /* ---------------- 缩放 ---------------- */
