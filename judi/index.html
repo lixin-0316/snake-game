@@ -9,58 +9,96 @@
   html,body{height:100%;background:#0b0d11;overflow:hidden;
     -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
     user-select:none;touch-action:manipulation;
-    font-family:"Kaiti SC",KaiTi,"Songti SC",serif;color:#ece7db}
+    font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",
+      system-ui,sans-serif;color:#e9e6df;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    font-feature-settings:"tnum" 1}
   #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   /* 手机竖屏时棋盘会被压成一条，提醒横过来（不挡画面） */
   #rotHint{position:fixed;left:0;right:0;top:0;z-index:30;display:none;
-    padding:7px 12px;text-align:center;font:13px/1.5 "Kaiti SC",KaiTi,serif;
+    padding:7px 12px;text-align:center;font:13px/1.5 -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
     color:#e6c877;background:rgba(201,162,74,.12);
     border-bottom:1px solid rgba(201,162,74,.28);pointer-events:none}
   @media (orientation:portrait) and (max-width:820px){ #rotHint{display:block} }
   canvas{display:block;touch-action:none;image-rendering:auto}
   /* 局内抉择卡片 */
   #perkCards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px}
-  .pcard{width:196px;min-height:152px;padding:16px 14px;cursor:pointer;transition:.16s;
-    display:flex;flex-direction:column;align-items:center;gap:9px;
-    border:1px solid rgba(201,162,74,.36);border-radius:8px;
-    background:linear-gradient(180deg,rgba(201,162,74,.09),rgba(236,231,219,.02))}
-  .pcard:hover{border-color:#c9a24a;transform:translateY(-2px);
-    background:linear-gradient(180deg,rgba(201,162,74,.20),rgba(236,231,219,.04))}
-  .pcard .pk{font:11px system-ui,sans-serif;color:#6b665e}
-  .pcard .pn{font-size:19px;color:#e6c877;letter-spacing:.14em}
-  .pcard .pd{font-size:13px;line-height:1.72;color:#a9a294;text-align:center}
+  .pcard{width:200px;min-height:158px;padding:18px 16px;cursor:pointer;transition:.2s;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    border:1px solid rgba(255,255,255,.09);border-radius:16px;
+    background:linear-gradient(180deg,rgba(255,255,255,.058),rgba(255,255,255,.015));
+    box-shadow:0 16px 40px -24px #000}
+  .pcard:hover{border-color:rgba(232,200,119,.65);transform:translateY(-4px);
+    background:linear-gradient(180deg,rgba(232,200,119,.14),rgba(255,255,255,.02));
+    box-shadow:0 22px 46px -22px rgba(232,200,119,.35)}
+  .pcard .pk{font:10px system-ui,sans-serif;color:#5f5b53;letter-spacing:.18em}
+  .pcard .sig{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:21px;color:#f0dfae;
+    font-family:"Songti SC","Source Han Serif SC",STZhongsong,serif;
+    border:1px solid rgba(232,200,119,.42);
+    background:radial-gradient(circle at 50% 28%,rgba(232,200,119,.24),rgba(232,200,119,.03));
+    box-shadow:inset 0 0 14px rgba(232,200,119,.14)}
+  .pcard .pn{font-size:19px;font-weight:600;color:#f0dfae;letter-spacing:.06em}
+  .pcard .pd{font-size:12.5px;line-height:1.75;color:#9b958a;text-align:center}
   @media (max-width:760px){
     .pcard{width:146px;min-height:118px;padding:12px 9px;gap:6px}
     .pcard .pn{font-size:16px} .pcard .pd{font-size:11.5px;line-height:1.6}
   }
   .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-    background:rgba(6,7,9,.90);z-index:20;flex-direction:column;text-align:center;padding:24px}
+    background:radial-gradient(120% 90% at 50% 0%,rgba(20,24,32,.94),rgba(5,6,8,.97));
+    z-index:20;flex-direction:column;text-align:center;padding:24px;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
-  .ttl{font-size:34px;letter-spacing:.22em;color:#e6c877;text-shadow:0 0 22px rgba(201,162,74,.28)}
-  .sub{font-size:14.5px;line-height:2.05;color:#a9a294;max-width:660px;margin-top:18px;text-align:left}
-  .sub b{color:#ece7db;font-weight:400}
-  .kbd{display:inline-block;min-width:20px;padding:1px 6px;border:1px solid rgba(236,231,219,.3);
-    border-radius:4px;font-size:12px;color:#e6c877;font-family:system-ui,sans-serif}
-  .btn{margin-top:26px;padding:12px 42px;border:1px solid rgba(201,162,74,.6);border-radius:6px;
-    background:rgba(201,162,74,.10);color:#e6c877;font-size:17px;letter-spacing:.2em;cursor:pointer;
-    font-family:inherit;transition:.18s}
-  .btn:hover{background:rgba(201,162,74,.22);border-color:#c9a24a}
+  .feat{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;max-width:700px}
+  .fitem{width:212px;padding:14px 16px;text-align:left;border-radius:14px;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,rgba(255,255,255,.052),rgba(255,255,255,.016))}
+  .fitem b{display:block;font-size:14px;font-weight:600;color:#e9e6df;letter-spacing:.02em}
+  .fitem span{display:block;margin-top:6px;font-size:12px;line-height:1.72;color:#8d8577}
+  .keys{margin-top:18px;font-size:12px;line-height:1.9;color:#6f6a60;max-width:680px}
+  @media (max-width:760px){
+    .ttl{font-size:29px} .tagline{font-size:11px;letter-spacing:.24em}
+    .fitem{width:158px;padding:11px 12px} .fitem b{font-size:12.5px} .fitem span{font-size:11px;line-height:1.6}
+    .keys{font-size:11px}
+  }
+  .ttl{font-size:38px;font-weight:600;letter-spacing:.14em;color:#f0dfae;
+    font-family:"Songti SC","Source Han Serif SC",STZhongsong,serif;
+    text-shadow:0 0 40px rgba(232,200,119,.30),0 2px 0 rgba(0,0,0,.5)}
+  .tagline{margin-top:10px;font-size:12.5px;letter-spacing:.34em;color:#8d8577;text-indent:.34em}
+  .sub{font-size:14px;line-height:1.95;color:#9b958a;max-width:660px;margin-top:18px;text-align:left}
+  .sub b{color:#e9e6df;font-weight:600}
+  .kbd{display:inline-block;min-width:20px;padding:2px 7px;border:1px solid rgba(255,255,255,.12);
+    border-radius:6px;font-size:11.5px;color:#e8d9a8;background:rgba(255,255,255,.055);
+    font-family:inherit;line-height:1.4}
+  .btn{margin-top:26px;padding:13px 46px;border:1px solid rgba(232,200,119,.45);border-radius:999px;
+    background:linear-gradient(180deg,rgba(232,200,119,.20),rgba(232,200,119,.07));
+    color:#f2e3bb;font-size:15px;font-weight:600;letter-spacing:.10em;cursor:pointer;
+    font-family:inherit;transition:.2s;box-shadow:0 10px 30px -14px rgba(232,200,119,.5)}
+  .btn:hover{background:linear-gradient(180deg,rgba(232,200,119,.32),rgba(232,200,119,.13));
+    border-color:rgba(232,200,119,.75);transform:translateY(-1px);
+    box-shadow:0 14px 34px -12px rgba(232,200,119,.55)}
+  .btn:active{transform:translateY(0) scale(.985)}
   .stat{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px;max-width:560px}
-  .stat div{padding:8px 16px;border:1px solid rgba(236,231,219,.14);border-radius:6px;
-    font-size:13.5px;color:#a9a294;background:rgba(236,231,219,.03)}
-  .stat b{color:#e6c877;font-weight:400}
+  .stat div{padding:9px 16px;border:1px solid rgba(255,255,255,.09);border-radius:10px;
+    font-size:13px;color:#9b958a;background:rgba(255,255,255,.035)}
+  .stat b{color:#e8d9a8;font-weight:600;font-variant-numeric:tabular-nums}
   /* 开局选图 */
   .mapWrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px}
-  .mapBtn{width:212px;padding:11px 14px;cursor:pointer;text-align:left;font-family:inherit;
-    border:1px solid rgba(236,231,219,.16);border-radius:7px;transition:.16s;
-    background:rgba(236,231,219,.035);color:#a9a294;display:flex;flex-direction:column;gap:4px}
-  .mapBtn b{font-size:16px;font-weight:400;color:#ece7db;letter-spacing:.12em}
-  .mapBtn span{font-size:12px;line-height:1.62;color:#6b665e}
-  .mapBtn.on{border-color:#c9a24a;background:rgba(201,162,74,.13)}
-  .mapBtn.on b{color:#e6c877}
-  .mapBtn.on span{color:#a9a294}
-  .mapBtn:hover{border-color:rgba(201,162,74,.7)}
-  @media (max-width:760px){ .mapBtn{width:150px;padding:9px 11px} .mapBtn b{font-size:14px} }
+  .mapBtn{position:relative;width:236px;padding:14px 16px 14px 20px;cursor:pointer;text-align:left;
+    font-family:inherit;border:1px solid rgba(255,255,255,.09);border-radius:14px;transition:.2s;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.014));
+    display:flex;flex-direction:column;gap:5px;box-shadow:0 14px 34px -24px #000}
+  .mapBtn b{font-size:15px;font-weight:600;color:#e9e6df;letter-spacing:.04em}
+  .mapBtn span{font-size:11.5px;line-height:1.68;color:#8d8577}
+  .mapBtn::before{content:"";position:absolute;left:7px;top:14px;bottom:14px;width:3px;
+    border-radius:3px;background:rgba(255,255,255,.16);transition:.2s}
+  .mapBtn:hover{border-color:rgba(232,200,119,.45);transform:translateY(-2px)}
+  .mapBtn.on{border-color:rgba(232,200,119,.7);background:linear-gradient(180deg,rgba(232,200,119,.16),rgba(232,200,119,.04));
+    box-shadow:0 16px 38px -20px rgba(232,200,119,.45)}
+  .mapBtn.on b{color:#f0dfae}
+  .mapBtn.on span{color:#a8a294}
+  .mapBtn.on::before{background:#e8c877}
+  @media (max-width:760px){ .mapBtn{width:164px;padding:11px 12px 11px 17px} .mapBtn b{font-size:13.5px} }
 </style>
 </head>
 <body>
@@ -76,24 +114,18 @@
 
 <div class="overlay on" id="startScreen">
   <div class="ttl">荒 潮 · 据 点</div>
-  <div class="sub">
-    你是荒原上最后一处据点的管事。<b>白天经营，夜里挡潮。</b><br><br>
-    <b>灵石</b>是唯一硬通货 —— 建灵田养人、建矿场进账、建民居招人、建塔守家，四样抢同一笔钱。<br>
-    <b>人口</b>越多矿场产出越高，但吃粮也越凶。粮断了会饿死人。<br><br>
-    妖潮从<b>四处妖门</b>扑向中央的<b>据点核心</b>。头两波只开一门，波次越高开得越多。
-    塔会自己打，你也可以按
-    <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span>
-    操作守将上场补刀。<br><br>
-    <b>塔会挡路，但封不死妖门。</b>把塔摆成迷宫，妖就得绕远 —— 顶栏的<b>妖路</b>步数会当场变长，
-    同样的塔就能多打好几秒。这是这游戏最值钱的一手。<br><br>
-    <span class="kbd">1</span>~<span class="kbd">6</span> 或<b>直接点下方卡片</b>选建筑 · 左键放置 · 左键点塔升级（最高四阶）· 右键拆除<br>
-    <span style="color:#8a8378">手机上：点卡片选建筑 → 点格子建造 → 再点同格升级，横屏更好操作</span><br>
-    左键点<b>核心</b>：伤了花 40 修 80，满血花 90 加固上限 · 
-    <span class="kbd">空格</span>提前开波换灵石
+  <div class="tagline">白 天 经 营 · 夜 里 挡 潮</div>
+  <div class="feat">
+    <div class="fitem"><b>一种灵石，四张嘴</b><span>灵田养人 · 矿场进账 · 民居招人 · 建塔守家，四样抢同一笔钱</span></div>
+    <div class="fitem"><b>塔能挡路</b><span>把塔摆成迷宫，妖就得绕远 —— 顶栏「妖路」步数当场变长</span></div>
+    <div class="fitem"><b>守将上场</b><span>WASD 移动，J 放「断潮斩」；也能直接点卡片建造</span></div>
   </div>
   <div class="mapWrap" id="mapPick">
     <div class="mapBtn on" data-map="plain"><b>荒 原 据 点</b><span>四门均布，四面来妖 —— 标准开局，先学怎么摆迷宫</span></div>
     <div class="mapBtn" data-map="pass"><b>断 崖 隘 口</b><span>三门聚西，断崖夹出一道窄口 —— 卡口好守，但后门没人管</span></div>
+  </div>
+  <div class="keys">
+    1–7 或点卡片选建筑 · 左键放置 · 右键拆除 · 点核心修复/加固 · 空格提前开波 · 手机点两次同格=升级
   </div>
   <button class="btn" id="startBtn">进 场</button>
 </div>
@@ -122,6 +154,21 @@ const BG='#0b0d11';
 const cv=document.getElementById('c');
 const ctx=cv.getContext('2d');
 let DPR=1, SCALE=1, OX=0, OY=0;
+
+/* UI 统一字体（画布不吃 CSS 的 font-family，必须自己写） */
+const UIF='-apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif';
+
+/* 圆角矩形：现代 UI 的地基，所有面板/胶囊都走它 */
+function rrect(x,y,w,h,r){
+  const rr=Math.min(r,Math.abs(w)/2,Math.abs(h)/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.lineTo(x+w-rr,y); ctx.arcTo(x+w,y,x+w,y+rr,rr);
+  ctx.lineTo(x+w,y+h-rr); ctx.arcTo(x+w,y+h,x+w-rr,y+h,rr);
+  ctx.lineTo(x+rr,y+h); ctx.arcTo(x,y+h,x,y+h-rr,rr);
+  ctx.lineTo(x,y+rr); ctx.arcTo(x,y,x+rr,y,rr);
+  ctx.closePath();
+}
 
 /* ---------------- 建筑表 ---------------- */
 const BUILD={
@@ -297,7 +344,8 @@ function showPerk(){
     const p=G.perkChoices[i];
     const d=document.createElement('div');
     d.className='pcard';
-    d.innerHTML='<div class="pk">'+p.s+' · '+(i+1)+'</div>'+
+    d.innerHTML='<div class="pk">按 '+(i+1)+'</div>'+
+                '<div class="sig">'+p.s+'</div>'+
                 '<div class="pn">'+p.n+'</div>'+
                 '<div class="pd">'+p.d+'</div>';
     d.addEventListener('click',(function(idx){ return function(){ pickPerk(idx); }; })(i));
@@ -871,7 +919,7 @@ function render(){
   // 地图名水印：压得很淡，只做归属感
   ctx.save();
   ctx.globalAlpha=0.17; ctx.fillStyle=INK2;
-  ctx.font='13px "Kaiti SC",KaiTi,serif'; ctx.textBaseline='bottom';
+  ctx.font='13px -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif'; ctx.textBaseline='bottom';
   ctx.fillText(G.mapN, 13, BH-9);
   ctx.restore();
 
@@ -985,6 +1033,8 @@ function drawRocks(){
   for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
     if(!G.cells[y][x].rock) continue;
     const px=x*CS, py=y*CS;
+    // 每块石头按坐标抖动一点，不然一整排断崖像复制粘贴
+    const j=(x*37+y*91)%7-3, j2=(x*53+y*29)%5-2;
     // 落影
     ctx.fillStyle='rgba(0,0,0,.36)';
     ctx.fillRect(px+3,py+9,CS-5,CS-11);
@@ -994,21 +1044,21 @@ function drawRocks(){
     ctx.fillStyle=g;
     ctx.beginPath();
     ctx.moveTo(px+2,py+CS-3);
-    ctx.lineTo(px+5,py+10);
-    ctx.lineTo(px+CS*0.44,py+2);
-    ctx.lineTo(px+CS-4,py+12);
+    ctx.lineTo(px+5+j,py+10);
+    ctx.lineTo(px+CS*0.44+j2,py+2-j*0.4);
+    ctx.lineTo(px+CS-4+j*0.6,py+12+j2);
     ctx.lineTo(px+CS-2,py+CS-2);
     ctx.closePath(); ctx.fill();
     // 棱线高光
     ctx.strokeStyle='rgba(236,231,219,.14)'; ctx.lineWidth=1.1;
     ctx.beginPath();
-    ctx.moveTo(px+CS*0.44,py+2);
+    ctx.moveTo(px+CS*0.44+j2,py+2-j*0.4);
     ctx.lineTo(px+CS*0.39,py+CS*0.56);
-    ctx.lineTo(px+CS-4,py+12);
+    ctx.lineTo(px+CS-4+j*0.6,py+12+j2);
     ctx.stroke();
     // 顶面的一点冷光
     ctx.strokeStyle='rgba(160,190,215,.10)';
-    ctx.beginPath(); ctx.moveTo(px+5,py+10); ctx.lineTo(px+CS*0.44,py+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px+5+j,py+10); ctx.lineTo(px+CS*0.44+j2,py+2-j*0.4); ctx.stroke();
   }
   ctx.restore();
 }
@@ -1064,18 +1114,18 @@ function drawGates(){
       ctx.fillStyle=gg;
       ctx.beginPath(); ctx.arc(cx,cy,CS*0.78,0,7); ctx.fill();
     }
-    // 石环
+    // 石环（未开启的门压得很淡，别和开着的抢视线）
     ctx.strokeStyle= g.act? 'rgba(224,122,90,'+(0.50+0.35*pulse).toFixed(3)+')'
-                           : 'rgba(146,138,126,.40)';
-    ctx.lineWidth= g.act? 2.2 : 1.2;
+                           : 'rgba(146,138,126,.20)';
+    ctx.lineWidth= g.act? 2.2 : 1;
     ctx.beginPath(); ctx.arc(cx,cy,CS*0.45,0,7); ctx.stroke();
     if(!g.act){
       ctx.fillStyle='rgba(126,120,110,.10)';
       ctx.beginPath(); ctx.arc(cx,cy,CS*0.45,0,7); ctx.fill();
     }
     // 裂隙：四道锯齿从中心劈开，开着的门更亮更宽
-    ctx.strokeStyle= g.act? '#ffb08a' : 'rgba(150,140,128,.42)';
-    ctx.lineWidth= g.act? 2.0 : 1.0;
+    ctx.strokeStyle= g.act? '#ffb08a' : 'rgba(150,140,128,.24)';
+    ctx.lineWidth= g.act? 2.0 : 0.9;
     ctx.beginPath();
     ctx.moveTo(cx-CS*0.16,cy-CS*0.30); ctx.lineTo(cx-CS*0.03,cy-CS*0.10);
     ctx.lineTo(cx-CS*0.12,cy+CS*0.02); ctx.lineTo(cx+CS*0.04,cy+CS*0.12);
@@ -1097,7 +1147,7 @@ function drawGates(){
       if(g.x===0){ lx=cx+CS*0.70; ly=cy-CS*0.66; ta='left'; }
       else if(g.x===CW-1){ lx=cx-CS*0.70; ly=cy-CS*0.66; ta='right'; }
       ctx.fillStyle='rgba(224,122,90,'+(0.55+0.30*pulse).toFixed(3)+')';
-      ctx.font='11px "Kaiti SC",KaiTi,serif';
+      ctx.font='11px -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif';
       ctx.textAlign=ta;
       ctx.fillText('妖门', lx, ly);
       ctx.textAlign='left';
@@ -1282,6 +1332,12 @@ function drawCreeps(){
     // 身体
     ctx.fillStyle=c.c;
     ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r,0,7); ctx.fill();
+    // 暗描边 + 顶部高光：避免纯色圆饼的老气感
+    ctx.strokeStyle='rgba(0,0,0,.30)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r-0.6,0,7); ctx.stroke();
+    ctx.globalAlpha=0.15; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(c.x,c.y+bob-c.r*0.26,c.r*0.6,Math.PI*1.06,Math.PI*1.94); ctx.fill();
+    ctx.globalAlpha=1;
     ctx.globalAlpha=0.5; ctx.fillStyle='#000';
     ctx.beginPath(); ctx.arc(c.x,c.y+bob+c.r*0.3,c.r*0.82,0,Math.PI); ctx.fill();
     ctx.globalAlpha=1;
@@ -1336,7 +1392,7 @@ function drawCreeps(){
       ctx.strokeStyle='rgba(201,162,74,.28)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.arc(c.x,c.y+bob,c.r+11,0,7); ctx.stroke();
       ctx.fillStyle='rgba(201,162,74,.95)';
-      ctx.font='12px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center';
+      ctx.font='12px -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif'; ctx.textAlign='center';
       ctx.fillText('妖王', c.x, c.y-c.r-14);
       ctx.textAlign='left';
     }
@@ -1441,76 +1497,113 @@ function drawHurtFx(){
 function drawHUD(){
   // 顶部条
   ctx.save();
-  ctx.fillStyle='rgba(8,9,11,.82)';
-  ctx.fillRect(0,0,W,46);
-  ctx.strokeStyle='rgba(201,162,74,.22)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(0,46.5); ctx.lineTo(W,46.5); ctx.stroke();
-  // 本波进度：顶栏下沿一条细线，清到哪一目了然
+  // 顶栏：微渐变玻璃条 + 一根 1px 底线，不再用一整条金线当装饰
+  const bgG=ctx.createLinearGradient(0,0,0,46);
+  bgG.addColorStop(0,'rgba(15,18,24,.95)');
+  bgG.addColorStop(1,'rgba(9,11,15,.86)');
+  ctx.fillStyle=bgG; ctx.fillRect(0,0,W,46);
+  ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,45.5); ctx.lineTo(W,45.5); ctx.stroke();
+  // 本波进度细线
   if(G.phase==='wave' && G.waveTotal>0){
     const left=G.spawnQ.length+G.creeps.length;
     const pp=Math.max(0,Math.min(1,1-left/G.waveTotal));
-    ctx.fillStyle='rgba(201,162,74,.14)'; ctx.fillRect(0,44,W,2);
-    ctx.fillStyle='rgba(224,145,106,.9)'; ctx.fillRect(0,44,W*pp,2);
+    ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fillRect(0,43,W,2.5);
+    if(pp>0){
+      const pg=ctx.createLinearGradient(0,0,W,0);
+      pg.addColorStop(0,'#d9463a'); pg.addColorStop(1,'#e8c877');
+      ctx.fillStyle=pg; ctx.fillRect(0,43,W*pp,2.5);
+    }
   }
 
-  ctx.font='15px "Kaiti SC",KaiTi,serif';
   ctx.textBaseline='middle';
-  const y=24;
-  ctx.fillStyle=GOLD2; ctx.fillText('灵石',16,y);
-  ctx.fillStyle=INK;  ctx.fillText(Math.floor(G.stone),58,y);
+  const y=23, CHH=27, CY=9;
+  let cx0=14;
+  // 一枚胶囊 = 色点 + 小标签 + 数字
+  const chip=function(label,val,dot,valCol){
+    ctx.font='10.5px '+UIF; const lw=ctx.measureText(label).width;
+    ctx.font='600 14px '+UIF; const vw=ctx.measureText(val).width;
+    const w=11+7+6+lw+8+vw+13;
+    ctx.fillStyle='rgba(255,255,255,.045)'; rrect(cx0,CY,w,CHH,9); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=dot; ctx.beginPath(); ctx.arc(cx0+14,CY+CHH/2,3.1,0,7); ctx.fill();
+    ctx.font='10.5px '+UIF; ctx.fillStyle='rgba(233,230,223,.42)';
+    ctx.fillText(label,cx0+22,y);
+    ctx.font='600 14px '+UIF; ctx.fillStyle=valCol||INK;
+    ctx.fillText(val,cx0+22+lw+8,y);
+    cx0+=w+7;
+  };
+  const starving=G.starve>0;
+  chip('灵石', Math.floor(G.stone), '#e8c877', GOLD2);
+  chip(starving?'断粮':'存粮', Math.floor(G.food), starving?'#e0553f':'#8fbf6f', starving?'#f0926a':INK);
+  chip('人口', G.pop+'/'+G.popMax, '#a58ae0', INK);
+  // 核心：数字 + 一条进度
+  (function(){
+    const label='核心', val=String(Math.max(0,Math.round(G.core.hp)));
+    ctx.font='10.5px '+UIF; const lw=ctx.measureText(label).width;
+    ctx.font='600 14px '+UIF; const vw=ctx.measureText(val).width;
+    const barW=94, w=11+7+6+lw+8+vw+10+barW+13;
+    const danger=G.core.hp/G.core.maxhp<=0.4;
+    ctx.fillStyle='rgba(255,255,255,.045)'; rrect(cx0,CY,w,CHH,9); ctx.fill();
+    ctx.strokeStyle= danger? 'rgba(217,70,58,.55)' : 'rgba(255,255,255,.07)';
+    ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#e0553f'; ctx.beginPath(); ctx.arc(cx0+14,CY+CHH/2,3.1,0,7); ctx.fill();
+    ctx.font='10.5px '+UIF; ctx.fillStyle='rgba(233,230,223,.42)';
+    ctx.fillText(label,cx0+22,y);
+    ctx.font='600 14px '+UIF; ctx.fillStyle=INK;
+    ctx.fillText(val,cx0+22+lw+8,y);
+    const bx=cx0+w-barW-12, bw=barW, bh=6, byy=CY+CHH/2-bh/2;
+    ctx.fillStyle='rgba(0,0,0,.45)'; rrect(bx,byy,bw,bh,3); ctx.fill();
+    const pr=Math.max(0,Math.min(1,G.core.hp/G.core.maxhp));
+    if(pr>0){
+      const cg=ctx.createLinearGradient(bx,0,bx+bw,0);
+      cg.addColorStop(0,'#d9463a'); cg.addColorStop(1, danger?'#e0553f':'#e8a06a');
+      ctx.fillStyle=cg; rrect(bx,byy,Math.max(3,bw*pr),bh,3); ctx.fill();
+    }
+    cx0+=w+7;
+  })();
 
-  ctx.fillStyle='#9fbf7a'; ctx.fillText('存粮',132,y);
-  ctx.fillStyle=INK;  ctx.fillText(Math.floor(G.food),174,y);
-
-  ctx.fillStyle='#b08ae0'; ctx.fillText('人口',248,y);
-  ctx.fillStyle=INK;  ctx.fillText(G.pop+' / '+G.popMax,290,y);
-  if(G.starve>0){
-    ctx.fillStyle='#e0916a'; ctx.font='13px "Kaiti SC",KaiTi,serif';
-    ctx.fillText('断粮',332,y);
-  }
-
-  ctx.fillStyle=CINNABAR; ctx.fillText('核心',372,y);
-  ctx.fillStyle=INK;
-  ctx.fillText(Math.max(0,Math.round(G.core.hp)),414,y);
-  const bw=110,bx=452,by=y-5;
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(bx,by,bw,10);
-  ctx.fillStyle= G.core.hp/G.core.maxhp>0.4? '#b8402f':'#d9534a';
-  ctx.fillRect(bx,by,bw*Math.max(0,G.core.hp/G.core.maxhp),10);
-  ctx.strokeStyle='rgba(201,162,74,.4)'; ctx.strokeRect(bx,by,bw,10);
-
-  // 妖路：最远妖门到核心要走几步（建塔变长会当场跳数）
+  // 妖门 / 妖路：同样是胶囊，路变长会当场跳数
   const openedG=G.gates.filter(g=>g.act).length;
-  ctx.fillStyle='#8fb6d0'; ctx.fillText('妖门',576,y);
-  ctx.fillStyle=INK;  ctx.fillText(openedG+'/4',618,y);
-  ctx.fillStyle='#e0916a'; ctx.fillText('妖路',664,y);
-  ctx.fillStyle=INK;  ctx.fillText(G.pathLen+' 步',706,y);
+  chip('妖门', openedG+'/4', '#7fb6d6', INK);
+  chip('妖路', G.pathLen+' 步', '#e0916a', INK);
 
-  // 波次 / 倒计时
+  // 波次 / 倒计时（右对齐，数字用等宽数字让跳动不抖）
   ctx.textAlign='right';
   if(G.phase==='prep'){
-    ctx.fillStyle=INK2; ctx.fillText('第 '+(G.wave+1)+' 波',W-92,y);
-    ctx.fillStyle=GOLD2; ctx.font='17px "Kaiti SC",KaiTi,serif';
-    ctx.fillText(Math.ceil(G.prepT)+'s',W-24,y);
+    ctx.font='11.5px '+UIF; ctx.fillStyle='rgba(233,230,223,.42)';
+    ctx.fillText('第 '+(G.wave+1)+' 波', W-78, y);
+    ctx.font='600 17px '+UIF; ctx.fillStyle=GOLD2;
+    ctx.fillText(Math.ceil(G.prepT)+'s', W-16, y);
   } else if(G.phase==='wave'){
     const left=G.spawnQ.length+G.creeps.length;
-    ctx.fillStyle='#e0916a'; ctx.fillText('妖潮 '+left,W-24,y);
+    ctx.font='600 14px '+UIF;
+    const tw=ctx.measureText('妖潮 '+left).width;
+    const pw=tw+26, px0=W-16-pw;
+    ctx.fillStyle='rgba(217,70,58,.14)'; rrect(px0,CY,pw,CHH,9); ctx.fill();
+    ctx.strokeStyle='rgba(217,70,58,.34)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle='#e0553f'; ctx.beginPath(); ctx.arc(px0+13,CY+CHH/2,3.1,0,7); ctx.fill();
+    ctx.fillStyle='#f0926a'; ctx.fillText('妖潮 '+left, W-16-11, y);
   } else if(G.phase==='perk'){
-    ctx.fillStyle=GOLD2; ctx.fillText('抉择中',W-24,y);
+    ctx.font='600 14px '+UIF; ctx.fillStyle=GOLD2; ctx.fillText('抉择中',W-16,y);
   } else {
-    ctx.fillStyle=INK3; ctx.fillText('已结束',W-24,y);
+    ctx.font='600 14px '+UIF; ctx.fillStyle=INK3; ctx.fillText('已结束',W-16,y);
   }
   ctx.textAlign='left';
 
-  // 提示
+  // 提示：胶囊 + 一点投影
   if(G.msgT>0 && G.msg){
     ctx.globalAlpha=Math.min(1,G.msgT*2);
     ctx.textAlign='center';
-    ctx.font='15px "Kaiti SC",KaiTi,serif';
-    ctx.fillStyle='rgba(8,9,11,.8)';
-    const tw=ctx.measureText(G.msg).width+28;
-    const my=PAD_T+BH-40;
-    ctx.fillRect(W/2-tw/2,my,tw,26);
-    ctx.fillStyle=GOLD2; ctx.fillText(G.msg,W/2,my+14);
+    ctx.font='13.5px '+UIF;
+    const tw=ctx.measureText(G.msg).width+40;
+    const my=PAD_T+BH-44, mh=30;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=4;
+    ctx.fillStyle='rgba(18,21,27,.94)'; rrect(W/2-tw/2,my,tw,mh,15); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='rgba(232,200,119,.28)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=GOLD2; ctx.fillText(G.msg,W/2,my+mh/2+0.5);
     ctx.textAlign='left'; ctx.globalAlpha=1;
   }
 
@@ -1518,11 +1611,12 @@ function drawHUD(){
   if(G.phase==='prep' && G.nextComp && G.nextComp.length){
     const cnt={}, ord=[];
     for(const k of G.nextComp){ if(cnt[k]===undefined){ cnt[k]=0; ord.push(k); } cnt[k]++; }
-    ctx.font='11px "Kaiti SC",KaiTi,serif'; ctx.textBaseline='middle';
+    ctx.font='11px -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif'; ctx.textBaseline='middle';
     let wsum=0;
     for(const k of ord) wsum+=ctx.measureText(CREEP[k].n+cnt[k]).width+18;
-    ctx.fillStyle='rgba(8,9,11,.72)';
-    ctx.fillRect(6,PAD_T+5,wsum+10,22);
+    ctx.fillStyle='rgba(18,21,27,.82)';
+    rrect(6,PAD_T+5,wsum+10,24,9); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=1; ctx.stroke();
     let px=13;
     for(const k of ord){
       const b=CREEP[k];
@@ -1542,9 +1636,9 @@ function drawHUD(){
       const pk=PERK_MAP[G.perkLog[G.perkLog.length-1-i]];
       if(!pk) continue;
       const px=W-10-(i+1)*26, py=PAD_T+6;
-      ctx.fillStyle='rgba(201,162,74,.15)'; ctx.fillRect(px,py,22,20);
-      ctx.strokeStyle='rgba(201,162,74,.45)'; ctx.lineWidth=1; ctx.strokeRect(px,py,22,20);
-      ctx.fillStyle=GOLD2; ctx.font='12px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center';
+      ctx.fillStyle='rgba(232,200,119,.13)'; rrect(px,py,22,20,6); ctx.fill();
+      ctx.strokeStyle='rgba(232,200,119,.38)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle=GOLD2; ctx.font='12px -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif'; ctx.textAlign='center';
       ctx.fillText(pk.s, px+11, py+15); ctx.textAlign='left';
     }
   }
@@ -1556,36 +1650,49 @@ function drawHUD(){
 function drawBuildBar(){
   const bh=PAD_B, by=H-PAD_B, by_=by;
   ctx.save();
-  ctx.fillStyle='rgba(8,9,11,.86)';
-  ctx.fillRect(0,by,W,bh);
-  ctx.strokeStyle='rgba(201,162,74,.2)';
+  // 底栏与顶栏同一套玻璃质感，上下呼应
+  const bbg=ctx.createLinearGradient(0,by,0,H);
+  bbg.addColorStop(0,'rgba(9,11,15,.86)');
+  bbg.addColorStop(1,'rgba(15,18,24,.95)');
+  ctx.fillStyle=bbg; ctx.fillRect(0,by,W,bh);
+  ctx.strokeStyle='rgba(255,255,255,.07)';
   ctx.beginPath(); ctx.moveTo(0,by+0.5); ctx.lineTo(W,by+0.5); ctx.stroke();
 
   const cw=CARD_W, gap=CARD_GAP;
   const total=ORDER.length*cw+(ORDER.length-1)*gap;
   let x=(W-total)/2;
+  ctx.textBaseline='middle';
   for(const t of ORDER){
     const b=BUILD[t], sel=(G.sel===t), cost=costOf(t), afford=G.stone>=cost;
-    ctx.fillStyle= sel? 'rgba(201,162,74,.18)' : 'rgba(236,231,219,.035)';
-    ctx.fillRect(x,by+9,cw,bh-18);
-    ctx.strokeStyle= sel? '#c9a24a' : 'rgba(236,231,219,.14)';
-    ctx.lineWidth= sel?1.6:1;
-    ctx.strokeRect(x,by+9,cw,bh-18);
-    // 色块
-    ctx.fillStyle=b.c; ctx.globalAlpha=afford?1:0.35;
-    ctx.fillRect(x+9,by+20,10,10);
-    ctx.globalAlpha=1;
+    const cxp=x, cyp=by+8, cwd=cw, chd=bh-16;
+    ctx.globalAlpha= afford? 1 : 0.46;
+    ctx.fillStyle= sel? 'rgba(232,200,119,.13)' : 'rgba(255,255,255,.035)';
+    rrect(cxp,cyp,cwd,chd,10); ctx.fill();
+    if(sel){
+      ctx.save(); ctx.shadowColor='rgba(232,200,119,.55)'; ctx.shadowBlur=14;
+      ctx.strokeStyle='rgba(232,200,119,.95)'; ctx.lineWidth=1.6; ctx.stroke(); ctx.restore();
+    } else {
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1; ctx.stroke();
+    }
+    // 左侧色条：比小方块更利落
+    ctx.save(); rrect(cxp,cyp,cwd,chd,10); ctx.clip();
+    ctx.fillStyle=b.c; ctx.fillRect(cxp+1,cyp+1,3,chd-2); ctx.restore();
     // 名
-    ctx.fillStyle= afford? INK : INK3;
-    ctx.font='14px "Kaiti SC",KaiTi,serif';
-    ctx.fillText(b.n, x+26, by+25);
+    ctx.font='600 13.5px '+UIF;
+    ctx.fillStyle= sel? GOLD2 : (afford? INK : 'rgba(233,230,223,.55)');
+    ctx.fillText(b.n, cxp+12, cyp+17);
     // 价
-    ctx.fillStyle= afford? GOLD2 : '#7a5a3a';
-    ctx.font='12px system-ui,sans-serif';
-    ctx.fillText(cost+' 灵石', x+26, by+41);
-    // 键位
-    ctx.fillStyle=INK3; ctx.font='10.5px system-ui,sans-serif';
-    ctx.textAlign='right'; ctx.fillText(b.key, x+cw-10, by+20); ctx.textAlign='left';
+    ctx.font='11.5px '+UIF;
+    ctx.fillStyle= afford? 'rgba(233,230,223,.5)' : 'rgba(224,110,80,.9)';
+    ctx.fillText(cost+' 灵石', cxp+12, cyp+34);
+    // 键位胶囊
+    ctx.font='10px '+UIF;
+    const kw=ctx.measureText(b.key).width+11;
+    ctx.fillStyle='rgba(255,255,255,.07)';
+    rrect(cxp+cwd-kw-7, cyp+7, kw, 15, 5); ctx.fill();
+    ctx.fillStyle='rgba(233,230,223,.45)'; ctx.textAlign='center';
+    ctx.fillText(b.key, cxp+cwd-kw/2-7, cyp+15);
+    ctx.textAlign='left'; ctx.globalAlpha=1;
     x+=cw+gap;
   }
   // ---- 左侧：守将技能按钮 ----
@@ -1594,20 +1701,23 @@ function drawBuildBar(){
     const h=G.hero;
     const ready=(h.skillCd<=0 && h.down<=0);
     ctx.beginPath(); ctx.arc(bx,by,r,0,7);
-    ctx.fillStyle= ready? 'rgba(201,162,74,.20)' : 'rgba(236,231,219,.05)';
+    ctx.fillStyle= ready? 'rgba(232,200,119,.14)' : 'rgba(255,255,255,.045)';
     ctx.fill();
-    ctx.strokeStyle= ready? '#c9a24a' : 'rgba(140,132,120,.45)';
-    ctx.lineWidth= ready?1.8:1.2; ctx.stroke();
-    if(!ready && h.skillCd>0){          // 冷却扇形
+    ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=1; ctx.stroke();
+    if(ready){
+      ctx.save(); ctx.shadowColor='rgba(232,200,119,.7)'; ctx.shadowBlur=16;
+      ctx.strokeStyle='rgba(232,200,119,.9)'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.arc(bx,by,r-0.8,0,7); ctx.stroke(); ctx.restore();
+    } else if(h.skillCd>0){              // 环形冷却
       const p=1-h.skillCd/SKILL.cd;
-      ctx.beginPath(); ctx.moveTo(bx,by);
-      ctx.arc(bx,by,r-1,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.closePath();
-      ctx.fillStyle='rgba(201,162,74,.22)'; ctx.fill();
+      ctx.strokeStyle='rgba(232,200,119,.85)'; ctx.lineWidth=2.6; ctx.lineCap='round';
+      ctx.beginPath(); ctx.arc(bx,by,r-1.6,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke();
+      ctx.lineCap='butt';
     }
-    ctx.fillStyle= ready? GOLD2 : INK3;
-    ctx.font='15px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle= ready? GOLD2 : 'rgba(233,230,223,.3)';
+    ctx.font='600 15px '+UIF; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('斩', bx, by+0.5);
-    ctx.font='9px system-ui,sans-serif'; ctx.fillStyle=INK3;
+    ctx.font='9.5px '+UIF; ctx.fillStyle= ready? 'rgba(232,200,119,.6)' : INK3;
     ctx.fillText(ready? 'J' : Math.ceil(h.skillCd)+'s', bx, by+r+7);
     ctx.textAlign='left'; ctx.textBaseline='middle';
   })();
@@ -1616,12 +1726,13 @@ function drawBuildBar(){
   if(G.phase==='prep'){
     const bw2=52, bh2=40, bx2=W-62, by2=by_+bh/2-bh2/2;
     const gain=Math.round(G.prepT*2);
-    ctx.fillStyle='rgba(184,64,47,.16)'; ctx.fillRect(bx2,by2,bw2,bh2);
-    ctx.strokeStyle='rgba(224,122,90,.55)'; ctx.lineWidth=1.2; ctx.strokeRect(bx2,by2,bw2,bh2);
-    ctx.fillStyle='#e0916a'; ctx.font='13px "Kaiti SC",KaiTi,serif'; ctx.textAlign='center';
-    ctx.fillText('开波', bx2+bw2/2, by2+15);
-    ctx.fillStyle=GOLD2; ctx.font='11px system-ui,sans-serif';
-    ctx.fillText('+'+gain, bx2+bw2/2, by2+30);
+    ctx.fillStyle='rgba(217,70,58,.13)'; rrect(bx2,by2,bw2,bh2,10); ctx.fill();
+    ctx.strokeStyle='rgba(217,70,58,.42)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillStyle='#f0926a'; ctx.font='600 12.5px '+UIF;
+    ctx.fillText('开波', bx2+bw2/2, by2+14);
+    ctx.fillStyle=GOLD2; ctx.font='600 11.5px '+UIF;
+    ctx.fillText('+'+gain, bx2+bw2/2, by2+29);
     ctx.textAlign='left';
   }
   ctx.restore();
