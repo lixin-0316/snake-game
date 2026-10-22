@@ -205,6 +205,13 @@ function sprSize(id,opt){
   return {im:im, h:h, w:h*im.width/im.height};
 }
 /* 贴图。opt: {h 覆盖高度, dx, dy, flip 水平翻转, a 透明度, rot 旋转弧度} */
+/* 踏步曲线：一个周期 0~1，前段腾空(0→1→0)，后段落地不动。
+   落地要有停顿 —— 连续正弦只会让人觉得角色"一直在抖"。 */
+function stepCurve(w){
+  const t=((w||0)%(Math.PI*2))/(Math.PI*2);
+  if(t<0.42) return Math.sin(t/0.42*Math.PI);
+  return 0;
+}
 function spr(id,cx,by,opt){
   const s2=sprSize(id,opt);
   if(!s2) return false;
@@ -819,7 +826,7 @@ function update(dt){
       if(d0<CS*0.62){ coreHurt(c.dmg); c.dead=true; continue; }
       const a0=Math.atan2(cy0-c.y,cx0-c.x);
       c.x+=Math.cos(a0)*spd*dt; c.y+=Math.sin(a0)*spd*dt;
-      c.face=Math.cos(a0)>=0?1:-1; c.ph+=dt*5;
+      c.face=Math.cos(a0)>=0?1:-1; c.mv=1;
       continue;
     }
 
@@ -846,7 +853,10 @@ function update(dt){
     c.x+=Math.cos(ang)*sp*dt;
     c.y+=Math.sin(ang)*sp*dt;
     c.face=Math.cos(ang)>=0?1:-1;
-    c.ph+=dt*4;
+    /* 步频跟"这一帧实际走了多远"走：被冰塔减速时步子自然变慢，
+       被挤在原地时不踏步 —— 按时间累加会出现"原地空转"的假动作 */
+    c.ph += sp*dt*0.20;
+    c.mv = 1;
     // 若踩进塔格，往回推
     const ngx=Math.floor(c.x/CS), ngy=Math.floor(c.y/CS);
     if(blocked(ngx,ngy) && !(ngx===G.core.cx&&ngy===G.core.cy)){
@@ -960,8 +970,12 @@ function updateHero(dt){
     h.vx=dx/l*sp; h.vy=dy/l*sp;
     if(dx) h.face=dx>0?1:-1;
   } else { h.vx*=0.8; h.vy*=0.8; }
+  const hox=h.x, hoy=h.y;
   h.x=Math.max(CS*0.4,Math.min(BW-CS*0.4,h.x+h.vx*dt));
   h.y=Math.max(CS*0.4,Math.min(BH-CS*0.4,h.y+h.vy*dt));
+  const hmv=Math.hypot(h.x-hox, h.y-hoy);
+  h.mv = hmv>0.30? 1 : 0;
+  h.ph = (h.ph||0) + hmv*0.16;
   // 撞塔就推开
   const gx=Math.floor(h.x/CS), gy=Math.floor(h.y/CS);
   if(blocked(gx,gy)){ h.x-=h.vx*dt*2; h.y-=h.vy*dt*2; }
@@ -1096,17 +1110,60 @@ function buildGround(){
   /* 1. 底色：草也要有上下体积，不能一坨平绿 */
   const bg=g.createLinearGradient(0,0,0,h);
   if(cold){
-    bg.addColorStop(0,'#6f9d55'); bg.addColorStop(.5,'#648f4c'); bg.addColorStop(1,'#517a3c');
+    bg.addColorStop(0,'#7bab58'); bg.addColorStop(.5,'#6f9c50'); bg.addColorStop(1,'#5c8740');
   }else{
-    bg.addColorStop(0,'#7cbb4c'); bg.addColorStop(.5,'#6fb043'); bg.addColorStop(1,'#5d9a38');
+    bg.addColorStop(0,'#8ccd59'); bg.addColorStop(.5,'#7dc04c'); bg.addColorStop(1,'#6aac40');
   }
   g.fillStyle=bg; g.fillRect(0,0,w,h);
 
-  /* 2. 大块明暗草坡 */
-  for(let i=0;i<26;i++){
-    const cx=R()*w, cy=R()*h, r=(70+R()*130)*S;
-    if(R()<0.52) gBlob(g,cx,cy,r,'#8ccd58',0.16,R,10);
-    else         gBlob(g,cx,cy,r,'#4f8530',0.13,R,10);
+  /* 2a. 宏观明暗：只在极低透明度下做"地形起伏"，半径大但不许读成圆形污斑 */
+  for(let i=0;i<7;i++){
+    const cx=R()*w, cy=R()*h, r=(150+R()*180)*S;
+    if(R()<0.5) gBlob(g,cx,cy,r,'#a5e070',0.055,R,13);
+    else        gBlob(g,cx,cy,r,'#4f8430',0.050,R,13);
+  }
+  /* 2b. 小尺度杂色：真正的绿度变化靠这些小块，尺寸小到看不出轮廓
+        （半径一旦超过 ~30px，纯色低透明填充的边界就会读成一个圆盘 → 像镜头脏点） */
+  for(let i=0;i<340;i++){
+    const cx=R()*w, cy=R()*h, r=(9+R()*17)*S;
+    const a=0.042+R()*0.052;
+    if(R()<0.5) gBlob(g,cx,cy,r,'#a8e274',a,R,7);
+    else        gBlob(g,cx,cy,r,'#56913a',a,R,7);
+  }
+  /* 2c. 苔丛 / 矮灌木：给地表放真正的"实物"，大块明暗由实体承担，不靠半透明涂抹 */
+  for(let i=0;i<15;i++){
+    const cx=R()*w, cy=R()*h, r=(7+R()*8)*S;
+    const blades=6+(R()*4|0);
+    /* 底盘暗影 */
+    g.fillStyle='rgba(38,72,26,.20)';
+    g.beginPath(); g.ellipse(cx+r*0.18,cy+r*0.42,r*1.06,r*0.42,0,0,7); g.fill();
+    /* 叶团：一团深绿打底 */
+    g.fillStyle='rgba(58,104,38,.62)';
+    g.beginPath();
+    for(let k=0;k<blades;k++){
+      const a=k/blades*6.2832, rr=r*(0.70+R()*0.34);
+      const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.72;
+      if(k===0) g.moveTo(x,y); else g.lineTo(x,y);
+    }
+    g.closePath(); g.fill();
+    /* 受光面：左上偏移一小团亮绿 */
+    g.fillStyle='rgba(132,190,86,.55)';
+    g.beginPath();
+    for(let k=0;k<blades;k++){
+      const a=k/blades*6.2832, rr=r*(0.42+R()*0.26);
+      const x=cx-r*0.24+Math.cos(a)*rr, y=cy-r*0.22+Math.sin(a)*rr*0.70;
+      if(k===0) g.moveTo(x,y); else g.lineTo(x,y);
+    }
+    g.closePath(); g.fill();
+    /* 几根立起来的草叶，破掉"贴片"感 */
+    g.strokeStyle='rgba(74,124,44,.52)'; g.lineWidth=0.9*S; g.lineCap='round';
+    for(let k=0;k<4;k++){
+      const ox=cx+(R()-0.5)*r*1.5, oy=cy+(R()-0.5)*r*0.6;
+      g.beginPath();
+      g.moveTo(ox,oy);
+      g.quadraticCurveTo(ox+(R()-0.5)*r*0.5, oy-r*0.9, ox+(R()-0.5)*r*0.9, oy-r*1.5);
+      g.stroke();
+    }
   }
   /* 3. 细草点 */
   for(let i=0;i<5200;i++){
@@ -1152,7 +1209,7 @@ function buildGround(){
   /* 7. 边缘压暗 */
   const vg=g.createRadialGradient(w/2,h/2,Math.min(w,h)*0.36,w/2,h/2,Math.max(w,h)*0.78);
   vg.addColorStop(0,'rgba(22,44,12,0)');
-  vg.addColorStop(1,'rgba(22,44,12,.26)');
+  vg.addColorStop(1,'rgba(22,44,12,.17)');
   g.fillStyle=vg; g.fillRect(0,0,w,h);
 
   GRND=oc; GRND_KEY=key;
@@ -1185,31 +1242,47 @@ function drawLodes(){
     const c=G.cells[y][x];
     if(!c.lode) continue;
     const cx=x*CS+CS/2, cy=y*CS+CS/2;
-    const used=!!c.t;                       // 已被占：光收一点，不抢建筑
+    const used=!!c.t;                       // 已被占：整体退成背景，不抢建筑
     const pul=0.5+0.5*Math.sin(tt*1.7+x*0.9+y*1.3);
-    const rr=CS*0.34;
+    const A=used?0.42:1.0;
+    const sp=used?0.22:0.50;                // 被占后转得更慢
+    const ro=CS*0.40, ri=CS*0.235;
     ctx.save();
-    ctx.globalAlpha=used?0.34:0.72;
-    const g=ctx.createRadialGradient(cx,cy,1,cx,cy,CS*0.46);
-    g.addColorStop(0,'rgba(230,200,119,'+(0.52+0.18*pul).toFixed(3)+')');
-    g.addColorStop(0.55,'rgba(201,162,74,0.16)');
+    /* ① 地面金气：范围收窄、亮度压低。
+       之前整块 0.72 透明度的径向填充，在亮草地上只会读成一个淡黄圆盘（像镜头脏点），
+       符阵结构反而全被冲掉 —— 金色要立住，靠的是环，不是填充。 */
+    ctx.globalAlpha=A*(0.28+0.10*pul);
+    const g=ctx.createRadialGradient(cx,cy,1,cx,cy,CS*0.44);
+    g.addColorStop(0,'rgba(240,214,140,0.58)');
+    g.addColorStop(0.60,'rgba(201,162,74,0.13)');
     g.addColorStop(1,'rgba(201,162,74,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,CS*0.46,0,7); ctx.fill();
-    // 符阵内圈：极淡的金色底，别让它看着像个洞
-    ctx.globalAlpha=used?0.10:0.18;
-    ctx.fillStyle='#e6c877';
-    ctx.beginPath(); ctx.arc(cx,cy,rr,0,7); ctx.fill();
-    ctx.globalAlpha=used?0.34:0.62;
-    ctx.strokeStyle='rgba(230,200,119,'+(0.42+0.30*pul).toFixed(3)+')';
-    ctx.lineWidth=1.2;
-    ctx.beginPath(); ctx.arc(cx,cy,rr,0,7); ctx.stroke();
-    // 三个小刻点，慢转
-    const a0=tt*0.5+x;
-    for(let i=0;i<3;i++){
-      const a=a0+i*2.094;
-      ctx.beginPath(); ctx.arc(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,1.5,0,7);
-      ctx.fillStyle='rgba(230,200,119,.75)'; ctx.fill();
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,CS*0.44,0,7); ctx.fill();
+    /* ② 暗底环：金色的命是"深底"，否则亮草地上只剩一团淡黄 */
+    ctx.globalAlpha=A*0.58;
+    ctx.strokeStyle='rgba(62,42,16,0.78)'; ctx.lineWidth=3.6;
+    ctx.beginPath(); ctx.arc(cx,cy,ro,0,7); ctx.stroke();
+    /* ③ 两层金环 */
+    ctx.globalAlpha=A*(0.74+0.22*pul);
+    ctx.strokeStyle='#e8cd82'; ctx.lineWidth=1.9;
+    ctx.beginPath(); ctx.arc(cx,cy,ro,0,7); ctx.stroke();
+    ctx.globalAlpha=A*0.62;
+    ctx.strokeStyle='#e8cd82'; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.arc(cx,cy,ri,0,7); ctx.stroke();
+    /* ④ 六道符刻：夹在两环之间的短线，慢慢转 */
+    const a0=tt*sp+x*0.7+y*1.1;
+    ctx.globalAlpha=A*0.88;
+    ctx.strokeStyle='#f4e0ac'; ctx.lineWidth=1.5; ctx.lineCap='round';
+    for(let i=0;i<6;i++){
+      const a=a0+i*1.0472, ca=Math.cos(a), sa=Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(cx+ca*(ri+1.7), cy+sa*(ri+1.7));
+      ctx.lineTo(cx+ca*(ro-1.7), cy+sa*(ro-1.7));
+      ctx.stroke();
     }
+    /* ⑤ 芯：小而稳的一点金，别做成发光球 */
+    ctx.globalAlpha=A*(0.55+0.25*pul);
+    ctx.fillStyle='#fff2c4';
+    ctx.beginPath(); ctx.arc(cx,cy,2.0,0,7); ctx.fill();
     ctx.restore();
   }
 }
@@ -1291,10 +1364,33 @@ function drawPaths(){
       if(n>1) ctx.lineTo(pts[n-1][0],pts[n-1][1]);
       ctx.stroke();
     };
-    /* 三层：外沿压草 → 土芯 → 中间被踩亮的一道 */
-    stroke('rgba(88,64,34,.30)', CS*0.50);
-    stroke('rgba(170,134,84,.52)', CS*0.43);
-    stroke('rgba(196,164,112,.34)', CS*0.29);
+    /* 三层：外沿压草 → 土芯 → 中间被踩亮的一道（亮草地上要压得住，否则像划痕） */
+    stroke('rgba(82,58,30,.42)', CS*0.52);
+    stroke('rgba(168,131,80,.80)', CS*0.44);
+    stroke('rgba(202,170,118,.52)', CS*0.28);
+    /* 路缘碎石：固定种子保证每帧位置一致（换 Math.random 会满路闪）。
+       两个坑：① 偏移量必须沿"法线"算，先前直接加在 x 上，竖着那段路会退化成一条竖线；
+       ② 亮草地上浅灰石必须带深色底边，否则埋进土色里什么也看不见。
+       至于"啃边草丛"试过了 —— 卡通风格土路的边缘本来就该干净，加了反而像撒了一把绿箭头。 */
+    let rr=(20261022 + g.i*7919)>>>0;
+    const pr=function(){ rr=(Math.imul(rr,1664525)+1013904223)>>>0; return rr/4294967296; };
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];
+      const pxv=pts[Math.min(i+1,pts.length-1)], pvv=pts[Math.max(i-1,0)];
+      let tx=pxv[0]-pvv[0], ty=pxv[1]-pvv[1];
+      const tl=Math.hypot(tx,ty)||1; tx/=tl; ty/=tl;
+      const nx=-ty, ny=tx;
+      const sgn=(i%2)?1:-1;
+      const ox=p[0]+nx*CS*(0.24+pr()*0.06)*sgn+(pr()-0.5)*CS*0.14;
+      const oy=p[1]+ny*CS*(0.24+pr()*0.06)*sgn+(pr()-0.5)*CS*0.14;
+      const rad=1.9+pr()*1.7;
+      ctx.fillStyle='rgba(70,52,26,.42)';
+      ctx.beginPath(); ctx.ellipse(ox+rad*0.24,oy+rad*0.32,rad*1.04,rad*0.72,0,0,7); ctx.fill();
+      ctx.fillStyle= pr()<0.5? 'rgba(196,186,160,.88)' : 'rgba(168,156,130,.88)';
+      ctx.beginPath(); ctx.ellipse(ox,oy,rad*0.90,rad*0.64,0,0,7); ctx.fill();
+      ctx.fillStyle='rgba(246,242,224,.62)';
+      ctx.beginPath(); ctx.ellipse(ox-rad*0.24,oy-rad*0.22,rad*0.38,rad*0.22,0,0,7); ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -1431,8 +1527,8 @@ function drawBuilding(c,x,y){
     ctx.beginPath(); ctx.ellipse(cx,BY+2,CS*0.30,CS*0.135,0,0,7); ctx.stroke();
     ctx.restore();
   }
-  /* 资源类建筑轻微起伏，塔不动（塔要"稳"，才压得住场） */
-  const bob=isTower? 0 : Math.sin(t*1.5+cx*0.045)*0.45;
+  /* 建筑一律钉在地上，不做上下浮动 —— 会浮的东西看着就像贴纸 */
+  const bob=0;
   const ok=spr(id,cx,BY+1+bob);
   if(!ok){
     /* 精灵还没解码完：先画个色块占位，别让场子空着 */
@@ -1529,13 +1625,24 @@ function drawCreeps(){
       bSh(c.x, by+c.r*1.25, hh*0.22, hh*0.062, 0.18);
       bSh(c.x, by, hh*0.15, hh*0.045, 0.10);
     }else{
-      bSh(c.x, by, hh*0.30, hh*0.082, 0.30);
+      const air=(c.mv? stepCurve(c.ph) : 0);
+      bSh(c.x, by, hh*0.30*(1-air*0.14), hh*0.082*(1-air*0.18), 0.30*(1-air*0.26));
       bAO(c.x, by, hh*0.30, hh*0.09);
     }
-    /* 呼吸 + 走路弹跳：静态精灵必须靠这点形变才有生命 */
-    const w=t*(c.fly? 12 : 9)+ (c.ph||0);
-    const lift=c.fly? Math.sin(w)*3.4 : Math.abs(Math.sin(w))*1.7;
-    const sq=1+Math.sin(w)*(c.fly? 0.05 : 0.035);
+    /* 动起来才晃：走路的弹跳由"走了多远"驱动，翼妖才用时间驱动扇翅。
+       曲线用 (1-cos)/2 做平滑起落，压扁与腾空同相位 —— 反相就会像果冻 */
+    let lift=0, sq=1;
+    if(c.fly){
+      const w=t*4.0+(c.ph||0);
+      lift=Math.sin(w)*2.0+1.0;            // 飞行是连续的，扇翅不该有停顿
+      sq=1+Math.sin(w+1.1)*0.012;
+    }else if(c.mv){
+      const up=stepCurve(c.ph);            // 0=着地 1=腾空，落回后停 58% 周期
+      lift=up*2.4;
+      sq=1+0.030*up;
+    }else{
+      sq=1;                                // 真站住：一动不动
+    }
     ctx.save();
     ctx.translate(c.x, by-lift);
     ctx.scale(F/sq, sq);
@@ -1673,10 +1780,16 @@ function drawHero(){
   /* 挥刀：出手瞬间整个人往前倾一点，比单纯放大有力 */
   const sp=1-Math.max(0,Math.min(1,h.cd/0.36));
   const sw=(h.cd>0? Math.sin(sp*Math.PI) : 0);
+  /* 走路才有起伏；站着不动就不许晃 */
+  let hLift=0, hSq=1;
+  if(h.mv){
+    const up=stepCurve(h.ph);
+    hLift=up*1.7; hSq=1+0.022*up;
+  }
   const s2=sprSize('hero');
   ctx.save();
-  ctx.translate(h.x,fy);
-  ctx.scale(F,1);
+  ctx.translate(h.x,fy-hLift);
+  ctx.scale(F,hSq);
   ctx.rotate(-sw*0.30);
   if(s2){
     ctx.drawImage(s2.im,-s2.w/2,-s2.h,s2.w,s2.h);
@@ -2092,7 +2205,9 @@ window.addEventListener('resize',resize);
 const glcv=document.getElementById('gl');
 let gl=null, GL_ON=false, glProg={}, glBuf=null, glQuad=null, glTex=null, glBloom=null, glBad=false;
 /* 后处理参数：改这里就能调味道，不用碰着色器 */
-const GLPCFG={th:0.72, ca:0.0022, ba:0.55, blur:0.90, gr:0.016, vig:0.78, amt:0.70, sat:1.10};
+/* 卡通亮场参数：老参数(th .72/ba .55/gr .016)是按暗调墨色配的，
+   放到亮草地上会让整屏泛光发飘、颗粒像在下雪 —— 亮场必须收 thresholds */
+const GLPCFG={th:0.84, ca:0.0012, ba:0.34, blur:0.85, gr:0.008, vig:0.50, amt:0.45, sat:1.06};
 
 const GL_VS=[
   'attribute vec2 p;',
