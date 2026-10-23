@@ -6,19 +6,19 @@
 <title>荒潮·据点</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:#241708;overflow:hidden;
+  html,body{height:100%;background:#e9f0d4;overflow:hidden;
     -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
     user-select:none;touch-action:manipulation;
     font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",
-      system-ui,sans-serif;color:#f4e8d2;
+      system-ui,sans-serif;color:#4a3d2a;
     -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
     font-feature-settings:"tnum" 1}
   #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   /* 手机竖屏时棋盘会被压成一条，提醒横过来（不挡画面） */
   #rotHint{position:fixed;left:0;right:0;top:0;z-index:30;display:none;
     padding:7px 12px;text-align:center;font:13px/1.5 -apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
-    color:#e6c877;background:rgba(201,162,74,.12);
-    border-bottom:1px solid rgba(201,162,74,.28);pointer-events:none}
+    color:#7a5a20;background:rgba(255,246,220,.94);
+    border-bottom:2px solid #e0c48a;pointer-events:none}
   @media (orientation:portrait) and (max-width:820px){ #rotHint{display:block} }
   canvas{display:block;touch-action:none;image-rendering:auto}
   /* WebGL 后处理画布：严格盖在 2D 画布上，不吃事件 */
@@ -26,87 +26,100 @@
     pointer-events:none;display:none}
   /* 局内抉择卡片 */
   #perkCards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px}
-  .pcard{width:200px;min-height:158px;padding:18px 16px;cursor:pointer;transition:.2s;
+  .pcard{width:200px;min-height:158px;padding:18px 16px;cursor:pointer;transition:.15s;
     display:flex;flex-direction:column;align-items:center;gap:10px;
-    border:1px solid rgba(255,255,255,.09);border-radius:16px;
-    background:linear-gradient(180deg,rgba(255,255,255,.058),rgba(255,255,255,.015));
-    box-shadow:0 16px 40px -24px #000}
-  .pcard:hover{border-color:rgba(232,200,119,.65);transform:translateY(-4px);
-    background:linear-gradient(180deg,rgba(232,200,119,.14),rgba(255,255,255,.02));
-    box-shadow:0 22px 46px -22px rgba(232,200,119,.35)}
-  .pcard .pk{font:10px system-ui,sans-serif;color:#5f5b53;letter-spacing:.18em}
+    border:2px solid rgba(150,116,62,.24);border-radius:16px;
+    background:rgba(255,255,255,.78);
+    box-shadow:0 4px 0 rgba(150,116,62,.14)}
+  .pcard:hover{border-color:#f2a52c;transform:translateY(-4px);
+    background:#fff8e6;box-shadow:0 6px 0 rgba(242,165,44,.35)}
+  .pcard .pk{font:10px system-ui,sans-serif;color:#8a8070;letter-spacing:.18em}
   .pcard .sig{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
-    justify-content:center;font-size:21px;color:#f0dfae;
+    justify-content:center;font-size:21px;color:#8a5a12;
     font-family:"Songti SC","Source Han Serif SC",STZhongsong,serif;
-    border:1px solid rgba(232,200,119,.42);
-    background:radial-gradient(circle at 50% 28%,rgba(232,200,119,.24),rgba(232,200,119,.03));
-    box-shadow:inset 0 0 14px rgba(232,200,119,.14)}
-  .pcard .pn{font-size:19px;font-weight:600;color:#f0dfae;letter-spacing:.06em}
-  .pcard .pd{font-size:12.5px;line-height:1.75;color:#9b958a;text-align:center}
+    border:2px solid #f2a52c;
+    background:#fff6e2}
+  .pcard .pn{font-size:19px;font-weight:700;color:#5a4423;letter-spacing:.06em}
+  .pcard .pd{font-size:12.5px;line-height:1.75;color:#7d7362;text-align:center}
   @media (max-width:760px){
     .pcard{width:146px;min-height:118px;padding:12px 9px;gap:6px}
     .pcard .pn{font-size:16px} .pcard .pd{font-size:11.5px;line-height:1.6}
   }
   .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-    background:radial-gradient(120% 90% at 50% 0%,rgba(58,38,20,.95),rgba(24,14,6,.975));
+    background:radial-gradient(120% 90% at 50% 0%,rgba(255,252,240,.995),rgba(224,238,196,.994));
     z-index:20;flex-direction:column;text-align:center;padding:24px;
     -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
   .overlay.on{display:flex}
   .feat{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;max-width:700px}
   .fitem{width:212px;padding:14px 16px;text-align:left;border-radius:14px;
-    border:1px solid rgba(255,255,255,.08);
-    background:linear-gradient(180deg,rgba(255,255,255,.052),rgba(255,255,255,.016))}
-  .fitem b{display:block;font-size:14px;font-weight:600;color:#e9e6df;letter-spacing:.02em}
-  .fitem span{display:block;margin-top:6px;font-size:12px;line-height:1.72;color:#8d8577}
-  .keys{margin-top:18px;font-size:12px;line-height:1.9;color:#6f6a60;max-width:680px}
+    border:2px solid rgba(150,116,62,.24);
+    background:rgba(255,255,255,.76)}
+  .fitem b{display:block;font-size:14px;font-weight:700;color:#5a4423;letter-spacing:.02em}
+  .fitem span{display:block;margin-top:6px;font-size:12px;line-height:1.72;color:#7d7362}
+  .keys{margin-top:18px;font-size:12px;line-height:1.9;color:#8a8070;max-width:680px}
   @media (max-width:760px){
     .ttl{font-size:29px} .tagline{font-size:11px;letter-spacing:.24em}
     .fitem{width:158px;padding:11px 12px} .fitem b{font-size:12.5px} .fitem span{font-size:11px;line-height:1.6}
     .keys{font-size:11px}
   }
-  .ttl{font-size:38px;font-weight:600;letter-spacing:.14em;color:#f0dfae;
+  .ttl{font-size:38px;font-weight:700;letter-spacing:.14em;color:#6b4a24;
     font-family:"Songti SC","Source Han Serif SC",STZhongsong,serif;
-    text-shadow:0 0 40px rgba(232,200,119,.30),0 2px 0 rgba(0,0,0,.5)}
-  .tagline{margin-top:10px;font-size:12.5px;letter-spacing:.34em;color:#8d8577;text-indent:.34em}
-  .sub{font-size:14px;line-height:1.95;color:#9b958a;max-width:660px;margin-top:18px;text-align:left}
-  .sub b{color:#e9e6df;font-weight:600}
-  .kbd{display:inline-block;min-width:20px;padding:2px 7px;border:1px solid rgba(255,255,255,.12);
-    border-radius:6px;font-size:11.5px;color:#e8d9a8;background:rgba(255,255,255,.055);
+    text-shadow:0 3px 0 rgba(255,255,255,.78)}
+  .tagline{margin-top:10px;font-size:12.5px;letter-spacing:.34em;color:#93866c;text-indent:.34em}
+  .sub{font-size:14px;line-height:1.95;color:#6b6153;max-width:660px;margin-top:18px;text-align:left}
+  .sub b{color:#46351f;font-weight:700}
+  .kbd{display:inline-block;min-width:20px;padding:2px 7px;border:2px solid rgba(150,116,62,.32);
+    border-radius:6px;font-size:11.5px;color:#6b4a24;background:#fffdf2;
     font-family:inherit;line-height:1.4}
-  .btn{margin-top:26px;padding:13px 46px;border:1px solid rgba(232,200,119,.45);border-radius:999px;
-    background:linear-gradient(180deg,rgba(232,200,119,.20),rgba(232,200,119,.07));
-    color:#f2e3bb;font-size:15px;font-weight:600;letter-spacing:.10em;cursor:pointer;
-    font-family:inherit;transition:.2s;box-shadow:0 10px 30px -14px rgba(232,200,119,.5)}
-  .btn:hover{background:linear-gradient(180deg,rgba(232,200,119,.32),rgba(232,200,119,.13));
-    border-color:rgba(232,200,119,.75);transform:translateY(-1px);
-    box-shadow:0 14px 34px -12px rgba(232,200,119,.55)}
-  .btn:active{transform:translateY(0) scale(.985)}
-  .stat{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px;max-width:560px}
-  .stat div{padding:9px 16px;border:1px solid rgba(255,255,255,.09);border-radius:10px;
-    font-size:13px;color:#9b958a;background:rgba(255,255,255,.035)}
-  .stat b{color:#e8d9a8;font-weight:600;font-variant-numeric:tabular-nums}
+  .btn{margin-top:26px;padding:13px 46px;border:2px solid #4e8a26;border-radius:999px;
+    background:linear-gradient(180deg,#9ad760,#6fae38);
+    color:#fffdf2;font-size:15px;font-weight:700;letter-spacing:.10em;cursor:pointer;
+    font-family:inherit;transition:.15s;text-shadow:0 1px 0 rgba(60,90,20,.45);
+    box-shadow:0 6px 0 #4b8125,0 16px 26px -14px rgba(60,90,20,.55)}
+  .btn:hover{background:linear-gradient(180deg,#a9e270,#7cbc42);transform:translateY(-1px);
+    box-shadow:0 7px 0 #4b8125,0 20px 30px -14px rgba(60,90,20,.55)}
+  .btn:active{transform:translateY(3px) scale(.99);box-shadow:0 3px 0 #4b8125}
+  .stat{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px;max-width:680px}
+  .stat div{padding:9px 16px;border:2px solid rgba(150,116,62,.24);border-radius:10px;
+    font-size:13px;color:#6b6153;background:rgba(255,255,255,.76)}
+  .stat b{color:#9a6a1e;font-weight:700;font-variant-numeric:tabular-nums}
   /* 开局选图 */
   .mapWrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px}
   .mapBtn{position:relative;width:236px;padding:14px 16px 14px 20px;cursor:pointer;text-align:left;
-    font-family:inherit;border:1px solid rgba(255,255,255,.09);border-radius:14px;transition:.2s;
-    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.014));
-    display:flex;flex-direction:column;gap:5px;box-shadow:0 14px 34px -24px #000}
-  .mapBtn b{font-size:15px;font-weight:600;color:#e9e6df;letter-spacing:.04em}
-  .mapBtn span{font-size:11.5px;line-height:1.68;color:#8d8577}
-  .mapBtn::before{content:"";position:absolute;left:7px;top:14px;bottom:14px;width:3px;
-    border-radius:3px;background:rgba(255,255,255,.16);transition:.2s}
-  .mapBtn:hover{border-color:rgba(232,200,119,.45);transform:translateY(-2px)}
-  .mapBtn.on{border-color:rgba(232,200,119,.7);background:linear-gradient(180deg,rgba(232,200,119,.16),rgba(232,200,119,.04));
-    box-shadow:0 16px 38px -20px rgba(232,200,119,.45)}
-  .mapBtn.on b{color:#f0dfae}
-  .mapBtn.on span{color:#a8a294}
-  .mapBtn.on::before{background:#e8c877}
+    font-family:inherit;border:2px solid rgba(150,116,62,.24);border-radius:14px;transition:.15s;
+    background:rgba(255,255,255,.76);
+    display:flex;flex-direction:column;gap:5px;box-shadow:0 4px 0 rgba(150,116,62,.14)}
+  .mapBtn b{font-size:15px;font-weight:700;color:#5a4423;letter-spacing:.04em}
+  .mapBtn span{font-size:11.5px;line-height:1.68;color:#7d7362}
+  .mapBtn::before{content:"";position:absolute;left:7px;top:14px;bottom:14px;width:4px;
+    border-radius:3px;background:rgba(150,116,62,.30);transition:.15s}
+  .mapBtn:hover{border-color:#f2a52c;transform:translateY(-2px)}
+  .mapBtn.on{border-color:#f2a52c;background:#fff8e6;
+    box-shadow:0 4px 0 rgba(242,165,44,.40)}
+  .mapBtn.on b{color:#a85d0c}
+  .mapBtn.on span{color:#7d7362}
+  .mapBtn.on::before{background:#f2a52c}
   @media (max-width:760px){ .mapBtn{width:164px;padding:11px 12px 11px 17px} .mapBtn b{font-size:13.5px} }
+  /* 开场阵容条：直接吃局内精灵，菜单和棋盘同一套画 */
+  .cast{margin-top:20px;display:flex;align-items:flex-end;justify-content:center;gap:26px}
+  .cast .grp{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .cast .row{display:flex;align-items:flex-end;gap:3px}
+  .cast .row img{display:block;width:auto;
+    filter:drop-shadow(0 5px 0 rgba(122,158,84,.26))}
+  .cast .cl{font-size:11px;letter-spacing:.26em;color:#8a8070;text-indent:.26em}
+  .cast .vs{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:#c8801e;
+    padding-bottom:22px;opacity:.85}
+  @media (max-width:760px){ .cast{gap:14px} .cast .row img{transform:scale(.8)} }
+  /* 开场页背景：太阳 / 云 / 草坡，纯 SVG 不占体积 */
+  #startScreen>.sky,#endScreen>.sky{position:absolute;inset:0;width:100%;height:100%;
+    pointer-events:none;display:block}
+  #startScreen>*:not(.sky),#endScreen>*:not(.sky){position:relative;z-index:1}
+  @media (max-width:760px){ #startScreen .ttl{font-size:29px} }
 </style>
 </head>
 <body>
 <div class="overlay" id="perkScreen">
-  <div class="ttl" style="font-size:27px">据 点 抉 择</div>
+  <div class="ttl" style="font-size:27px">羊 村 抉 择</div>
   <div class="sub" style="max-width:600px;text-align:center;margin-top:10px">
     狼群暂退。趁这一夜把羊村再盘一盘 —— 三选一，<b>本局永久生效</b>。
   </div>
@@ -116,8 +129,48 @@
 <div id="stage"><canvas id="c"></canvas><canvas id="gl"></canvas></div>
 
 <div class="overlay on" id="startScreen">
-  <div class="ttl">荒 潮 · 据 点</div>
+  <svg class="sky" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="sunG" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#fffbe0"/>
+        <stop offset=".42" stop-color="#ffeaa6" stop-opacity=".92"/>
+        <stop offset="1" stop-color="#ffeaa6" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="1000" cy="152" r="176" fill="url(#sunG)"/>
+    <circle cx="1000" cy="152" r="42" fill="#ffdc72" opacity=".42"/>
+    <g fill="#ffffff">
+      <g opacity=".88" transform="translate(158,202)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+      <g opacity=".72" transform="translate(1016,300) scale(.66)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+      <g opacity=".5" transform="translate(300,120) scale(.44)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+    </g>
+    <path d="M0,900 L0,806 Q170,748 372,792 Q556,830 726,782 Q912,730 1200,794 L1200,900 Z"
+      fill="#d3e8ad" opacity=".62"/>
+    <path d="M0,900 L0,856 Q228,812 432,844 Q654,878 872,842 Q1052,812 1200,850 L1200,900 Z"
+      fill="#c2df96" opacity=".68"/>
+  </svg>
+  <div class="ttl">羊 村 守 卫 战</div>
   <div class="tagline">白 天 经 营 · 夜 里 挡 狼</div>
+  <div class="cast">
+    <div class="grp"><div class="row" id="castA"></div><span class="cl">羊 村</span></div>
+    <div class="vs">VS</div>
+    <div class="grp"><div class="row" id="castB"></div><span class="cl">狼 群</span></div>
+  </div>
   <div class="feat">
     <div class="fitem"><b>一种灵石，四张嘴</b><span>菜地供饭 · 矿场进账 · 羊屋招羊 · 建羊塔守家，四样抢同一笔钱</span></div>
     <div class="fitem"><b>塔能挡路</b><span>把塔摆成迷宫，狼就得绕远 —— 顶栏「狼路」步数当场变长</span></div>
@@ -135,7 +188,42 @@
 </div>
 
 <div class="overlay" id="endScreen">
-  <div class="ttl" id="endTtl">据点已破</div>
+  <svg class="sky" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="sunG2" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#fffbe0"/>
+        <stop offset=".42" stop-color="#ffeaa6" stop-opacity=".92"/>
+        <stop offset="1" stop-color="#ffeaa6" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="1000" cy="152" r="176" fill="url(#sunG2)"/>
+    <circle cx="1000" cy="152" r="42" fill="#ffdc72" opacity=".42"/>
+    <g fill="#ffffff">
+      <g opacity=".88" transform="translate(158,202)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+      <g opacity=".72" transform="translate(1016,300) scale(.66)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+      <g opacity=".5" transform="translate(300,120) scale(.44)">
+        <ellipse cx="0" cy="0" rx="54" ry="30"/>
+        <ellipse cx="50" cy="6" rx="40" ry="24"/>
+        <ellipse cx="-48" cy="8" rx="34" ry="22"/>
+        <ellipse cx="8" cy="-16" rx="32" ry="26"/>
+      </g>
+    </g>
+    <path d="M0,900 L0,806 Q170,748 372,792 Q556,830 726,782 Q912,730 1200,794 L1200,900 Z"
+      fill="#d3e8ad" opacity=".62"/>
+    <path d="M0,900 L0,856 Q228,812 432,844 Q654,878 872,842 Q1052,812 1200,850 L1200,900 Z"
+      fill="#c2df96" opacity=".68"/>
+  </svg>
+  <div class="ttl" id="endTtl">羊村被破</div>
   <div class="stat" id="endStat"></div>
   <button class="btn" id="againBtn">再 来 一 局</button>
 </div>
@@ -196,6 +284,22 @@ const SPRH={
   creep_armor:46, creep_boss:68, creep_wing:35, creep_shaman:46,
   hero:52, core:70, gate:44
 };
+/* 开场页阵容：从 SPRSRC 直接取图，菜单与局内是同一套精灵 */
+(function(){
+  const A=['hero','tower_sword2','bld_house'];
+  const B=['creep_grunt','creep_boss','creep_wing'];
+  const box=function(id,ids){
+    const el=document.getElementById(id); if(!el) return;
+    let h='';
+    for(let i=0;i<ids.length;i++){
+      const src=SPRSRC[ids[i]]; if(!src) continue;
+      const hh=Math.round((SPRH[ids[i]]||40)*1.58);
+      h+='<img src="'+src+'" style="height:'+hh+'px" alt="">';
+    }
+    el.innerHTML=h;
+  };
+  box('castA',A); box('castB',B);
+})();
 function sprSize(id,opt){
   const im=SPR[id];
   if(!im||!im.width) return null;
@@ -729,7 +833,7 @@ function coreHurt(d){
 function endGame(win){
   G.phase='over';
   if(win) SFX.win(); else SFX.lose();
-  document.getElementById('endTtl').textContent = win? '荒潮退去' : '据点已破';
+  document.getElementById('endTtl').textContent = win? '羊村守住了' : '羊村被破';
   const el=document.getElementById('endStat');
   el.innerHTML =
     '<div>地图 <b>'+G.mapN+'</b></div>'+
