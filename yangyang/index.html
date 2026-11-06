@@ -25,7 +25,7 @@
   #gl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     pointer-events:none;display:none}
   /* 局内抉择卡片 */
-  #perkCards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px}
+  #perkCards,#awCards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px}
   .pcard{width:200px;min-height:158px;padding:18px 16px;cursor:pointer;transition:.15s;
     display:flex;flex-direction:column;align-items:center;gap:10px;
     border:2px solid rgba(150,116,62,.24);border-radius:16px;
@@ -100,6 +100,32 @@
   .mapBtn.on span{color:#7d7362}
   .mapBtn.on::before{background:#f2a52c}
   @media (max-width:760px){ .mapBtn{width:164px;padding:11px 12px 11px 17px} .mapBtn b{font-size:13.5px} }
+  /* ---- 战役关卡选择 ---- */
+  .lvWrap{margin-top:16px;width:100%;max-width:706px;display:flex;flex-direction:column;align-items:center;gap:9px}
+  .lvHead{display:flex;align-items:center;gap:14px;font-size:11.5px;color:#8a8070;letter-spacing:.16em}
+  .lvToggle{font-family:inherit;font-size:11.5px;letter-spacing:.06em;color:#6b4a24;
+    background:#fffdf2;border:2px solid rgba(150,116,62,.30);border-radius:999px;
+    padding:3px 13px;cursor:pointer;transition:.15s}
+  .lvToggle:hover{border-color:#f2a52c;background:#fff8e6;color:#a85d0c}
+  .lvGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;width:100%}
+  .lvCell{position:relative;font-family:inherit;cursor:pointer;transition:.15s;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    padding:7px 3px 6px;border:2px solid rgba(150,116,62,.24);border-radius:11px;
+    background:rgba(255,255,255,.78);box-shadow:0 3px 0 rgba(150,116,62,.13)}
+  .lvCell:hover{border-color:#f2a52c;background:#fff8e6;transform:translateY(-2px)}
+  .lvCell.on{border-color:#f2a52c;background:#fff8e6;box-shadow:0 3px 0 rgba(242,165,44,.38)}
+  .lvCell .no{font-size:9.5px;font-weight:700;color:#c09a58;letter-spacing:.06em}
+  .lvCell b{font-size:12.5px;font-weight:700;color:#5a4423;letter-spacing:.02em}
+  .lvCell i{font-style:normal;font-size:9.5px;color:#a1937a}
+  .lvCell.lock{opacity:.42;cursor:not-allowed;filter:grayscale(.75)}
+  .lvCell.lock:hover{transform:none;border-color:rgba(150,116,62,.24);background:rgba(255,255,255,.78)}
+  .lvCell.on b{color:#a85d0c}
+  .lvTip{font-size:11.5px;line-height:1.6;color:#8a7a5e;min-height:18px;max-width:660px;text-align:center}
+  .lvTip b{color:#a85d0c}
+  @media (max-width:760px){
+    .lvGrid{grid-template-columns:repeat(4,1fr)}
+    .lvCell b{font-size:11.5px} .lvCell i{font-size:9px}
+  }
   /* 开场阵容条：直接吃局内精灵，菜单和棋盘同一套画 */
   .cast{margin-top:20px;display:flex;align-items:flex-end;justify-content:center;gap:26px}
   .cast .grp{display:flex;flex-direction:column;align-items:center;gap:5px}
@@ -124,6 +150,13 @@
     狼群暂退。趁这一夜把羊村再盘一盘 —— 三选一，<b>本局永久生效</b>。
   </div>
   <div id="perkCards"></div>
+</div>
+<div class="overlay" id="awScreen">
+  <div class="ttl" style="font-size:27px">三 级 觉 醒</div>
+  <div class="sub" style="max-width:620px;text-align:center;margin-top:10px">
+    选一条路走到底，<b>之后不可更改</b>。
+  </div>
+  <div id="awCards"></div>
 </div>
 <div id="rotHint">↻ 手机横过来玩，棋盘才铺得开</div>
 <div id="stage"><canvas id="c"></canvas><canvas id="gl"></canvas></div>
@@ -174,9 +207,15 @@
   <div class="feat">
     <div class="fitem"><b>一种灵石，四张嘴</b><span>菜地供饭 · 矿场进账 · 羊屋招羊 · 建羊塔守家，四样抢同一笔钱</span></div>
     <div class="fitem"><b>塔能挡路</b><span>把塔摆成迷宫，狼就得绕远 —— 顶栏「狼路」步数当场变长</span></div>
-    <div class="fitem"><b>守将上场</b><span>WASD 移动，J 放「断潮斩」；也能直接点卡片建造</span></div>
+    <div class="fitem"><b>守将上场</b><span>WASD 移动，J 放「断潮斩」，杀狼升级；Lv.3 解锁 K「跃斩」</span></div>
   </div>
-  <div class="mapWrap" id="mapPick">
+  <div class="lvWrap" id="lvPanel">
+    <div class="lvHead"><span id="modeName">战 役 · 十 二 关</span>
+      <button class="lvToggle" id="modeBtn">自由模式 ›</button></div>
+    <div class="lvGrid" id="lvGrid"></div>
+    <div class="lvTip" id="lvTip"></div>
+  </div>
+  <div class="mapWrap" id="mapPick" style="display:none">
     <div class="mapBtn on" data-map="plain"><b>白 羊 村</b><span>四门均布，四面来妖 —— 标准开局，先学怎么摆迷宫</span></div>
     <div class="mapBtn" data-map="pass"><b>断 崖 牧 场</b><span>三门聚西，断崖夹出一道窄口 —— 卡口好守，但后门没人管</span></div>
   </div>
@@ -377,10 +416,16 @@ const BUILD={
   wall   :{n:'木栅栏', key:'7', cost:14,  up:2.00, block:true,  tower:false, c:'#9a948a', d:'只挡路 · 不攻击'}
 };
 const ORDER=['farm','mine','house','sword','frost','thunder','wall'];
-const CARD_W=112, CARD_GAP=8;      // 建造栏卡片尺寸（7 张刚好铺满）
+const CARD_W=104, CARD_GAP=8;      // 建造栏卡片尺寸（7 张 + 两个技能钮刚好铺满）
 
 /* 守将主动技：断潮斩 —— 一圈范围伤害 + 减速，冷却 8 秒 */
 const SKILL={cd:8, r:152, dmg:44, slow:0.5, slowT:1.4};   // 实伤 = dmg + 波次*12
+/* ---- 守将成长：杀狼攒经验，等级抬血量与攻击 ---- */
+const HERO_HP0=120, HERO_HPG=18;                // 1 级血量 / 每级加成
+const HERO_ATKG=0.16;                           // 每级 +16% 攻击
+const XP_LV=[0,8,22,44,74,114,164,226,300];     // 各等级累计经验（1 只小狼 = 1）
+/* ---- 二技：跃斩 ---- */
+const SKILL2={cd:14, unlock:3, r:78, dmg:58, stun:0.9, hop:0.30, seek:340};
 
 const TOWER={
   sword  :{range:3.25*CS, cd:0.75, dmg:15, col:'#f2ecd8', bolt:'#ffeab4'},
@@ -397,6 +442,18 @@ const CREEP={
   wing :{hp:34,  sp:108, dmg:7,  bg:0.84, r:11, c:'#e8c15a', n:'飞狼', fly:true},
   shaman:{hp:130, sp:33, dmg:6,  bg:0.70, r:14, c:'#6fc7b0', n:'巫狼', heal:0.055}
 };
+
+/* ---------------- 狼王形态 ----------------
+   三种王各只做一件事，但都针对现有打法：拆你的迷宫 / 逼你清小狼 / 打乱射程布局。
+   想加新王只往这张表塞一条，再在 update 里补一个 id 分支。 */
+const BOSS_KINDS=[
+  {id:'breaker', n:'撞门王', aura:'224,102,58', hp:1.18, sp:0.92,
+   tip:'它会撞碎挡路的栅栏和塔'},
+  {id:'summon',  n:'召狼王', aura:'138,63,208', hp:1.00, sp:1.00,
+   tip:'它会一直召唤小狼'},
+  {id:'phantom', n:'影行王', aura:'79,179,217', hp:0.92, sp:1.08,
+   tip:'半血之后它会沿狼路瞬移'}
+];
 
 /* ---------------- 全局状态 ---------------- */
 let G=null, lastT=0, raf=0;
@@ -417,7 +474,81 @@ const MAPS=[
 let MAP_PICK='plain';
 function mapOf(id){ for(const m of MAPS) if(m.id===id) return m; return MAPS[0]; }
 
-function newGame(mapId){
+/* ---------------- 战役：十二关 ----------------
+   每关只加一条"专属规则"，不加波数数值。加关只往这张表塞一条。
+   ban      : 这一关不能建的东西
+   farmMul  : 粮产倍率（荒年）
+   lodeLimit: 只保留前 N 处灵脉（孤脉）
+   vision   : 塔射程倍率（夜袭，屏外之狼看不见也打不着）
+   prepMul  : 准备期倍率（急袭）
+   heroMul  : 守将伤害倍率（空手）
+   hard     : 额外难度（决战） */
+const LEVELS=[
+  {n:'启程', map:'plain', w:5,  ban:['mine','frost','thunder'],
+   tip:'只有菜地、羊屋、剑羊和栅栏。先把钱花在刀口上。'},
+  {n:'立村', map:'plain', w:6,  ban:['frost','thunder'],
+   tip:'矿场开张 —— 灵石终于能自己生出来了。'},
+  {n:'冰封', map:'plain', w:7,  ban:['thunder'],
+   tip:'冰羊上场：它不负责杀，负责让狼走得慢。'},
+  {n:'雷雨', map:'plain', w:8,  ban:[],
+   tip:'四种塔齐了。这一关没有限制，只有你自己摆得好不好。'},
+  {n:'荒年', map:'plain', w:8,  farmMul:0.55,
+   tip:'草场欠收，粮产只剩一半 —— 少建一座塔就多一口饭。'},
+  {n:'孤脉', map:'plain', w:8,  lodeLimit:1,
+   tip:'地脉只剩一处。围着它摆，或者放弃它。'},
+  {n:'夜袭', map:'plain', w:9,  vision:0.66,
+   tip:'天黑了，塔只能看见火光附近 —— 屏外的狼打不着。'},
+  {n:'狭路', map:'plain', w:8,  ban:['wall'],
+   tip:'栅栏断了供。想挡路？只能拿塔来挡。'},
+  {n:'急袭', map:'plain', w:9,  prepMul:0.45,
+   tip:'狼不给时间。准备期砍掉一多半。'},
+  {n:'断崖', map:'pass',  w:10, ban:[],
+   tip:'换到断崖牧场：三门聚西，断崖夹出一道窄口。'},
+  {n:'空手', map:'plain', w:4,  ban:['sword','frost','thunder'],
+   heroMul:3.0, stone:500, food:400,
+   tip:'一座塔都不给你。这一局只有你和守将。'},
+  {n:'决战', map:'pass',  w:12, ban:[], hard:1.15,
+   tip:'断崖十二波。三头狼王都会来。'}
+];
+const CV_KEY='yy_cv_v1';
+let CV={done:0};            // 已通关数 = 下一关的下标
+let LV_PICK=0, FREE_MODE=false;
+function loadCV(){
+  try{ const t=localStorage.getItem(CV_KEY); if(t){ const o=JSON.parse(t); if(o&&typeof o.done==='number') CV={done:o.done}; } }
+  catch(e){ CV={done:0}; }
+}
+function saveCV(){ try{ localStorage.setItem(CV_KEY, JSON.stringify(CV)); }catch(e){} }
+function renderLevels(){
+  const g=document.getElementById('lvGrid'); if(!g) return;
+  let h='';
+  for(let i=0;i<LEVELS.length;i++){
+    const L=LEVELS[i], lock=(i>CV.done);
+    h+='<button class="lvCell'+(i===LV_PICK?' on':'')+(lock?' lock':'')+'" data-lv="'+i+'"'+(lock?' disabled':'')+'>'
+      +'<span class="no">'+(i+1)+'</span><b>'+L.n+'</b><i>'+L.w+' 波</i></button>';
+  }
+  g.innerHTML=h;
+  const cells=g.querySelectorAll('.lvCell');
+  for(let i=0;i<cells.length;i++){
+    (function(btn){
+      btn.addEventListener('click',function(){
+        const i2=+btn.getAttribute('data-lv');
+        if(i2>CV.done) return;
+        LV_PICK=i2; renderLevels(); updateLvTip();
+        newGame(LEVELS[i2].map, i2); resize();
+        SFX.deny();
+      });
+    })(cells[i]);
+  }
+  updateLvTip();
+}
+function updateLvTip(){
+  const el=document.getElementById('lvTip'); if(!el) return;
+  const i=(LV_PICK>=0&&LV_PICK<LEVELS.length)?LV_PICK:0;
+  const L=LEVELS[i];
+  el.innerHTML='<b>第 '+(i+1)+' 关 · '+L.n+'</b> —— '+L.tip;
+}
+
+function newGame(mapId, lvIdx){
   GRND=null; GRND_KEY='';
   const M=mapOf(mapId||MAP_PICK);
   MAP_PICK=M.id;
@@ -427,16 +558,19 @@ function newGame(mapId){
     stone:120, food:40, pop:3, popMax:3,
     wave:0, maxWave:10,
     prepT:45, prepMax:45,
-    tickT:0, day:0,
+    tickT:0, day:0, night:0,
     cells:[], creeps:[], bolts:[], fx:[], beams:[],
     sel:null, hover:null, msg:null, msgT:0,
     core:{cx:M.core[0], cy:M.core[1], hp:1000, maxhp:1000, shake:0},
-    hero:{x:0,y:0,vx:0,vy:0,hp:120,maxhp:120,cd:0,down:0,face:1,skillCd:0},
+    hero:{x:0,y:0,vx:0,vy:0,hp:120,maxhp:120,cd:0,down:0,face:1,skillCd:0,
+          lv:1, xp:0, hurtT:0, s2Cd:0},
     spawnQ:[], spawnT:0,
     dist:null, pathLen:0, pathMin:0, gateNeed:1,
     mods:modsBase(), perkLog:[], perkChoices:[],
     slash:null, nextComp:null, hurtFx:0, waveTotal:0,
-    bonus:0, kills:0, built:0
+    bonus:0, kills:0, built:0,
+    lv:-1, lvName:'', ban:[], order:ORDER.slice(), lvCfg:{vision:1,prepMul:1,farmMul:1,mineMul:1},
+    bossN:0, pending:[]
   };
   for(let y=0;y<CH;y++){
     const row=[];
@@ -459,6 +593,34 @@ function newGame(mapId){
   G.gates=M.gates.map(function(g,i){
     return {x:g[0], y:g[1], i:i, act:false, len:0};
   });
+  /* ---- 战役关卡：把这一关的规则叠上去 ---- */
+  G.lv = (lvIdx==null? -1 : lvIdx);
+  if(G.lv>=0 && G.lv<LEVELS.length){
+    const L=LEVELS[G.lv];
+    G.lvName=L.n;
+    if(L.w) G.maxWave=L.w;
+    G.ban=(L.ban||[]).slice();
+    if(L.farmMul!=null) G.lvCfg.farmMul=L.farmMul;
+    if(L.mineMul!=null) G.lvCfg.mineMul=L.mineMul;
+    if(L.vision!=null)  G.lvCfg.vision=L.vision;
+    if(L.prepMul!=null) G.lvCfg.prepMul=L.prepMul;
+    if(L.stone!=null)   G.stone=L.stone;
+    if(L.food!=null)    G.food=L.food;
+    if(L.heroMul!=null) G.mods.hero*=L.heroMul;
+    if(L.hard!=null)    G.mapHard*=L.hard;
+    G.bossN=(L.bossN!=null? L.bossN : G.lv)%3;   // 每关从不同的王开始，别每关都是撞门王
+    if(L.lodeLimit!=null){
+      let k=0;
+      for(let yy=0;yy<CH;yy++) for(let xx=0;xx<CW;xx++){
+        const cc=G.cells[yy][xx];
+        if(!cc.lode) continue;
+        if(k>=L.lodeLimit) cc.lode=false;
+        k++;
+      }
+    }
+  }
+  G.order=ORDER.filter(function(t){ return G.ban.indexOf(t)<0; });
+
   G.hero.x=G.core.cx*CS+CS/2;
   G.hero.y=G.core.cy*CS+CS/2+CS*1.2;
   if(blocked(Math.floor(G.hero.x/CS),Math.floor(G.hero.y/CS))) G.hero.y=G.core.cy*CS+CS/2-CS*1.2;
@@ -525,11 +687,66 @@ const PERKS=[
   {id:'hero', s:'将', n:'守将磨砺',d:'守将伤害 ×1.6',                f:function(){ G.mods.hero*=1.6; }},
   {id:'grit', s:'忍', n:'忍饥',   d:'断粮伤害减半，塔不再因断粮变慢', f:function(){ G.mods.grit=1; }}
 ];
+/* 三级觉醒：每条塔两条路，只影响"怎么打"，不改数值曲线 */
+const AWAKEN={
+  sword:{
+    a:{s:'破', n:'破甲斩', d:'无视 60% 护甲，专破铁甲狼'},
+    b:{s:'双', n:'双锋',   d:'每次同时攻击两个目标'}
+  },
+  frost:{
+    a:{s:'爆', n:'霜爆',   d:'命中时冻住周围一圈狼'},
+    b:{s:'寒', n:'极寒',   d:'减速更强、持续更久'}
+  },
+  thunder:{
+    a:{s:'链', n:'长链',   d:'连锁目标 3 → 5'},
+    b:{s:'雷', n:'落雷',   d:'放弃连锁，单体伤害 ×2.2'}
+  }
+};
 const PERK_MAP={};
 for(const p of PERKS) PERK_MAP[p.id]=p;
 function modsBase(){
   return {dmg:1, cd:1, range:1, mine:1, farm:1, wall:1, hero:1, maze:0, crit:0, regen:0, grit:0};
 }
+/* ---------------- 三级觉醒 ---------------- */
+function showAwaken(x,y){
+  const c=G.cells[y][x];
+  const A=AWAKEN[c.t];
+  if(!A){ c.lv=3; return; }
+  G.awCell=[x,y];
+  G.awPrev=(G.phase==='wave'?'wave':'prep');
+  G.phase='aw';
+  const box=document.getElementById('awCards');
+  box.innerHTML='';
+  const keys=['a','b'];
+  for(let i=0;i<2;i++){
+    const p=A[keys[i]];
+    const d=document.createElement('div');
+    d.className='pcard';
+    d.innerHTML='<div class="pk">按 '+(i+1)+' 或点这里</div>'+
+                '<div class="sig">'+p.s+'</div>'+
+                '<div class="pn">'+p.n+'</div>'+
+                '<div class="pd">'+p.d+'</div>';
+    d.addEventListener('click',(function(idx){ return function(){ pickAwaken(idx); }; })(i));
+    box.appendChild(d);
+  }
+  document.getElementById('awScreen').classList.add('on');
+  SFX.perk();
+}
+function pickAwaken(i){
+  if(!G || G.phase!=='aw' || !G.awCell) return;
+  const x=G.awCell[0], y=G.awCell[1], c=G.cells[y][x];
+  document.getElementById('awScreen').classList.remove('on');
+  if(c && c.t && BUILD[c.t].tower){
+    c.aw=(i===0?'a':'b');
+    c.lv=3; c.flash=1;
+    addFX(x*CS+CS/2,y*CS+CS/2, c.aw==='a'?'#ffd75e':'#9fe4ff', 16);
+    SFX.build();
+    toast(BUILD[c.t].n+' 觉醒 · '+AWAKEN[c.t][c.aw].n);
+  }
+  G.awCell=null;
+  G.phase=G.awPrev||'prep';
+}
+
 function showPerk(){
   G.phase='perk';
   const pool=PERKS.slice();
@@ -559,7 +776,7 @@ function pickPerk(i){
   document.getElementById('perkScreen').classList.remove('on');
   G.perkChoices=[];
   G.phase='prep';
-  G.prepT=G.prepMax=Math.max(24,42-G.wave*2.2);
+  G.prepT=G.prepMax=prepTime();
   toast('已得 · '+p.n);
   SFX.build();
 }
@@ -627,6 +844,7 @@ const SFX={
   wave(){ tone(70,150,0.7,'sawtooth',0.05); noise(0.6,0.04,700); },
   perk(){ [0,0.09,0.19].forEach((d,i)=>tone([523,659,880][i],0,0.30,'triangle',0.045,d)); },
   win(){ [0,0.13,0.27].forEach((d,i)=>tone([392,523,659][i],0,0.42,'triangle',0.05,d)); },
+  levelup(){ [0,0.08,0.16,0.30].forEach((d,i)=>tone([523,659,784,1047][i],0,0.34,'triangle',0.042,d)); },
   lose(){ tone(200,60,1.1,'sawtooth',0.08); }
 };
 
@@ -638,17 +856,18 @@ function canPlace(x,y){
   return true;
 }
 function place(x,y,t){
+  if(G.ban && G.ban.indexOf(t)>=0) return toast('这一关没有'+BUILD[t].n), SFX.deny();
   if(!canPlace(x,y)) return toast('这里不能建'), SFX.deny();
   const b=BUILD[t], cost=costOf(t);
   if(G.stone<cost) return toast('灵石不足'), SFX.deny();
   const lenBefore=G.pathLen;
   // 会挡路的（塔 / 石障）先试放，看妖门还通不通
   if(b.block){
-    G.cells[y][x].t=t; G.cells[y][x].lv=1;
+    G.cells[y][x].t=t; G.cells[y][x].lv=1; G.cells[y][x].aw=null;
     buildFlow();
     if(!borderReachable()){ G.cells[y][x].t=null; G.cells[y][x].lv=0; buildFlow(); toast('狼洞会被堵死，狼就没路走了'); SFX.deny(); return; }
   } else {
-    G.cells[y][x].t=t; G.cells[y][x].lv=1;
+    G.cells[y][x].t=t; G.cells[y][x].lv=1; G.cells[y][x].aw=null;
   }
   G.stone-=cost; G.built++;
   addFX(x*CS+CS/2, y*CS+CS/2, b.c, 12);
@@ -663,10 +882,15 @@ function place(x,y,t){
 function upgrade(x,y){
   const c=G.cells[y][x];
   if(!c.t) return;
+  const b=BUILD[c.t];
   if(c.t==='wall') return toast('石障不可升级，拆了换塔吧'), SFX.deny();
   if(c.lv>=4) return toast('已至四阶，再无可升'), SFX.deny();
   const cost=upCost(c);
   if(G.stone<cost) return toast('灵石不足'), SFX.deny();
+  if(c.lv===2 && b.tower && !c.aw){
+    G.stone-=cost; c.flash=1;
+    return showAwaken(x,y);        // 三级：先选路再升
+  }
   G.stone-=cost; c.lv++; c.flash=1;
   addFX(x*CS+CS/2,y*CS+CS/2,GOLD,10);
   SFX.build();
@@ -680,7 +904,7 @@ function sell(x,y){
   for(let i=1;i<c.lv;i++) paid+=Math.round(b.cost*Math.pow(b.up,i)*0.9);
   G.stone+=Math.round(paid*0.55);
   addFX(x*CS+CS/2,y*CS+CS/2,INK3,10);
-  c.t=null; c.lv=0;
+  c.t=null; c.lv=0; c.aw=null;
   if(b.tower) buildFlow();
   if(c.t==='house') G.popMax=3+2*lvSum('house');
   G.popMax=3+2*lvSum('house');
@@ -701,6 +925,13 @@ const LODE_BOOST=1.3;      // 灵脉格对塔伤的加成
 
 /* 地图难度系数：断崖隘口地形太好用，妖潮要更凶一点 */
 function hardM(){ return (G && G.mapHard) || 1; }
+/* 准备期：急袭关要把时间砍半，但别短到没法摆塔 */
+function buildOrder(){ return (G&&G.order&&G.order.length)?G.order:ORDER; }
+function prepTime(){
+  const base=Math.max(24, 42-G.wave*2.2);
+  const k=(G && G.lvCfg && G.lvCfg.prepMul) || 1;
+  return Math.max(9, Math.round(base*k));
+}
 
 function waveComp(w){
   const s=[];
@@ -729,22 +960,55 @@ function startWave(){
   toast('第 '+G.wave+' 波 · 狼群来袭');
   SFX.wave();
 }
+/* 造一只狼（不进场）：召唤王和出兵都走这里，避免两份构造代码走偏 */
+function buildCreep(type,x,y){
+  const base=CREEP[type];
+  const ws=(1+(G.wave-1)*0.32)*hardM();
+  const o={
+    type, x, y,
+    hp:base.hp*ws, maxhp:base.hp*ws, sp:base.sp, dmg:base.dmg,
+    armor:base.armor||0, r:base.r, c:base.c, bgb:base.bg,
+    fly:!!base.fly, heal:base.heal||0, healT:0,
+    slowT:0, slowF:1, stunT:0, flash:0, ph:Math.random()*6, boss:type==='boss',
+    face:1
+  };
+  if(type==='boss'){
+    const K=BOSS_KINDS[(G.bossN||0)%BOSS_KINDS.length];
+    G.bossN=(G.bossN||0)+1;
+    o.bk=K; o.n=K.n; o.auraRGB=K.aura; o.skillT=2.4;
+    o.hp*=K.hp; o.maxhp=o.hp; o.sp*=K.sp;
+  }
+  return o;
+}
 function spawnOne(type){
   // 只从已开启、且还通得过的妖门出来
   const spots=G.gates.filter(g=>g.act && g.len>=0);
   if(!spots.length) return;
   const gp=spots[(Math.random()*spots.length)|0];
-  const gx=gp.x, gy=gp.y;
-  const base=CREEP[type];
-  const ws=(1+(G.wave-1)*0.32)*hardM();
-  G.creeps.push({
-    type, x:gx*CS+CS/2+(Math.random()-0.5)*10, y:gy*CS+CS/2+(Math.random()-0.5)*10,
-    hp:base.hp*ws, maxhp:base.hp*ws, sp:base.sp, dmg:base.dmg,
-    armor:base.armor||0, r:base.r, c:base.c, bgb:base.bg,
-    fly:!!base.fly, heal:base.heal||0, healT:0,
-    slowT:0, slowF:1, flash:0, ph:Math.random()*6, boss:type==='boss',
-    face:1
-  });
+  const o=buildCreep(type,
+    gp.x*CS+CS/2+(Math.random()-0.5)*10,
+    gp.y*CS+CS/2+(Math.random()-0.5)*10);
+  G.creeps.push(o);
+  if(o.bk) toast(o.bk.n+' 来了 · '+o.bk.tip);
+}
+
+/* ---------------- 守将成长 ---------------- */
+function heroMaxHp(){ return HERO_HP0 + (G.hero.lv-1)*HERO_HPG; }
+function heroAtk(){ return 1 + (G.hero.lv-1)*HERO_ATKG; }
+function addHeroXp(n){
+  const h=G.hero;
+  if(!h || h.lv>=XP_LV.length) return;
+  h.xp+=n;
+  while(h.lv<XP_LV.length && h.xp>=XP_LV[h.lv]){
+    h.lv++;
+    h.maxhp=heroMaxHp();
+    h.hp=Math.min(h.maxhp, h.hp+h.maxhp*0.35);   // 升级只回三成，别当免费治疗
+    addFX(h.x,h.y-8,'#ffe08a',18);
+    G.core.shake=Math.max(G.core.shake||0,0.28);
+    if(h.lv===SKILL2.unlock) toast('守将 Lv.'+h.lv+' · 解锁跃斩（K）');
+    else                     toast('守将晋升 · Lv.'+h.lv);
+    SFX.levelup();
+  }
 }
 
 /* ---------------- 战斗 ---------------- */
@@ -753,17 +1017,19 @@ function hurtCreep(c,dmg,opt){
   if(c.armor) d*= (1-c.armor*(opt&&opt.pierce?0.4:1));
   c.hp-=d; c.flash=0.6;
   if(opt&&opt.slow){ c.slowT=Math.max(c.slowT,opt.slowT||1.6); c.slowF=Math.min(c.slowF,opt.slow); }
+  if(opt&&opt.stun){ c.slowT=Math.max(c.slowT,opt.stun); c.slowF=0; c.stunT=Math.max(c.stunT||0,opt.stun); }
   if(c.hp<=0 && !c.dead){
     c.dead=true; G.kills++;
     addFX(c.x,c.y,c.c,c.boss?26:10);
     SFX.hit();
     G.stone += c.boss? 55 : (c.type==='armor'?3:2);
+    addHeroXp(c.boss? 9 : (c.type==='armor'?3:1));
   }
 }
 function towerFire(c,x,y){
   const T=TOWER[c.t], MD=G.mods;
   let dmg=T.dmg*(1+(c.lv-1)*0.85)*MD.dmg*(1+MD.maze*G.pathLen)*(c.lode?LODE_BOOST:1);
-  const range=(T.range+(c.lv-1)*10)*MD.range;
+  const range=(T.range+(c.lv-1)*10)*MD.range*(G.lvCfg.vision||1);
   let target=null,best=1e9;
   for(const k of G.creeps){
     if(k.dead) continue;
@@ -773,10 +1039,22 @@ function towerFire(c,x,y){
   if(!target) return;
   let crit=false;
   if(MD.crit>0 && Math.random()<MD.crit){ crit=true; dmg*=2; }
+  if(c.t==='thunder' && c.aw==='b'){
+    // 落雷：放弃连锁，单体 ×2.2，天上一道雷
+    hurtCreep(target, dmg*2.2, {});
+    G.beams.push({x1:target.x, y1:y-250, x2:target.x, y2:target.y,
+                  life:0.22, max:0.22, c:'#fff6c0'});
+    addFX(target.x,target.y,'#ffe89a',16);
+    G.core.shake=Math.max(G.core.shake||0,0.22);
+    SFX.bolt();
+    c.flash=0.25;
+    return;
+  }
   if(c.t==='thunder'){
-    // 连锁：主目标 + 最近的两个
+    // 连锁：主目标 + 最近的几个（长链觉醒到 5）
+    const cn=(c.aw==='a'? 5 : T.chain);
     let hit=[target];
-    for(let i=0;i<(T.chain-1);i++){
+    for(let i=0;i<(cn-1);i++){
       let nb=null,nd=1e9;
       for(const k of G.creeps){
         if(k.dead||hit.indexOf(k)>=0) continue;
@@ -791,8 +1069,22 @@ function towerFire(c,x,y){
     }
     SFX.bolt();
   } else {
-    G.bolts.push({x,y,tx:target.x,ty:target.y,tgt:target,dmg,crit,
-      sp:c.t==='frost'?420:620, c:T.bolt, kind:c.t});
+    const bolt={x,y,tx:target.x,ty:target.y,tgt:target,dmg,crit,
+      sp:c.t==='frost'?420:620, c:T.bolt, kind:c.t,
+      pierce:(c.t==='sword'&&c.aw==='a')?1:0, aw:c.aw||null};
+    if(c.t==='frost' && c.aw==='b'){ bolt.slow=0.28; bolt.slowT=2.4; }
+    G.bolts.push(bolt);
+    /* 双锋：再打一个最近的目标 */
+    if(c.t==='sword' && c.aw==='b'){
+      let t2=null,b2=1e9;
+      for(const k of G.creeps){
+        if(k.dead||k===target) continue;
+        const d2=Math.hypot(k.x-x,k.y-y);
+        if(d2<range && d2<b2){ b2=d2; t2=k; }
+      }
+      if(t2) G.bolts.push({x,y,tx:t2.x,ty:t2.y,tgt:t2,dmg:dmg*0.7,crit:false,
+        sp:620, c:T.bolt, kind:c.t, pierce:(c.aw==='a')?1:0, aw:c.aw});
+    }
     if(c.t==='frost') SFX.frost(); else SFX.shoot();
   }
   c.flash=0.25;
@@ -834,9 +1126,10 @@ function endGame(win){
   G.phase='over';
   if(win) SFX.win(); else SFX.lose();
   document.getElementById('endTtl').textContent = win? '羊村守住了' : '羊村被破';
+  if(win && G.lv>=0 && G.lv+1>CV.done){ CV.done=Math.min(LEVELS.length, G.lv+1); saveCV(); }
   const el=document.getElementById('endStat');
   el.innerHTML =
-    '<div>地图 <b>'+G.mapN+'</b></div>'+
+    (G.lv>=0? '<div>第 <b>'+(G.lv+1)+'</b> 关 · '+G.lvName+'</div>' : '<div>地图 <b>'+G.mapN+'</b></div>')+
     '<div>撑到第 <b>'+Math.min(G.wave,G.maxWave)+'</b> 波</div>'+
     '<div>击退恶狼 <b>'+G.kills+'</b></div>'+
     '<div>建了 <b>'+G.built+'</b> 座</div>'+
@@ -847,7 +1140,10 @@ function endGame(win){
 /* ---------------- 更新 ---------------- */
 function update(dt){
   if(!G||G.phase==='over') return;
-  if(G.phase==='perk') return;      // 抉择中：整局暂停，等玩家选
+  /* 昼夜：准备期是白天（经营），开波就入夜（挡狼）。perk / aw 期间也继续过渡，别卡在半亮 */
+  if(G.night==null) G.night=0;
+  G.night += (((G.phase==='wave')?1:0)-G.night)*Math.min(1,dt*1.8);
+  if(G.phase==='perk' || G.phase==='aw') return;   // 抉择 / 觉醒中：整局暂停，等玩家选
 
   // 结算 tick（2 秒一次）
   G.tickT+=dt;
@@ -856,8 +1152,8 @@ function update(dt){
     const farm=lvSum('farm'), mine=lvSum('mine');
     const tw=countT('sword')+countT('frost')+countT('thunder');
     const upkeep=G.pop*0.5+tw*0.62;          // 人吃粮，塔也要驻军养
-    G.food += farm*5.2*G.mods.farm - upkeep;
-    G.stone += mine*2.35*(1+G.pop*0.10)*G.mods.mine;
+    G.food += farm*5.2*G.mods.farm*G.lvCfg.farmMul - upkeep;
+    G.stone += mine*2.35*(1+G.pop*0.10)*G.mods.mine*G.lvCfg.mineMul;
     if(G.food<0){
       G.food=0;
       G.starve=(G.starve||0)+3.5;            // 断粮：塔变慢 + 核心持续掉血
@@ -894,7 +1190,7 @@ function update(dt){
       toast('第 '+G.wave+' 波已退 · 灵石 +'+reward);
       if(G.wave>=G.maxWave) return endGame(true);
       if(G.wave%3===0) return showPerk();        // 每 3 波一次抉择
-      G.phase='prep'; G.prepT=G.prepMax=Math.max(24,42-G.wave*2.2);
+      G.phase='prep'; G.prepT=G.prepMax=prepTime();
     }
   }
 
@@ -902,6 +1198,7 @@ function update(dt){
   for(const c of G.creeps){
     if(c.dead) continue;
     if(c.slowT>0){ c.slowT-=dt; if(c.slowT<=0) c.slowF=1; }
+    if(c.stunT>0) c.stunT-=dt;
     if(c.flash>0) c.flash-=dt*3;
     const spd=c.sp*(c.slowT>0?c.slowF:1);
 
@@ -921,6 +1218,62 @@ function update(dt){
       }
     }
 
+    /* 妖王专属招 */
+    if(c.bk){
+      c.skillT-=dt;
+      if(c.skillT<=0){
+        if(c.bk.id==='breaker'){
+          c.skillT=3.4;
+          const gx0=Math.floor(c.x/CS), gy0=Math.floor(c.y/CS);
+          let best=null,bd=9;
+          for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+            const nx=gx0+dx, ny=gy0+dy;
+            if(nx<0||ny<0||nx>=CW||ny>=CH) continue;
+            const cc=G.cells[ny][nx];
+            if(!cc.t||!BUILD[cc.t].block) continue;
+            const d2=dx*dx+dy*dy; if(d2<bd){ bd=d2; best={x:nx,y:ny,c:cc}; }
+          }
+          if(best){
+            const bn=BUILD[best.c.t].n;
+            best.c.t=null; best.c.lv=0; best.c.aw=null;
+            addFX(best.x*CS+CS/2,best.y*CS+CS/2,'#e0663a',24);
+            buildFlow();
+            G.core.shake=0.9;
+            toast('撞门王撞碎了'+bn+'！');
+            SFX.hit();
+          }
+        } else if(c.bk.id==='summon'){
+          c.skillT=8;
+          for(let i=0;i<3;i++){
+            const m=buildCreep('grunt',
+              c.x+(Math.random()-0.5)*CS*0.8,
+              c.y+(Math.random()-0.5)*CS*0.8);
+            m.hp*=0.8; m.maxhp=m.hp;
+            G.pending.push(m);
+          }
+          addFX(c.x,c.y,'#8a3fd0',16);
+          toast('召狼王召来了三只小狼');
+        } else {
+          c.skillT=99;
+          if(!c.blink && c.hp<c.maxhp*0.5){
+            c.blink=1;
+            let best=null,bd=-1;
+            for(let yy=0;yy<CH;yy++) for(let xx=0;xx<CW;xx++){
+              const dv=G.dist[yy*CW+xx];
+              if(dv<0) continue;
+              if(dv>bd && dv<=G.pathLen*0.92){ bd=dv; best=[xx,yy]; }
+            }
+            if(best){
+              addFX(c.x,c.y,'#4fb3d9',24);
+              c.x=best[0]*CS+CS/2; c.y=best[1]*CS+CS/2;
+              addFX(c.x,c.y,'#4fb3d9',24);
+              toast('影行王沿狼路瞬移了');
+            }
+          }
+        }
+      }
+    }
+
     // 翼妖：不走流场，直线扑核心 —— 迷宫对它无效
     if(c.fly){
       const cx0=G.core.cx*CS+CS/2, cy0=G.core.cy*CS+CS/2;
@@ -933,6 +1286,14 @@ function update(dt){
     }
 
     const gx=Math.floor(c.x/CS), gy=Math.floor(c.y/CS);
+    /* 贴身的狼会咬守将：守将不是无敌的，站位才有意义 */
+    if(G.hero.down<=0){
+      c.atkCd=(c.atkCd||0)-dt;
+      if(c.atkCd<=0 && Math.hypot(c.x-G.hero.x,c.y-G.hero.y)<CS*0.68){
+        c.atkCd=1.0;
+        heroHurt(c.dmg*0.42);
+      }
+    }
     // 到了核心格
     if(gx===G.core.cx && gy===G.core.cy){ coreHurt(c.dmg); c.dead=true; continue; }
     // 找下坡
@@ -966,6 +1327,7 @@ function update(dt){
     }
   }
   G.creeps=G.creeps.filter(c=>!c.dead);
+  if(G.pending.length){ G.creeps=G.creeps.concat(G.pending); G.pending=[]; }
 
   // 塔开火
   for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
@@ -989,8 +1351,21 @@ function update(dt){
     const dx=b.tx-b.x, dy=b.ty-b.y, d=Math.hypot(dx,dy);
     if(d<12 || (!b.tgt&&d<16)){
       if(b.tgt && !b.tgt.dead){
-        hurtCreep(b.tgt,b.dmg, b.kind==='frost'?{slow:TOWER.frost.slow,slowT:TOWER.frost.slowT}:{});
+        const _o={};
+        if(b.pierce) _o.pierce=1;
+        if(b.kind==='frost'){ _o.slow=b.slow||TOWER.frost.slow; _o.slowT=b.slowT||TOWER.frost.slowT; }
+        hurtCreep(b.tgt,b.dmg,_o);
         addFX(b.tx,b.ty,b.c,4);
+        /* 霜爆：命中点周围一圈一起冻住 */
+        if(b.kind==='frost' && b.aw==='a'){
+          for(const k2 of G.creeps){
+            if(k2.dead||k2===b.tgt) continue;
+            if(Math.hypot(k2.x-b.tx,k2.y-b.ty)<=74){
+              k2.slowT=Math.max(k2.slowT,1.5); k2.slowF=Math.min(k2.slowF,0.58);
+            }
+          }
+          addFX(b.tx,b.ty,'#9fe4ff',10);
+        }
       }
       b.dead=true; continue;
     }
@@ -1005,7 +1380,9 @@ function update(dt){
 
   // 守将
   if(G.hero.skillCd>0) G.hero.skillCd-=dt;
+  if(G.hero.s2Cd>0)   G.hero.s2Cd-=dt;
   if(G.slash){ G.slash.t-=dt; if(G.slash.t<=0) G.slash=null; }
+  updateLeap(dt);
   updateHero(dt);
 
   // 粒子
@@ -1025,7 +1402,7 @@ function update(dt){
 /* 守将主动技：断潮斩 */
 function castSkill(){
   const h=G.hero;
-  if(!G || G.phase==='over' || G.phase==='perk') return;
+  if(!G || G.phase==='over' || G.phase==='perk' || G.phase==='aw') return;
   if(h.down>0) return toast('守将还未起身'), SFX.deny();
   if(h.skillCd>0) return SFX.deny();
   h.skillCd=SKILL.cd;
@@ -1033,7 +1410,7 @@ function castSkill(){
   for(const c of G.creeps){
     if(c.dead) continue;
     if(Math.hypot(c.x-h.x,c.y-h.y)<=SKILL.r){
-      hurtCreep(c, (SKILL.dmg+G.wave*12)*G.mods.hero, {slow:SKILL.slow, slowT:SKILL.slowT});
+      hurtCreep(c, (SKILL.dmg+G.wave*12)*G.mods.hero*heroAtk(), {slow:SKILL.slow, slowT:SKILL.slowT});
       n++;
     }
   }
@@ -1041,6 +1418,71 @@ function castSkill(){
   addFX(h.x,h.y,'#ffeab4',16);
   SFX.slash();
   toast(n>0? ('断潮斩 · 斩中 '+n+' 只') : '断潮斩 · 落空');
+}
+/* 守将受伤：血量归零就倒地，5 秒后自己爬起来（不是死） */
+function heroHurt(d){
+  const h=G.hero;
+  if(!h || h.down>0 || h.hp<=0) return;
+  h.hp-=d; h.hurtT=3.4;
+  addFX(h.x,h.y-10,CINNABAR,7);
+  if(h.hp<=0){
+    h.hp=0; h.down=5;
+    addFX(h.x,h.y,CINNABAR,22);
+    G.core.shake=Math.max(G.core.shake||0,0.5);
+    toast('守将被打倒了 · 5 秒后起身');
+    SFX.hit();
+  }
+}
+
+/* 守将二技：跃斩 —— 跳到狼最密的地方，落地崩一圈并震晕 */
+function castSkill2(){
+  const h=G.hero;
+  if(!G || G.phase==='over' || G.phase==='perk' || G.phase==='aw') return;
+  if(G.leap) return;
+  if(h.lv<SKILL2.unlock) return toast('守将 Lv.'+SKILL2.unlock+' 才解锁跃斩'), SFX.deny();
+  if(h.down>0) return toast('守将还未起身'), SFX.deny();
+  if(h.s2Cd>0) return SFX.deny();
+  /* 找密度最高的落点：以每只狼为圆心数 96px 内的同伴 */
+  let best=null, bn=0;
+  for(const c of G.creeps){
+    if(c.dead) continue;
+    if(Math.hypot(c.x-h.x,c.y-h.y)>SKILL2.seek) continue;
+    let n=0;
+    for(const k of G.creeps){
+      if(k.dead) continue;
+      if(Math.hypot(k.x-c.x,k.y-c.y)<=96) n++;
+    }
+    if(n>bn){ bn=n; best={x:c.x,y:c.y}; }
+  }
+  if(!best){ SFX.deny(); return toast('跃斩 · 附近没有目标'); }
+  h.s2Cd=SKILL2.cd;
+  G.leap={x0:h.x, y0:h.y, x1:best.x, y1:best.y, t:0, max:SKILL2.hop};
+  SFX.slash();
+}
+function updateLeap(dt){
+  const L=G.leap; if(!L) return;
+  const h=G.hero;
+  L.t+=dt;
+  const k=Math.min(1,L.t/L.max);
+  h.x=L.x0+(L.x1-L.x0)*k;
+  h.y=L.y0+(L.y1-L.y0)*k;
+  if(L.x1!==L.x0) h.face = L.x1>L.x0? 1 : -1;
+  if(k>=1){ G.leap=null; landSlash(h.x,h.y); }
+}
+function landSlash(x,y){
+  let n=0;
+  for(const c of G.creeps){
+    if(c.dead) continue;
+    if(Math.hypot(c.x-x,c.y-y)<=SKILL2.r){
+      hurtCreep(c, (SKILL2.dmg+G.wave*9)*G.mods.hero*heroAtk(), {stun:SKILL2.stun});
+      n++;
+    }
+  }
+  G.slash={x:x,y:y,t:0.42,max:0.42};
+  addFX(x,y,'#ffeab4',20);
+  G.core.shake=Math.max(G.core.shake||0,0.34);
+  SFX.slash();
+  toast(n>0? ('跃斩 · 震晕 '+n+' 只') : '跃斩 · 落空');
 }
 function drawSlash(){
   const s=G.slash;
@@ -1059,6 +1501,7 @@ function drawSlash(){
 
 function updateHero(dt){
   const h=G.hero;
+  if(G.leap) return;                      // 跃斩途中不接受操作，落地再接管
   if(h.down>0){ h.down-=dt; if(h.down<=0){ h.hp=h.maxhp*0.6;
     h.x=G.core.cx*CS+CS/2; h.y=G.core.cy*CS+CS/2+CS*1.2; } return; }
   const sp=205;
@@ -1092,11 +1535,14 @@ function updateHero(dt){
     }
     if(t){
       h.cd=0.36;
-      G.bolts.push({x:h.x,y:h.y-14,tx:t.x,ty:t.y,tgt:t,dmg:(10+Math.floor(G.wave*0.6))*G.mods.hero,
+      G.bolts.push({x:h.x,y:h.y-14,tx:t.x,ty:t.y,tgt:t,dmg:(10+Math.floor(G.wave*0.6))*G.mods.hero*heroAtk(),
         sp:760,c:'#ffeab4',kind:'sword'});
       SFX.shoot();
     } else h.cd=0.1;
   }
+  /* 脱战回血：一直在挨打就回不动，逼玩家把人撤开 */
+  if(h.hurtT>0) h.hurtT-=dt;
+  else if(h.hp>0 && h.hp<h.maxhp) h.hp=Math.min(h.maxhp, h.hp+(2.4+h.lv*0.55)*dt);
   if(h.hp<=0 && h.down<=0){ h.down=5; addFX(h.x,h.y,CINNABAR,20); }
 }
 
@@ -1158,6 +1604,7 @@ function render(){
   drawBolts();
   drawHero();
   drawFX();
+  drawNight();
   ctx.restore();
   drawHurtFx();
   drawHUD();
@@ -1637,6 +2084,15 @@ function drawBuilding(c,x,y){
     ctx.fillStyle=b.c; ctx.globalAlpha=0.75;
     rrect(cx-13,BY-20,26,20,5); ctx.fill(); ctx.globalAlpha=1;
   }
+  /* 觉醒塔：脚下一圈专属色 */
+  if(c.aw){
+    ctx.save();
+    ctx.globalAlpha=0.30+0.10*Math.sin(t*3.0);
+    ctx.strokeStyle= c.aw==='a'? '#ffd75e' : '#9fe4ff';
+    ctx.lineWidth=1.9;
+    ctx.beginPath(); ctx.ellipse(cx,BY+2,CS*0.41,CS*0.175,0,0,7); ctx.stroke();
+    ctx.restore();
+  }
   /* 塔：灵脉加成时罩一层暖金光 */
   if(isTower && c.lode) sprGlow(id,cx,BY+1+bob,{},0.14+0.05*Math.sin(t*3));
   /* 等级：只在 2 级以上挂一个角标，比排四个方块干净得多 */
@@ -1764,6 +2220,9 @@ function drawCreeps(){
       rrect(-c.r,-c.r*2,c.r*2,c.r*2,4); ctx.fill();
     }
     ctx.restore();
+    /* 夜里狼眼要发光：位置在这里算好，实际画在 drawNight —— 夜纱之后才亮得起来 */
+    c._ex = ((G.night||0)>0.28)?
+      {x:c.x+F*hh*0.055, y:by-lift-hh*0.74, g:hh*0.085} : null;
     /* 减速：罩一层冷霜 */
     if(c.slowT>0){
       ctx.save();
@@ -1773,13 +2232,28 @@ function drawCreeps(){
       ctx.ellipse(c.x, by-lift-hh*0.46, hh*0.30, hh*0.42,0,0,7); ctx.fill();
       ctx.restore();
     }
+    /* 跃斩震晕：头顶三点金星打转 */
+    if(c.stunT>0){
+      ctx.save();
+      const sy=by-lift-hh-10;
+      ctx.fillStyle='#ffd75e';
+      for(let i=0;i<3;i++){
+        const a2=t*7+i*2.094;
+        ctx.globalAlpha=Math.min(1,c.stunT*2)*0.9;
+        ctx.beginPath();
+        ctx.arc(c.x+Math.cos(a2)*7.5, sy+Math.sin(a2)*3.0, 1.9, 0, 7);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
     /* 妖王：脚下一圈紫气，一眼认出来 */
     if(c.boss){
       ctx.save();
       ctx.globalAlpha=0.22+0.08*Math.sin(t*3.2);
       const bg2=ctx.createRadialGradient(c.x,by,2,c.x,by,hh*0.62);
-      bg2.addColorStop(0,'rgba(160,90,230,.85)');
-      bg2.addColorStop(1,'rgba(160,90,230,0)');
+      const _au=c.auraRGB||'160,90,230';
+      bg2.addColorStop(0,'rgba('+_au+',.85)');
+      bg2.addColorStop(1,'rgba('+_au+',0)');
       ctx.fillStyle=bg2;
       ctx.beginPath(); ctx.ellipse(c.x,by,hh*0.62,hh*0.26,0,0,7); ctx.fill();
       ctx.restore();
@@ -1876,15 +2350,17 @@ function drawHero(){
     ctx.textAlign='left';
     return;
   }
+  /* 跃斩：腾空 + 影子缩一圈，读得出"在飞" */
+  const lk = G.leap? Math.sin(Math.PI*Math.min(1,G.leap.t/G.leap.max)) : 0;
   /* 落影 + 接触阴影 */
-  bSh(h.x,fy,13.0,4.6,0.34);
-  bAO(h.x,fy,13.5,5.0);
+  bSh(h.x,fy,13.0*(1-0.42*lk),4.6*(1-0.42*lk),0.34);
+  bAO(h.x,fy,13.5*(1-0.42*lk),5.0*(1-0.42*lk));
   /* 挥刀：出手瞬间整个人往前倾一点，比单纯放大有力 */
   const sp=1-Math.max(0,Math.min(1,h.cd/0.36));
   const sw=(h.cd>0? Math.sin(sp*Math.PI) : 0);
   /* 走路才有起伏；站着不动就不许晃 */
-  let hLift=0, hSq=1;
-  if(h.mv){
+  let hLift=lk*24, hSq=1;
+  if(!lk && h.mv){
     const up=stepCurve(h.ph);
     hLift=up*1.7; hSq=1+0.022*up;
   }
@@ -1916,6 +2392,36 @@ function drawHero(){
     ctx.beginPath(); ctx.ellipse(h.x,fy+1,17,6.4,0,0,7); ctx.stroke();
     ctx.restore();
   }
+  /* 头顶：一枚紧凑小铭牌 —— Lv 和血条并排，下面带个小尖角指向脑袋。
+     带尖角是为了别被误读成"后面那栋建筑的信息" */
+  (function(){
+    const lvTxt='Lv.'+h.lv, full=(h.lv>=XP_LV.length-1);
+    ctx.save();
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font='600 8.5px '+UIF;
+    const tw=ctx.measureText(lvTxt).width;
+    const bw=17, pad=6, gapx=4;
+    const pw=pad+tw+gapx+bw+pad, ph=13;
+    const px0=h.x-pw/2, py0=fy-70, pcy=py0+ph/2;
+    /* 尖角 */
+    ctx.fillStyle='rgba(18,21,27,.80)';
+    ctx.beginPath();
+    ctx.moveTo(h.x-3.6, py0+ph-0.5); ctx.lineTo(h.x+3.6, py0+ph-0.5); ctx.lineTo(h.x, py0+ph+4.2);
+    ctx.closePath(); ctx.fill();
+    /* 牌 */
+    ctx.fillStyle='rgba(18,21,27,.80)'; rrect(px0,py0,pw,ph,6.5); ctx.fill();
+    ctx.strokeStyle= full? 'rgba(255,215,94,.85)' : 'rgba(255,226,170,.22)';
+    ctx.lineWidth=1; rrect(px0,py0,pw,ph,6.5); ctx.stroke();
+    ctx.fillStyle= full? '#ffd75e' : (h.lv>=SKILL2.unlock? '#e8c877':'rgba(246,232,206,.78)');
+    ctx.fillText(lvTxt, px0+pad, pcy);
+    /* 血条 */
+    const hbx=px0+pad+tw+gapx, pr=Math.max(0,Math.min(1,h.hp/h.maxhp));
+    ctx.fillStyle='rgba(0,0,0,.55)'; rrect(hbx,pcy-2.1,bw,4.2,2.1); ctx.fill();
+    ctx.fillStyle= pr>0.6? '#8fcf72' : (pr>0.3? '#e8c04a' : '#e0553f');
+    rrect(hbx,pcy-2.1,Math.max(2,bw*pr),4.2,2.1); ctx.fill();
+    ctx.restore();
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+  })();
 }
 
 function drawFX(){
@@ -1925,6 +2431,81 @@ function drawFX(){
     ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
   }
   ctx.globalAlpha=1;
+}
+
+/* 夜幕：整块棋盘压一层夜蓝，再点起核心火塘 / 羊屋窗火 / 塔位火把 / 妖门凶光。
+   光源一律走加色，但数量少、alpha 低 —— 别让整片特效一起 lighter，会过曝。 */
+function drawNight(){
+  const n=G.night||0;
+  if(n<=0.012) return;
+  const t=G.t||0;
+  ctx.save();
+  /* 夜纱：上深下浅，远处更黑 */
+  const vg=ctx.createLinearGradient(0,0,0,BH);
+  vg.addColorStop(0,'rgba(9,13,38,'+(0.60*n).toFixed(3)+')');
+  vg.addColorStop(1,'rgba(12,17,36,'+(0.40*n).toFixed(3)+')');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,BW,BH);
+  ctx.globalCompositeOperation='lighter';
+  /* 月光：从左上来的一层冷调，给夜景一个光向 */
+  const mg=ctx.createLinearGradient(0,0,BW*0.72,BH);
+  mg.addColorStop(0,'rgba(124,152,224,'+(0.13*n).toFixed(3)+')');
+  mg.addColorStop(1,'rgba(124,152,224,0)');
+  ctx.fillStyle=mg; ctx.fillRect(0,0,BW,BH);
+  /* 一盏灯 */
+  const pool=function(x,y,r,rgb,al){
+    if(r<=2) return;
+    const gg=ctx.createRadialGradient(x,y,r*0.05,x,y,r);
+    gg.addColorStop(0,'rgba('+rgb+','+(al*n).toFixed(3)+')');
+    gg.addColorStop(0.48,'rgba('+rgb+','+(al*0.36*n).toFixed(3)+')');
+    gg.addColorStop(1,'rgba('+rgb+',0)');
+    ctx.fillStyle=gg;
+    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  };
+  /* 核心火塘：最大的一盏，火光明暗会呼吸 */
+  pool(G.core.cx*CS+CS/2, G.core.cy*CS+CS/2, 172,
+       '255,196,120', 0.40+0.045*Math.sin(t*5.1));
+  /* 村落灯火：羊屋亮窗、菜地小灯、塔位火把 */
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const c=G.cells[y][x];
+    if(!c.t) continue;
+    const px=x*CS+CS/2, py=y*CS+CS/2;
+    if(c.t==='house')      pool(px,py, 86, '255,190,110', 0.26+0.05*Math.sin(t*6.3+x*1.7));
+    else if(c.t==='farm')  pool(px,py, 48, '255,214,140', 0.12);
+    else if(c.t==='mine')  pool(px,py, 46, '255,186,110', 0.12);
+    else if(BUILD[c.t].tower) pool(px,py, 56, '255,172,96', 0.14+0.03*Math.sin(t*7.1+x*2.3+y));
+  }
+  /* 妖门：冷红凶光，提示这边会出东西 */
+  for(const gt of G.gates){
+    if(!gt.act) continue;
+    pool(gt.x*CS+CS/2, gt.y*CS+CS/2, 88, '158,66,58', 0.26+0.06*Math.sin(t*4.4+gt.i*2.1));
+  }
+  /* 守将提灯 */
+  const h=G.hero;
+  if(h && h.down<=0) pool(h.x, h.y-6, 76, '255,226,164', 0.28);
+  /* 狼眼：暗场里最省事的可读性补偿，也最像夜晚 */
+  const ea=Math.min(1,(n-0.28)/0.5);
+  if(ea>0){
+    /* 先铺一层柔光（加色），再压一颗实心琥珀珠 —— 纯加色会烧成白点，看着不像眼睛 */
+    for(const c of G.creeps){
+      if(c.dead || !c._ex) continue;
+      const e=c._ex;
+      ctx.globalAlpha=ea*0.55;
+      ctx.fillStyle= c.boss? 'rgba(255,96,44,.9)' : 'rgba(255,176,48,.9)';
+      ctx.beginPath(); ctx.arc(e.x-e.g, e.y, 4.2, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(e.x+e.g, e.y, 4.2, 0, 7); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+    for(const c of G.creeps){
+      if(c.dead || !c._ex) continue;
+      const e=c._ex;
+      ctx.globalAlpha=ea;
+      ctx.fillStyle= c.boss? '#ff6a33' : '#ffc63a';
+      ctx.beginPath(); ctx.arc(e.x-e.g, e.y, 1.85, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(e.x+e.g, e.y, 1.85, 0, 7); ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
 }
 
 /* 核心挨打：棋盘四周压一层朱砂血雾（半秒内自己散掉） */
@@ -2105,10 +2686,10 @@ function drawBuildBar(){
   ctx.fillStyle='rgba(0,0,0,.30)'; ctx.fillRect(0,by+1.4,W,2);
 
   const cw=CARD_W, gap=CARD_GAP;
-  const total=ORDER.length*cw+(ORDER.length-1)*gap;
+  const _ord=buildOrder(), total=_ord.length*cw+(_ord.length-1)*gap;
   let x=(W-total)/2;
   ctx.textBaseline='middle';
-  for(const t of ORDER){
+  for(const t of _ord){
     const b=BUILD[t], sel=(G.sel===t), cost=costOf(t), afford=G.stone>=cost;
     const cxp=x, cyp=by+8, cwd=cw, chd=bh-16;
     ctx.globalAlpha= afford? 1 : 0.52;
@@ -2156,31 +2737,36 @@ function drawBuildBar(){
     ctx.globalAlpha=1;
     x+=cw+gap;
   }
-  // ---- 左侧：守将技能按钮 ----
+  // ---- 左侧：守将两个技能钮（斩 / 跃）----
   (function(){
-    const bx=34, by=by_ + bh/2, r=17;
-    const h=G.hero;
-    const ready=(h.skillCd<=0 && h.down<=0);
-    ctx.beginPath(); ctx.arc(bx,by,r,0,7);
-    ctx.fillStyle= ready? 'rgba(232,200,119,.14)' : 'rgba(255,255,255,.045)';
-    ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=1; ctx.stroke();
-    if(ready){
-      ctx.save(); ctx.shadowColor='rgba(232,200,119,.7)'; ctx.shadowBlur=16;
-      ctx.strokeStyle='rgba(232,200,119,.9)'; ctx.lineWidth=1.6;
-      ctx.beginPath(); ctx.arc(bx,by,r-0.8,0,7); ctx.stroke(); ctx.restore();
-    } else if(h.skillCd>0){              // 环形冷却
-      const p=1-h.skillCd/SKILL.cd;
-      ctx.strokeStyle='rgba(232,200,119,.85)'; ctx.lineWidth=2.6; ctx.lineCap='round';
-      ctx.beginPath(); ctx.arc(bx,by,r-1.6,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke();
-      ctx.lineCap='butt';
+    const h=G.hero, cy=by_+bh/2, r=16;
+    const B=[
+      {g:'斩', key:'J', cd:h.skillCd, max:SKILL.cd,  on:true,                 x:28},
+      {g:'跃', key:'K', cd:h.s2Cd,    max:SKILL2.cd, on:h.lv>=SKILL2.unlock,  x:64}
+    ];
+    for(const s of B){
+      const bx=s.x, ready=(s.on && s.cd<=0 && h.down<=0);
+      ctx.beginPath(); ctx.arc(bx,cy,r,0,7);
+      ctx.fillStyle= ready? 'rgba(232,200,119,.14)' : 'rgba(255,255,255,.045)';
+      ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=1; ctx.stroke();
+      if(ready){
+        ctx.save(); ctx.shadowColor='rgba(232,200,119,.7)'; ctx.shadowBlur=16;
+        ctx.strokeStyle='rgba(232,200,119,.9)'; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.arc(bx,cy,r-0.8,0,7); ctx.stroke(); ctx.restore();
+      } else if(s.on && s.cd>0){           // 环形冷却
+        const p=1-s.cd/s.max;
+        ctx.strokeStyle='rgba(232,200,119,.85)'; ctx.lineWidth=2.6; ctx.lineCap='round';
+        ctx.beginPath(); ctx.arc(bx,cy,r-1.6,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke();
+        ctx.lineCap='butt';
+      }
+      ctx.fillStyle= ready? GOLD2 : (s.on? 'rgba(233,230,223,.3)' : 'rgba(233,230,223,.13)');
+      ctx.font='600 14px '+UIF; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(s.g, bx, cy+0.5);
+      ctx.font='9.5px '+UIF; ctx.fillStyle= ready? 'rgba(232,200,119,.6)' : INK3;
+      ctx.fillText(s.on? (ready? s.key : Math.ceil(s.cd)+'s') : ('L'+SKILL2.unlock), bx, cy+r+7);
+      ctx.textAlign='left'; ctx.textBaseline='middle';
     }
-    ctx.fillStyle= ready? GOLD2 : 'rgba(233,230,223,.3)';
-    ctx.font='600 15px '+UIF; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('斩', bx, by+0.5);
-    ctx.font='9.5px '+UIF; ctx.fillStyle= ready? 'rgba(232,200,119,.6)' : INK3;
-    ctx.fillText(ready? 'J' : Math.ceil(h.skillCd)+'s', bx, by+r+7);
-    ctx.textAlign='left'; ctx.textBaseline='middle';
   })();
 
   // ---- 右侧：开波按钮（手机上唯一能提前开波的方式）----
@@ -2215,11 +2801,17 @@ window.addEventListener('keydown',e=>{
   if(k==='escape'){ G.sel=null; }
   if(k==='p'){ toggleGL(); }
   if(k==='j'){ castSkill(); }
+  if(k==='k'){ castSkill2(); }
   if(G && G.phase==='perk'){
     const idx='123'.indexOf(k);
     if(idx>=0){ pickPerk(idx); return; }
   }
-  for(const t of ORDER){
+  if(G && G.phase==='aw'){
+    const idx2='12'.indexOf(k);
+    if(idx2>=0){ pickAwaken(idx2); return; }
+    return;
+  }
+  for(const t of buildOrder()){
     if(k===BUILD[t].key){ G.sel = (G.sel===t? null : t); }
   }
 });
@@ -2242,11 +2834,14 @@ cv.addEventListener('contextmenu',ev=>ev.preventDefault());
 /* 统一指针处理：鼠标和触屏走同一条路。
    toWorld 已经把 PAD_T 减掉，所以 py>=BH 就是落在底部建造栏上。 */
 function handleTap(px,py,button){
-  if(!G||G.phase==='over'||G.phase==='perk') return;
+  if(!G||G.phase==='over'||G.phase==='perk'||G.phase==='aw') return;
   if(py>=BH){                       // 建造栏区域
     const cyIn=py-BH;               // 建造栏内的 y
-    // 左侧技能圆钮
-    if(Math.hypot(px-34, cyIn-PAD_B/2)<=23){ castSkill(); return; }
+    // 左侧技能圆钮（斩 / 跃）
+    if(cyIn>=PAD_B/2-22 && cyIn<=PAD_B/2+22){
+      if(Math.hypot(px-28, cyIn-PAD_B/2)<=20){ castSkill();  return; }
+      if(Math.hypot(px-64, cyIn-PAD_B/2)<=20){ castSkill2(); return; }
+    }
     // 右侧开波按钮
     if(G.phase==='prep' && px>=W-66 && px<=W-8 && cyIn>=PAD_B/2-24 && cyIn<=PAD_B/2+24){
       const gain=Math.round(G.prepT*2);
@@ -2256,9 +2851,9 @@ function handleTap(px,py,button){
       return;
     }
     const cw=CARD_W, gap=CARD_GAP;
-    const total=ORDER.length*cw+(ORDER.length-1)*gap;
+    const _ord=buildOrder(), total=_ord.length*cw+(_ord.length-1)*gap;
     let bx=(W-total)/2;
-    for(const k of ORDER){
+    for(const k of buildOrder()){
       if(px>=bx && px<bx+cw){ G.sel = (G.sel===k? null : k); return; }
       bx+=cw+gap;
     }
@@ -2554,7 +3149,8 @@ function loop(ts){
 
 /* ---------------- 启动 ---------------- */
 function boot(){
-  newGame();
+  if(FREE_MODE) newGame(MAP_PICK, null);
+  else newGame(LEVELS[LV_PICK].map, LV_PICK);
   resize();
   lastT=0;
   if(raf) cancelAnimationFrame(raf);
@@ -2581,7 +3177,21 @@ document.getElementById('againBtn').addEventListener('click',()=>{
 });
 
 // 首帧先画个底，避免开场黑屏
-newGame(); resize();
+loadCV();
+LV_PICK=Math.min(CV.done, LEVELS.length-1);
+renderLevels();
+(function(){
+  const mb=document.getElementById('modeBtn');
+  if(mb) mb.addEventListener('click',function(){
+    FREE_MODE=!FREE_MODE;
+    document.getElementById('lvGrid').style.display = FREE_MODE?'none':'';
+    document.getElementById('lvTip').style.display  = FREE_MODE?'none':'';
+    document.getElementById('mapPick').style.display = FREE_MODE?'flex':'none';
+    document.getElementById('modeName').textContent = FREE_MODE?'自 由 模 式':'战 役 · 十 二 关';
+    mb.textContent = FREE_MODE?'‹ 返回战役':'自由模式 ›';
+  });
+})();
+newGame(LEVELS[LV_PICK].map, LV_PICK); resize();
 </script>
 </body>
 </html>
