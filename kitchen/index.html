@@ -857,7 +857,7 @@ KM.ui = (function(){
         '<div style="display:flex;align-items:center;gap:12px">'+
           '<div style="font-size:34px">'+esc(rec.emoji||'🍽️')+'</div>'+
           '<div style="flex:1"><div style="font-weight:600;font-size:16px">'+esc(rec.name)+'</div>'+
-          '<div style="color:var(--muted);font-size:12px">'+esc(cuisineName(rec))+ ' · '+esc(rec.prepMin||0)+'+'+esc(rec.cookMin||0)+' 分钟 · '+spicyStr(rec.spicy)+'</div></div>'+
+          '<div style="color:var(--muted);font-size:12px">'+esc(cuisineName(rec))+ ' · '+ ((rec.prepMin||0)+(rec.cookMin||0)) +' 分钟 · '+spicyStr(rec.spicy)+'</div></div>'+
           '<button class="btn btn-sm" onclick="KM.ui.nav(\'#/dish/'+esc(rec.id)+'\')">看看</button>'+
         '</div>'+
         '<div style="margin-top:10px"><button class="btn btn-sm" onclick="KM.ui.randomPick()">换一个</button></div>'+
